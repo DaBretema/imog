@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/vec3.hpp>
+#include "wrap/Math.hpp"
 
 namespace BRAVE {
 

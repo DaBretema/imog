@@ -1,6 +1,14 @@
-#include <glad/glad.h>
+#pragma once
+
+#if !defined(__BRAVE_GLAD__)
+#define __BRAVE_GLAD__
+
+
 #include <Dac/Logger.hpp>
 
+#ifndef __glad_h_
+#include <glad/glad.h>
+#endif
 
 /// GL_ERRORS :: PreProcesor func wrapper
 #define GL_ASSERT(funcToCheck) \
@@ -27,3 +35,6 @@ void glAssert(const char* file, int line) {
     DacLog_ERR("{} ({}): {} ({})", file, line, errStr, glError);
   }
 }
+
+
+#endif // __BRAVE_GLAD__

@@ -4,11 +4,10 @@
 
 #include <Dac/Logger.hpp>
 
-#include "IO.hpp"
-#include "Core.hpp"
-#include "Renderable.hpp"
-
 #include "wrap/Math.hpp"
+
+#include "IO.hpp"
+#include "Renderable.hpp"
 
 
 namespace BRAVE {

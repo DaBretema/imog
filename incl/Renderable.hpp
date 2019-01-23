@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Shader.hpp"
+#include <memory>
+#include <vector>
 
 #include "wrap/Math.hpp"
 #include "wrap/Colors.hpp"
 
-#include <memory>
-#include <vector>
+#include "Shader.hpp"
+
 
 namespace BRAVE {
 

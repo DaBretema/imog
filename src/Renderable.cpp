@@ -1,9 +1,11 @@
+
 #include <mutex>
 #include <sstream>
 
-#include "../incl/Renderable.hpp"
-#include "../incl/wrap/Global.hpp"
 #include "../incl/wrap/Glad.hpp"
+#include "../incl/wrap/Global.hpp"
+
+#include "../incl/Renderable.hpp"
 #include "../incl/LoaderOBJ.hpp"
 
 
@@ -113,8 +115,8 @@ void Renderable::draw() {
 }
 
 
-void Renderable::translate(const glm::vec3& T) { translateMat4(m_model, T); }
-void Renderable::rotate(const glm::vec3& R) { rotateMat4(m_model, R); }
-void Renderable::scale(const glm::vec3& S) { scaleMat4(m_model, S); }
+void Renderable::translate(const glm::vec3& T) { Math::dTranslate(m_model, T); }
+void Renderable::rotate(const glm::vec3& R) { Math::dRotate(m_model, R); }
+void Renderable::scale(const glm::vec3& S) { Math::dScale(m_model, S); }
 
 } // namespace BRAVE

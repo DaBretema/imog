@@ -1,5 +1,7 @@
 #pragma once
+
 #include <vector>
+
 #include "wrap/Math.hpp"
 
 namespace BRAVE {

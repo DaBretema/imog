@@ -1,7 +1,9 @@
 #pragma once
-#include "wrap/Math.hpp"
 
 #include <string>
+
+#include "wrap/Math.hpp"
+
 
 namespace BRAVE {
 

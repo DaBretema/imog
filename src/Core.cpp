@@ -1,5 +1,6 @@
-#include "../incl/Core.hpp"
+
 #include "../incl/IO.hpp"
+#include "../incl/Core.hpp"
 
 namespace BRAVE {
 

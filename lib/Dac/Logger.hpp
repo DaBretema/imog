@@ -15,8 +15,8 @@ private:
   static std::once_flag m_once_init;
 
   // PATTERNS
-  static const char *m_patternPrints;
-  static const char *m_patternAlerts;
+  static const char* m_patternPrints;
+  static const char* m_patternAlerts;
 
   // DECLARE SHARED PTRs
   static std::shared_ptr<spdlog::logger> m_info;
@@ -25,9 +25,9 @@ private:
 
 public:
   // "GETTERS"
-  static std::shared_ptr<spdlog::logger> &info();
-  static std::shared_ptr<spdlog::logger> &error();
-  static std::shared_ptr<spdlog::logger> &print();
+  static std::shared_ptr<spdlog::logger>& info();
+  static std::shared_ptr<spdlog::logger>& error();
+  static std::shared_ptr<spdlog::logger>& print();
 
   // INIT: Just setup patterns for loggers
   static void init();
@@ -38,4 +38,5 @@ public:
 // Comfortable macros
 #define DacLog_INFO(...) SPDLOG_LOGGER_INFO(DAC::Logger::info(), __VA_ARGS__)
 #define DacLog_ERR(...) SPDLOG_LOGGER_ERROR(DAC::Logger::error(), __VA_ARGS__)
+#define DacLog_WARN(...) SPDLOG_LOGGER_WARN(DAC::Logger::error(), __VA_ARGS__)
 #define DacLog_PRINT(...) SPDLOG_LOGGER_INFO(DAC::Logger::print(), __VA_ARGS__)

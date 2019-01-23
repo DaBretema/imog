@@ -3,9 +3,12 @@
 #include <string>
 
 #include "wrap/Glad.hpp"
+
+#define GLFW_INCLUDE_NONE
 #include <glfw/glfw3.h>
 
 #include "wrap/Global.hpp"
+
 
 namespace BRAVE {
 
