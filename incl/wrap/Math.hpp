@@ -18,19 +18,21 @@ namespace Math {
   const glm::vec3 VEC_Z{0.f, 0.f, 1.f};
 
   /// Wrap mat4 translation
-  void dTranslate(glm::mat4& mat, const glm::vec3& T) {
+  static inline void dTranslate(glm::mat4& mat, const glm::vec3& T) {
     mat = glm::translate(mat, T);
   }
 
   /// Wrap mat4 rotation
-  void dRotate(glm::mat4& mat, const glm::vec3& R) {
+  static inline void dRotate(glm::mat4& mat, const glm::vec3& R) {
     mat = glm::rotate(mat, glm::radians(R.z), VEC_Z);
     mat = glm::rotate(mat, glm::radians(R.y), VEC_Y);
     mat = glm::rotate(mat, glm::radians(R.x), VEC_X);
   }
 
   /// Wrap mat4 scale
-  void dScale(glm::mat4& mat, const glm::vec3& S) { mat = glm::scale(mat, S); }
+  static inline void dScale(glm::mat4& mat, const glm::vec3& S) {
+    mat = glm::scale(mat, S);
+  }
 
 } // namespace Math
 } // namespace BRAVE

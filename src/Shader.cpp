@@ -1,11 +1,12 @@
 
 #include <vector>
 
+#include <glad/glad.h>
+
 #include <Dac/Logger.hpp>
 #include <Dac/Strings.hpp>
 
 #include "../incl/Shader.hpp"
-#include "../incl/wrap/Glad.hpp"
 
 
 // ==========================================================================

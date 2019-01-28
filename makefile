@@ -80,8 +80,8 @@ default_target: debug
 
 # CLEAN
 clean:
-	@rm -r $(BIN_DIR)/*
-	@rm -r $(BUILD_DIR)/*
+	@rm -rf $(BIN_DIR)/*
+	@rm -rf $(BUILD_DIR)/*
 
 # DEBUG
 debug: CXX_FLAGS += $(DEBUG_FLAGS)
@@ -91,17 +91,19 @@ debug: $(PROJECT_NAME)
 release: CXX_FLAGS += $(RELEASE_FLAGS)
 release: $(PROJECT_NAME)
 
-#! STATIC LIB
-$(PROJECT_NAME): $(OBJECTS)
-	@ar crs lib$@.a $^
-	@mkdir -p $(BIN_DIR)/$@
-	@mv ./*.a ./$(BIN_DIR)
-	@cp -r ./$(INCL_DIR)/* ./$(BIN_DIR)/$@
-
-
-# #! EXECUTABLE
+# #! STATIC LIB
 # $(PROJECT_NAME): $(OBJECTS)
-# 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
+# 	@ar crs lib$@.a $^
+# 	@mkdir -p $(BIN_DIR)/$@
+# 	@mv ./*.a ./$(BIN_DIR)
+# 	@cp -r ./$(INCL_DIR)/* ./$(BIN_DIR)/$@
+
+#! EXECUTABLE
+$(PROJECT_NAME): $(OBJECTS)
+	@echo "Creating: $@.exe"
+	@mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
+	@mv ./$@.exe ./$(BIN_DIR)/$@.exe
 
 # #* ICON COMPILATION
 # $(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc
@@ -109,8 +111,8 @@ $(PROJECT_NAME): $(OBJECTS)
 
 # SOURCES COMPILATION : Called on $(OBJECTS)
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
+	@echo "Changes detected @ $^"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXX_FLAGS) -c $^ -o $@ $(INCLUDES) $(LIBS)
-
 
 .PHONY: clean debug release

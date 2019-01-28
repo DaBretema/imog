@@ -13,6 +13,8 @@ namespace BRAVE {
 
 class Renderable {
 
+  static uint64_t g_ID;
+
 private:
   uint64_t                m_ID      = 0;
   std::shared_ptr<Shader> m_shader  = nullptr;

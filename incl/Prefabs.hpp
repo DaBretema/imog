@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include <Dac/Logger.hpp>
 
@@ -9,6 +10,7 @@
 #include "wrap/Colors.hpp"
 
 #include "Renderable.hpp"
+#include "Shader.hpp"
 
 #define __p_h_WrapPrefab(fName)                  \
   fName(const glm::vec3& color = Colors::Yellow, \

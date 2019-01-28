@@ -1,0 +1,30 @@
+{
+	"openglMajorV": 4,
+	"openglMinorV": 5,
+	"pollEvents": true,
+	"windowWidth": 800,
+	"windowHeight": 600,
+	"windowTitle": "Brave Engine",
+	"clearColor": [
+		0.2,
+		0.3,
+		0.3
+	],
+	"mouseSensitivity": 1.1,
+	"mainCameraPos": [
+		0.0,
+		0.0,
+		0.0
+	],
+	"mainCameraSpeed": 1.5,
+	"mainLightPos": [
+		0,
+		10.5,
+		0
+	],
+	"mainLightColor": [
+		0.5,
+		0.5,
+		0.3
+	]
+}

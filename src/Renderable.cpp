@@ -2,21 +2,20 @@
 #include <mutex>
 #include <sstream>
 
-#include "../incl/wrap/Glad.hpp"
-#include "../incl/wrap/Global.hpp"
-
-#include "../incl/Renderable.hpp"
 #include "../incl/LoaderOBJ.hpp"
+#include "../incl/Renderable.hpp"
+#include "../incl/wrap/GLAssert.hpp"
 
 
 namespace BRAVE {
 
+uint64_t Renderable::g_ID;
 
 /// Empty ctor
 Renderable::Renderable(const std::shared_ptr<Shader>& shader,
                        const glm::vec3&               color)
     : m_color(color) {
-  m_ID     = ID_Counter_RenderableObjects++;
+  m_ID     = g_ID++;
   m_shader = shader;
   m_shader->uFloat3("Color", m_color);
   GL_ASSERT(glGenVertexArrays(1, &m_vao));
@@ -38,7 +37,6 @@ Renderable::Renderable(const std::string&             objFilePath,
 
 // ID
 uint64_t Renderable::ID() const { return m_ID; }
-
 
 // Shader
 std::shared_ptr<Shader> Renderable::shader() const { return m_shader; }

@@ -1,21 +1,45 @@
 #pragma once
 
-#include <string>
+#include <json.hpp>
+using json = nlohmann::json;
+
+#include <Dac/FileWatcher.hpp>
 
 #include "wrap/Math.hpp"
 
-namespace BRAVE { namespace Settings {
 
-  int openglMajorV;
-  int openglMinorV;
+namespace BRAVE {
 
-  int         windowWidth;
-  int         windowHeight;
-  std::string windowTitle;
+class Settings {
+private:
+  static bool             m_corrupted;
+  static std::string      m_path;
+  static nlohmann::json   m_json;
+  static DAC::FileWatcher m_filewatcher;
 
-  glm::vec3 clearColor;
+public:
+  static int         openglMajorV;
+  static int         openglMinorV;
+  static int         windowWidth;
+  static int         windowHeight;
+  static std::string windowTitle;
+  static glm::vec3   clearColor;
+  static float       mouseSensitivity;
+  static bool        pollEvents;
+  static glm::vec3   mainCameraPos;
+  static float       mainCameraSpeed;
+  static glm::vec3   mainLightPos;
+  static glm::vec3   mainLightColor;
 
-  float mouseSensitivity;
+  // Initializer
+  static void init(const std::string& filePath);
 
+  // Print object values
+  static void dump();
 
-}} // namespace BRAVE::Settings
+  // Are settings corrupted?
+  // If it's corrupted the simulation will be paused
+  static bool corrupted();
+};
+
+} // namespace BRAVE
