@@ -1,12 +1,10 @@
+#include "LoaderOBJ.hpp"
 
 #include <mutex>
 #include <sstream>
 #include <unordered_map>
 
 #include <dac/Strings.hpp>
-
-#include "../incl/LoaderOBJ.hpp"
-#include "../incl/wrap/Math.hpp"
 
 
 namespace BRAVE {

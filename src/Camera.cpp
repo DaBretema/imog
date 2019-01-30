@@ -1,5 +1,5 @@
+#include "Camera.hpp"
 
-#include "../incl/Camera.hpp"
 
 namespace BRAVE {
 
@@ -115,7 +115,7 @@ void Camera::move(CamDir dir) {
       case CamDir::up: m_pos += m_up * speed(); break;
       case CamDir::down: m_pos -= m_up * speed(); break;
 
-      default: dlog::err("Invalid camera move"); break;
+      default: dErr("Invalid camera move"); break;
     }
   }
 
@@ -131,7 +131,7 @@ void Camera::move(CamDir dir) {
       case CamDir::up: m_pos.y += speed(); break;
       case CamDir::down: m_pos.y -= speed(); break;
 
-      default: dlog::err("Invalid camera move"); break;
+      default: dErr("Invalid camera move"); break;
     }
   }
 }

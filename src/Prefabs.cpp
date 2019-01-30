@@ -1,4 +1,4 @@
-#include "../incl/Prefabs.hpp"
+#include "Prefabs.hpp"
 
 
 #define __p_c_WrapPrefab(fName)           \

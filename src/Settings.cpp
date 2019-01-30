@@ -1,14 +1,13 @@
-
-#include "../incl/Settings.hpp"
-
-#include <dac/Logger.hpp>
+#include "Settings.hpp"
 
 #include <fstream>
 #include <functional>
 
+#include <dac/Logger.hpp>
+
+
 
 namespace BRAVE {
-
 
 // ========================================================================= //
 // ========================================================================= //
@@ -22,13 +21,13 @@ namespace BRAVE {
   } catch (json::exception&) { var = defVal; }
 
 // --- GLM Types --- //
-#define glmParse(var, defVal)                                         \
-  try {                                                               \
-    auto v = m_json.at(#var);                                         \
-    if (!v.is_array()) {                                              \
-      throw json::other_error::create(501, "An array was expected");  \
-    }                                                                 \
-    for (auto i = 0u; i < v.size(); ++i) { var[i] = v.at(i); } \
+#define glmParse(var, defVal)                                        \
+  try {                                                              \
+    auto v = m_json.at(#var);                                        \
+    if (!v.is_array()) {                                             \
+      throw json::other_error::create(501, "An array was expected"); \
+    }                                                                \
+    for (auto i = 0u; i < v.size(); ++i) { var[i] = v.at(i); }       \
   } catch (json::exception&) { var = defVal; }
 
 
@@ -60,6 +59,7 @@ glm::vec3   Settings::mainCameraPos;
 float       Settings::mainCameraSpeed;
 glm::vec3   Settings::mainLightPos;
 glm::vec3   Settings::mainLightColor;
+bool        Settings::promptUniformErrors;
 
 
 // ====================================================================== //
@@ -69,7 +69,7 @@ glm::vec3   Settings::mainLightColor;
 
 void Settings::init(const std::string& filePath) {
   if (!std::fstream(filePath).good()) {
-    dlog::err("Settings file not found @ '{}' path", filePath);
+    dErr("Settings file not found @ '{}' path", filePath);
     return;
   }
 
@@ -92,12 +92,13 @@ void Settings::init(const std::string& filePath) {
       stdParse(mainCameraSpeed, 0.1f);
       glmParse(mainLightPos, glm::vec3(0, 10, 0));
       glmParse(mainLightColor, glm::vec3(0.5, 0.5, 0.25));
+      stdParse(promptUniformErrors, false);
 
       // -----------------------//
       m_corrupted = false;
     } catch (json::exception& e) {
       m_corrupted = true;
-      dlog::err("'{}' Bad parsing:\n{}", m_path, e.what());
+      dErr("'{}' Bad parsing:\n{}", m_path, e.what());
     }
   });
   m_filewatcher.launch();
@@ -108,14 +109,12 @@ void Settings::init(const std::string& filePath) {
 // ====================================================================== //
 // Print object values
 // ====================================================================== //
-#define stdPrint(var) dlog::print("{} => {}", 33, var);
-#define glmPrint(var) dlog::print("{}: ({},{},{})", 33, var.x, var.y, var.z);
+#define stdPrint(var) dPrint("{} => {}", #var, var);
+#define glmPrint(var) dPrint("{}: ({},{},{})", #var, var.x, var.y, var.z);
 
 void Settings::dump() {
 
-  dlog::print("{2} - [{1}]", 33, "hola");
-
-  dlog::print("\nSETTINGS ({}) Corruption={}\n  ---", m_path, m_corrupted);
+  dPrint("\nSETTINGS ({}) Corruption={}\n  ---", m_path, m_corrupted);
   stdPrint(openglMajorV);
   stdPrint(openglMinorV);
   stdPrint(windowWidth);
@@ -128,7 +127,8 @@ void Settings::dump() {
   stdPrint(mainCameraSpeed);
   glmPrint(mainLightPos);
   glmPrint(mainLightColor);
-  dlog::print("");
+  stdPrint(promptUniformErrors);
+  dPrint("");
 }
 
 

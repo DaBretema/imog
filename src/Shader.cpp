@@ -1,3 +1,4 @@
+#include "Shader.hpp"
 
 #include <vector>
 
@@ -6,16 +7,25 @@
 #include <dac/Logger.hpp>
 #include <dac/Strings.hpp>
 
-#include "../incl/Shader.hpp"
+#include "Settings.hpp"
 
 
 namespace BRAVE {
 
 // ====================================================================== //
 // ====================================================================== //
+// Global pool for shaders (static)
+// ====================================================================== //
+
+std::vector<std::shared_ptr<Shader>> Shader::pool;
+
+
+// ====================================================================== //
+// ====================================================================== //
 // Return the OpenGL state machine ID for a filePath
 // shader, if source compilation fails returns 0
 // ====================================================================== //
+
 unsigned int Shader::loadShader(const std::string& filePath,
                                 unsigned int       type) {
   // Data
@@ -36,7 +46,7 @@ unsigned int Shader::loadShader(const std::string& filePath,
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
     std::vector<char> msg(len);
     glGetShaderInfoLog(shader, len, &len, &msg[0]);
-    dlog::err("Shader {} \n{}", filePath, std::string(msg.data(), msg.size()));
+    dErr("Shader {} \n{}", filePath, std::string(msg.data(), msg.size()));
     glDeleteShader(shader);
     return 0;
   }
@@ -94,9 +104,11 @@ Shader::Shader(const std::string& name,
     glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &len);
     std::vector<char> msg(len);
     glGetProgramInfoLog(m_program, len, &len, &msg[0]);
-    dlog::err("Program {} \n{}", m_name, std::string(msg.data(), msg.size()));
+    dErr("Program {} \n{}", m_name, std::string(msg.data(), msg.size()));
     glDeleteProgram(m_program);
   }
+
+  pool.push_back(std::shared_ptr<Shader>(this));
 }
 
 
@@ -116,55 +128,72 @@ void Shader::unbind() { glUseProgram(0); }
 
 // ====================================================================== //
 // ====================================================================== //
-// Returns the ID of the uniform associated to that string
+// Returns the ID of the uniform associated to that string,
+// if its cached, return from cache, else request it to OpenGL
+// and store on cache.
 // ====================================================================== //
 
-int Shader::getUniformID(const char* uniformName) {
-  return glGetUniformLocation(m_program, uniformName);
+int Shader::uniform(const std::string& uName) {
+
+  if (m_uCache.count(uName) > 0) { return m_uCache.at(uName); }
+  int uLoc = glGetUniformLocation(m_program, uName.c_str());
+
+  if (uLoc > -1)
+    m_uCache.insert({uName, uLoc});
+  else if (Settings::promptUniformErrors && !m_alertCache[uName]) {
+    dErr("'{}': !{}", m_name, uName);
+    m_alertCache[uName] = true;
+  }
+
+  return uLoc;
 }
 
 
 // ====================================================================== //
 // ====================================================================== //
-// Upload a mat4 (view, proj, etc.) to the shader
+// Upload a mat4 (view, proj, ...)
 // ====================================================================== //
-void Shader::uMat4(const std::string& uniformName, const glm::mat4& mat) {
-  int uID = this->getUniformID(uniformName.data());
-  glProgramUniformMatrix4fv(m_program, uID, 1, GL_FALSE, glm::value_ptr(mat));
+
+void Shader::uMat4(const std::string& uName, const glm::mat4& mat) {
+  glProgramUniformMatrix4fv(
+      m_program, uniform(uName), 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 
 // ====================================================================== //
 // ====================================================================== //
-// Upload a float (height, intensity, etc.) to the shader
+// Upload a float (height, intensity, ...)
 // ====================================================================== //
 
-void Shader::uFloat1(const std::string& uniformName, float f) {
-  int uID = this->getUniformID(uniformName.data());
-  glProgramUniform1f(m_program, uID, f);
+void Shader::uFloat1(const std::string& uName, float f) {
+  glProgramUniform1f(m_program, uniform(uName), f);
 }
 
 // ====================================================================== //
 // ====================================================================== //
-// Upload a vec3 (lightPos, color, etc.) to the shader
+// Upload a vec3 (lightPos, color, ...)
 // ====================================================================== //
 
-void Shader::uFloat3(const std::string& uniformName,
-                     float              f1,
-                     float              f2,
-                     float              f3) {
-  int uID = this->getUniformID(uniformName.data());
-  glProgramUniform3f(m_program, uID, f1, f2, f3);
+void Shader::uFloat3(const std::string& uName, float f1, float f2, float f3) {
+  glProgramUniform3f(m_program, uniform(uName), f1, f2, f3);
 }
 
 // ====================================================================== //
 // ====================================================================== //
-// Upload a vec3 (lightPos, color, etc.) to the shader
+// Upload a vec3 (lightPos, color, ...)
 // ====================================================================== //
 
-void Shader::uFloat3(const std::string& uniformName, const glm::vec3& floats) {
-  int uID = this->getUniformID(uniformName.data());
-  glProgramUniform3fv(m_program, uID, 1, glm::value_ptr(floats));
+void Shader::uFloat3(const std::string& uName, const glm::vec3& floats) {
+  glProgramUniform3fv(m_program, uniform(uName), 1, glm::value_ptr(floats));
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Upload a int1 (textures, ...)
+// ====================================================================== //
+
+void Shader::uInt1(const std::string& uName, int i) {
+  glProgramUniform1i(m_program, uniform(uName), i);
 }
 
 } // namespace BRAVE

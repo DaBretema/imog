@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 
-#include "wrap/Math.hpp"
-#include "wrap/Colors.hpp"
+#include "helpers/Math.hpp"
+#include "helpers/Colors.hpp"
 
 #include "Shader.hpp"
 
@@ -13,16 +13,21 @@ namespace BRAVE {
 
 class Renderable {
 
-  static uint64_t g_ID;
+  static unsigned int g_RenderablesLastID;
+
+public:
+  // Global pool for shaders
+  static std::vector<std::shared_ptr<Renderable>> pool;
+
 
 private:
-  uint64_t                m_ID      = 0;
-  std::shared_ptr<Shader> m_shader  = nullptr;
-  glm::vec3               m_color   = glm::vec3(0);
-  glm::mat4               m_model   = glm::mat4(1.f);
-  unsigned int            m_vao     = 0;
-  unsigned int            m_loc     = 0;
-  unsigned int            m_eboSize = 0;
+  unsigned int            m_ID;
+  std::shared_ptr<Shader> m_shader;
+  glm::vec3               m_color;
+  glm::mat4               m_model;
+  unsigned int            m_vao;
+  unsigned int            m_loc;
+  unsigned int            m_eboSize;
 
 public:
   // Param constructor w/o OBJ file
@@ -45,7 +50,7 @@ public:
 
 
   // Getter for ID
-  uint64_t ID() const;
+  unsigned int ID() const;
 
   // G/Setter for shader
   std::shared_ptr<Shader> shader() const;

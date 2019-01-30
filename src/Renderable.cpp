@@ -1,10 +1,10 @@
+#include "Renderable.hpp"
 
 #include <mutex>
 #include <sstream>
 
-#include "../incl/LoaderOBJ.hpp"
-#include "../incl/Renderable.hpp"
-#include "../incl/wrap/GLAssert.hpp"
+#include "LoaderOBJ.hpp"
+#include "helpers/GLAssert.hpp"
 
 
 namespace BRAVE {
@@ -14,7 +14,14 @@ namespace BRAVE {
 // Global Renderable objects counter
 // ====================================================================== //
 
-uint64_t Renderable::g_ID;
+unsigned int Renderable::g_RenderablesLastID;
+
+// ====================================================================== //
+// ====================================================================== //
+// Global pool for shaders
+// ====================================================================== //
+
+std::vector<std::shared_ptr<Renderable>> Renderable::pool;
 
 
 // ====================================================================== //
@@ -24,11 +31,17 @@ uint64_t Renderable::g_ID;
 
 Renderable::Renderable(const std::shared_ptr<Shader>& shader,
                        const glm::vec3&               color)
-    : m_color(color) {
-  m_ID     = g_ID++;
-  m_shader = shader;
+    : m_ID(g_RenderablesLastID++),
+      m_shader(shader),
+      m_color(color),
+      m_model(glm::mat4(1.f)),
+      m_vao(0),
+      m_loc(0),
+      m_eboSize(0) {
   m_shader->uFloat3("Color", m_color);
   GL_ASSERT(glGenVertexArrays(1, &m_vao));
+
+  pool.push_back(std::shared_ptr<Renderable>(this));
 }
 
 // ====================================================================== //
@@ -43,9 +56,9 @@ Renderable::Renderable(const std::string&             objFilePath,
                        const glm::vec3&               color)
     : Renderable(shader, color) {
   RenderData renderData = loadOBJ(objFilePath);
-  this->fillEBO(renderData.indices);
-  this->addVBO(renderData.vertices);
-  this->addVBO(renderData.normals);
+  this->fillEBO(renderData.indices); // Location = 0
+  this->addVBO(renderData.vertices); // Location = 1
+  this->addVBO(renderData.normals);  // Location = 2
 }
 
 
@@ -77,7 +90,7 @@ void Renderable::unbind() {
 // Getter for ID
 // ====================================================================== //
 
-uint64_t Renderable::ID() const { return m_ID; }
+unsigned int Renderable::ID() const { return m_ID; }
 
 // ====================================================================== //
 // ====================================================================== //

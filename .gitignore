@@ -1,3 +1,2 @@
 .vscode/
-[bB]in/
-[bB]uild/
+.bin/

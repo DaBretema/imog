@@ -24,6 +24,6 @@ static inline void glAssert(const char* file, int line) {
       case GL_INVALID_OPERATION: errStr = "Invalid operation"; break;
       default: errStr = "Unrecognised GLenum"; break;
     }
-    dlog::err("{} ({}): {} ({})", file, line, errStr, glError);
+    dErr("{} ({}): {} ({})", file, line, errStr, glError);
   }
 }

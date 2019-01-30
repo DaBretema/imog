@@ -5,9 +5,9 @@
 
 #include <dac/Logger.hpp>
 
-#include "wrap/Math.hpp"
-#include "wrap/Paths.hpp"
-#include "wrap/Colors.hpp"
+#include "helpers/Math.hpp"
+#include "helpers/Paths.hpp"
+#include "helpers/Colors.hpp"
 
 #include "Renderable.hpp"
 #include "Shader.hpp"

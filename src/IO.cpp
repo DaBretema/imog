@@ -1,9 +1,9 @@
+#include "IO.hpp"
 
 #include <dac/Logger.hpp>
 
-#include "../incl/IO.hpp"
-#include "../incl/Core.hpp"
-#include "../incl/Settings.hpp"
+#include "Core.hpp"
+#include "Settings.hpp"
 
 
 namespace BRAVE {
@@ -40,7 +40,7 @@ void IO::windowInit() {
 
   auto lam_WinERR = [&](auto cond, const std::string& err) {
     if (!cond) {
-      dlog::err(err);
+      dErr(err);
       glfwTerminate();
     }
   };
@@ -240,7 +240,7 @@ void IO::keyboardAddAction(int key, const _IO_FUNC& action) {
   if (m_keyboardActions.count(key) < 1) {
     m_keyboardActions.insert({key, action});
   } else {
-    dlog::info("The key is already defined");
+    dInfo("The key is already defined");
   }
 }
 

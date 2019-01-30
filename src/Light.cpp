@@ -1,5 +1,4 @@
-
-#include "../incl/Light.hpp"
+#include "Light.hpp"
 
 namespace BRAVE {
 

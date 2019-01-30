@@ -1,17 +1,26 @@
 #pragma once
 
 #include <string>
+#include <memory>
+#include <unordered_map>
 
-#include "wrap/Math.hpp"
+#include "helpers/Math.hpp"
 
 
 namespace BRAVE {
 
 class Shader {
 
+public:
+  // Global pool for shaders
+  static std::vector<std::shared_ptr<Shader>> pool;
+
 private:
   std::string  m_name;
   unsigned int m_program;
+
+  std::unordered_map<std::string, int>  m_uCache;
+  std::unordered_map<std::string, bool> m_alertCache; // Alert only once :D
 
   // Return the OpenGL state machine ID for a filePath
   // shader, if source compilation fails returns 0
@@ -41,20 +50,25 @@ public:
   void unbind();
 
 
-  // Returns the ID of the uniform associated to that string
-  int getUniformID(const char* uniformName);
+  // Returns the ID of the uniform associated to that string,
+  // if its cached, return from cache, else request it to OpenGL
+  // and store it.
+  int uniform(const std::string& uniformName);
 
-  // Upload a mat4 (view, proj, etc.) to the shader
+  // Upload a mat4 (view, proj, ...)
   void uMat4(const std::string& uniformName, const glm::mat4& mat);
 
-  // Upload a float (height, intensity, etc.) to the shader
+  // Upload a float1 (height, intensity, ...)
   void uFloat1(const std::string& uniformName, float f);
 
-  // Upload a vec3 (lightPos, color, etc.) to the shader
+  // Upload a vec3 (lightPos, color, ...)
   void uFloat3(const std::string& uniformName, float f1, float f2, float f3);
 
-  // Upload a vec3 (lightPos, color, etc.) to the shader
+  // Upload a vec3 (lightPos, color, ...)
   void uFloat3(const std::string& uniformName, const glm::vec3& floats);
+
+  // Upload a int1 (textures, ...)
+  void uInt1(const std::string& uniformName, int i);
 };
 
 } // namespace BRAVE

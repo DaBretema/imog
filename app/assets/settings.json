@@ -15,5 +15,7 @@
   "mainCameraSpeed": 1.0,
 
   "mainLightPos": [0, 10.5, 0],
-  "mainLightColor": [1.0, 1.0, 0.0]
+  "mainLightColor": [1.0, 1.0, 0.0],
+
+  "promptUniformErrors": false
 }

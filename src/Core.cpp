@@ -1,9 +1,7 @@
+#include "Core.hpp"
 
-#include "../incl/Core.hpp"
-#include "../incl/Settings.hpp"
+#include "Settings.hpp"
 
-// #define GLFW_INCLUDE_NONE
-// #include <glfw/glfw3.h>
 
 namespace BRAVE {
 
@@ -56,7 +54,7 @@ void Core::init() {
       KBAA(GLFW_KEY_E, [&]() { camera->move(CamDir::down); });
       // ------------------------------------ / KEYBOARD ACTIONS SETUP --- //
     });
-  } catch (std::exception&) { dlog::err("BRAVE was already initialized"); }
+  } catch (std::exception&) { dErr("BRAVE was already initialized"); }
 }
 
 // ====================================================================== //
@@ -81,7 +79,7 @@ void Core::close() {
 void Core::draw(const std::shared_ptr<Renderable>& r, bool grid) {
 
   if (camera == nullptr || light == nullptr) {
-    dlog::err("Camera or Light ar not defined");
+    dErr("Camera or Light ar not defined");
     return;
   }
 

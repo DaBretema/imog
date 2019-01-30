@@ -56,15 +56,15 @@ RELEASE_FLAGS  = -DNDEBUG -O3 -static -static-libgcc -static-libstdc++
 
 # --- PATHS ----------------------------------------------------------------- #
 
-ICON_DIR      =
+ICON_DIR      = $(SOURCE_DIR)/icon
 
-BUILD_DIR     = build
-BIN_DIR       = bin
-INCL_DIR      = incl
-LIB_DIR       = lib
+BUILD_DIR     = .bin
+DIST_DIR      = app
 SOURCE_DIR    = src
+INCL_DIR      = $(SOURCE_DIR)/submodules
+LIB_DIR       = $(SOURCE_DIR)/submodules
 
-INCLUDES      = $(patsubst %,-I%,$(INCL_DIR) $(LIB_DIR))
+INCLUDES      = $(patsubst %,-I%,$(INCL_DIR))
 LIBS          = $(patsubst %,-L%,$(LIB_DIR))
 LIBS += -ldac
 LIBS += -lglad
@@ -80,7 +80,8 @@ default_target: debug
 
 # CLEAN
 clean:
-	@rm -rf $(BIN_DIR)/*
+	@rm -rf $(DIST_DIR)/$(PROJECT_NAME).exe
+	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)
 	@rm -rf $(BUILD_DIR)/*
 
 # DEBUG
@@ -94,24 +95,25 @@ release: $(PROJECT_NAME)
 # #! STATIC LIB
 # $(PROJECT_NAME): $(OBJECTS)
 # 	@ar crs lib$@.a $^
-# 	@mkdir -p $(BIN_DIR)/$@
-# 	@mv ./*.a ./$(BIN_DIR)
-# 	@cp -r ./$(INCL_DIR)/* ./$(BIN_DIR)/$@
+# 	@mkdir -p $(DIST_DIR)/$@
+# 	@mv ./*.a ./$(DIST_DIR)
+# 	@cp -r ./$(INCL_DIR)/* ./$(DIST_DIR)/$@
 
 #! EXECUTABLE
-$(PROJECT_NAME): $(OBJECTS)
+$(PROJECT_NAME): $(OBJECTS) $(BUILD_DIR)/icon.o
 	@echo "out: $@.exe"
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(DIST_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
-	@mv ./$@.exe ./$(BIN_DIR)/$@.exe
+	@mv -f ./$@.exe ./$(DIST_DIR)/$@.exe
 
-# #* ICON COMPILATION
-# $(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc
-# 	windres $^ $@
+#* ICON COMPILATION
+$(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc
+	@echo " [*] iconizig !"
+	windres $^ $@
 
 # SOURCES COMPILATION : Called on $(OBJECTS)
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
-	@echo " * $^"
+	@echo "  *  $^"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXX_FLAGS) -c $^ -o $@ $(INCLUDES) $(LIBS)
 
