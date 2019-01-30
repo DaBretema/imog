@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
+#define GLFW_INCLUDE_NONE
 #include <glfw/glfw3.h>
 
 #include <string>
@@ -27,7 +28,7 @@ public:
   static GLFWwindow* window();
 
   static void  windowInit();
-  static void  windowLoop(const _IO_FUNC& renderFn);
+  static void  windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn);
   static float windowAspectRatio();
   static void  windowOnScaleChange(GLFWwindow* w, int width, int height);
   static void  windowOnClose(GLFWwindow* w);

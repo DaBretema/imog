@@ -1,5 +1,5 @@
 
-#include <Dac/Logger.hpp>
+#include <dac/Logger.hpp>
 
 #include "../incl/IO.hpp"
 #include "../incl/Core.hpp"
@@ -13,19 +13,19 @@ namespace BRAVE {
 // Private variables definition
 // ====================================================================== //
 
-GLFWwindow* IO::m_windowPtr;
+GLFWwindow* IO::m_windowPtr{nullptr};
 
-std::string IO::m_windowTitle;
-int         IO::m_windowWidth;
-int         IO::m_windowHeight;
+std::string IO::m_windowTitle{""};
+int         IO::m_windowWidth{0};
+int         IO::m_windowHeight{0};
 
-bool   IO::m_mouseClicL;
-bool   IO::m_mouseClicM;
-bool   IO::m_mouseClicR;
-double IO::m_mouseLastX;
-double IO::m_mouseLastY;
+bool   IO::m_mouseClicL{false};
+bool   IO::m_mouseClicM{false};
+bool   IO::m_mouseClicR{false};
+double IO::m_mouseLastX{.0};
+double IO::m_mouseLastY{.0};
 
-std::unordered_map<int, _IO_FUNC> IO::m_keyboardActions;
+std::unordered_map<int, _IO_FUNC> IO::m_keyboardActions{};
 
 
 
@@ -40,7 +40,7 @@ void IO::windowInit() {
 
   auto lam_WinERR = [&](auto cond, const std::string& err) {
     if (!cond) {
-      DacLog_ERR(err);
+      dlog::err(err);
       glfwTerminate();
     }
   };
@@ -54,8 +54,9 @@ void IO::windowInit() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Settings::openglMajorV);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Settings::openglMinorV);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  // glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+  glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+
   GLFWwindow* o_WINDOW = glfwCreateWindow(
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
   lam_WinERR(o_WINDOW, "Creating GLFW window");
@@ -91,11 +92,9 @@ void IO::windowInit() {
 // WINDOW loop definition
 // ====================================================================== //
 
-void IO::windowLoop(const _IO_FUNC& renderFn) {
+void IO::windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn) {
   int    frame = 0;
   double iTime = glfwGetTime();
-
-  // ---------------------------//
 
   auto lam_FPS = [&]() {
     ++frame;
@@ -108,28 +107,20 @@ void IO::windowLoop(const _IO_FUNC& renderFn) {
     }
   };
 
-  // ---------------------------//
-
   while (!glfwWindowShouldClose(m_windowPtr)) {
 
     // Events
     lam_FPS();
-    DacLog_INFO("Window LOOP: {} Frames drawed", frame);
     (Settings::pollEvents) ? glfwPollEvents() : glfwWaitEvents();
     if (Settings::corrupted()) { Core::pause = true; }
     if (Core::pause) { continue; }
+    updateFn();
 
     // Render
-    DacLog_INFO("Going to draw");
     renderFn();
-    DacLog_INFO("Going to swap");
     glfwSwapBuffers(m_windowPtr);
-    DacLog_INFO("Going to clear");
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    DacLog_INFO("Draw process end");
   }
-
-  DacLog_WARN("Window CLOSED");
 }
 
 // ====================================================================== //
@@ -184,9 +175,9 @@ void IO::mouseOnScroll(GLFWwindow* w, double xOffset, double yOffset) {
 
 void IO::mouseOnMove(GLFWwindow* w, double mouseCurrX, double mouseCurrY) {
   if (m_mouseClicL) {
-    Core::camera->rotateX(static_cast<float>((mouseCurrX - m_mouseLastX) *
+    Core::camera->rotateY(static_cast<float>((mouseCurrX - m_mouseLastX) *
                                              Settings::mouseSensitivity));
-    Core::camera->rotateY(static_cast<float>((mouseCurrY - m_mouseLastY) *
+    Core::camera->rotateX(static_cast<float>((mouseCurrY - m_mouseLastY) *
                                              Settings::mouseSensitivity));
   }
   m_mouseLastX = mouseCurrX;
@@ -233,7 +224,12 @@ void IO::keyboardOnPress(GLFWwindow* w,
                          int         key,
                          int         scancode,
                          int         action,
-                         int         mods) {}
+                         int         mods) {
+  bool keyIsOnMap  = (m_keyboardActions.count(key) > 0);
+  bool keyIsActive = (action == GLFW_PRESS || action == GLFW_REPEAT);
+
+  if (keyIsActive && keyIsOnMap) { m_keyboardActions.at(key)(); }
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -244,7 +240,7 @@ void IO::keyboardAddAction(int key, const _IO_FUNC& action) {
   if (m_keyboardActions.count(key) < 1) {
     m_keyboardActions.insert({key, action});
   } else {
-    DacLog_INFO("The key is already defined");
+    dlog::info("The key is already defined");
   }
 }
 

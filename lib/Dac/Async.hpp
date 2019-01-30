@@ -2,13 +2,14 @@
 
 #include <functional>
 
-namespace DAC {
+namespace dac {
 
 class Async {
+  using asyncFn = std::function<void(void)>;
+
 public:
   // Runs a function fn each wait time until flag is false;
-  static void periodic(float sleepTime, bool* threadLiveFlag,
-                       const std::function<void(void)>& func);
+  static void periodic(float sleepTime, bool* threadFlag, const asyncFn& func);
 };
 
-} // namespace DAC
+} // namespace dac

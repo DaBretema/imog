@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include <Dac/Logger.hpp>
+#include <dac/Logger.hpp>
 
 #include "wrap/Math.hpp"
 
@@ -30,6 +30,7 @@ private:
 
   float m_fov;
   float m_speed;
+  float m_multSpeed;
   float m_pitch;
   float m_yaw;
 
@@ -49,39 +50,43 @@ public:
          float            yaw   = -90.f);
 
 
-
-  /// View
+  // Getter for view
   glm::mat4 view() const;
 
-  /// Proj
+  // Getter for proj
   glm::mat4 proj() const;
 
-  /// View * Projection
+  // Getter for viewproj
   glm::mat4 viewproj() const;
 
-  /// Pos
+  // G/Setter for pos
   glm::vec3 pos() const;
   void      pos(const glm::vec3& newPos);
 
+  // G/Setter for speed
+  float speed() const;
+  void  speed(float newSpeed);
 
 
-  /// Attach a renderable object to follow it
+  // Attach a renderable object to follow it
   void attach(const std::shared_ptr<Renderable>& objToFollow = nullptr);
 
-  /// Detach a previously attached renderable object
+  // Detach a previously attached renderable object
   void detach();
 
-  /// MultSpeed multiply m_speed by passed factor
+  // MultSpeed multiply m_speed by passed factor
   void multSpeed(float factor);
 
-  /// Move the camera position based on its local axis
+  // Move the camera position based on its local axis
   void move(CamDir dir);
 
-  /// Rotate the camera based on its local axis
+  // Rotate the camera over X axis
   void rotateX(float angle);
+
+  // Rotate the camera over Y axis
   void rotateY(float angle);
 
-  /// Modify camera fov (a.k.a. zoom)
+  // Modify camera fov (a.k.a. zoom)
   void zoom(float variation);
 
   /// Compute m_proj and m_view per frame

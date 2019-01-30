@@ -1,7 +1,7 @@
 
 #include "../incl/Settings.hpp"
 
-#include <Dac/Logger.hpp>
+#include <dac/Logger.hpp>
 
 #include <fstream>
 #include <functional>
@@ -28,7 +28,7 @@ namespace BRAVE {
     if (!v.is_array()) {                                              \
       throw json::other_error::create(501, "An array was expected");  \
     }                                                                 \
-    for (auto i = 0u; i < v.size(); ++i) { clearColor[i] = v.at(i); } \
+    for (auto i = 0u; i < v.size(); ++i) { var[i] = v.at(i); } \
   } catch (json::exception&) { var = defVal; }
 
 
@@ -40,7 +40,7 @@ namespace BRAVE {
 bool             Settings::m_corrupted;
 std::string      Settings::m_path;
 nlohmann::json   Settings::m_json;
-DAC::FileWatcher Settings::m_filewatcher;
+dac::FileWatcher Settings::m_filewatcher;
 
 
 // ====================================================================== //
@@ -69,13 +69,13 @@ glm::vec3   Settings::mainLightColor;
 
 void Settings::init(const std::string& filePath) {
   if (!std::fstream(filePath).good()) {
-    DacLog_ERR("Settings file not found @ '{}' path", filePath);
+    dlog::err("Settings file not found @ '{}' path", filePath);
     return;
   }
 
   m_path = filePath;
-  m_filewatcher.setPath(m_path);
-  m_filewatcher.setCallback([&](std::fstream f) {
+  m_filewatcher.path(m_path);
+  m_filewatcher.callback([&](std::fstream f) {
     try {
       m_json = json::parse(f);
       // -----------------------//
@@ -89,7 +89,7 @@ void Settings::init(const std::string& filePath) {
       stdParse(mouseSensitivity, 1.0);
       stdParse(pollEvents, false);
       glmParse(mainCameraPos, glm::vec3(0.f));
-      stdParse(mainCameraSpeed, 1.0f);
+      stdParse(mainCameraSpeed, 0.1f);
       glmParse(mainLightPos, glm::vec3(0, 10, 0));
       glmParse(mainLightColor, glm::vec3(0.5, 0.5, 0.25));
 
@@ -97,10 +97,10 @@ void Settings::init(const std::string& filePath) {
       m_corrupted = false;
     } catch (json::exception& e) {
       m_corrupted = true;
-      DacLog_ERR("'{}' Bad parsing:\n{}", m_path, e.what());
+      dlog::err("'{}' Bad parsing:\n{}", m_path, e.what());
     }
   });
-  m_filewatcher.launchWatcher();
+  m_filewatcher.launch();
 }
 
 
@@ -108,12 +108,14 @@ void Settings::init(const std::string& filePath) {
 // ====================================================================== //
 // Print object values
 // ====================================================================== //
+#define stdPrint(var) dlog::print("{} => {}", 33, var);
+#define glmPrint(var) dlog::print("{}: ({},{},{})", 33, var.x, var.y, var.z);
 
 void Settings::dump() {
-#define stdPrint(var) DacLog_PRINT("{} => {}", #var, var);
-#define glmPrint(var) DacLog_PRINT("{}: ({},{},{})", #var, var.x, var.y, var.z);
 
-  DacLog_PRINT("\nSETTINGS ({}) Corruption={}\n  ---", m_path, m_corrupted);
+  dlog::print("{2} - [{1}]", 33, "hola");
+
+  dlog::print("\nSETTINGS ({}) Corruption={}\n  ---", m_path, m_corrupted);
   stdPrint(openglMajorV);
   stdPrint(openglMinorV);
   stdPrint(windowWidth);
@@ -126,7 +128,7 @@ void Settings::dump() {
   stdPrint(mainCameraSpeed);
   glmPrint(mainLightPos);
   glmPrint(mainLightColor);
-  DacLog_PRINT("");
+  dlog::print("");
 }
 
 

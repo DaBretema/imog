@@ -9,8 +9,6 @@ int main(int argc, char const* argv[]) {
   BRAVE::Settings::init(BRAVE::Paths::Settings);
   BRAVE::Core::init();
 
-  // ! Missing keyboard actions!!!
-
   auto floor = BRAVE::Prefab::plane(BRAVE::Colors::Cyan,
                                     glm::vec3{0.f, -18.f, 0.f},
                                     glm::vec3{0},

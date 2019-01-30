@@ -9,9 +9,19 @@
 
 namespace BRAVE {
 
+// ====================================================================== //
+// ====================================================================== //
+// Global Renderable objects counter
+// ====================================================================== //
+
 uint64_t Renderable::g_ID;
 
-/// Empty ctor
+
+// ====================================================================== //
+// ====================================================================== //
+// Param constructor w/o OBJ file
+// ====================================================================== //
+
 Renderable::Renderable(const std::shared_ptr<Shader>& shader,
                        const glm::vec3&               color)
     : m_color(color) {
@@ -21,8 +31,13 @@ Renderable::Renderable(const std::shared_ptr<Shader>& shader,
   GL_ASSERT(glGenVertexArrays(1, &m_vao));
 }
 
+// ====================================================================== //
+// ====================================================================== //
+// Param constructor w/ OBJ file, call basic constructor and link
+// render data of the OBJ file to EBO(indices) and
+// VBOs(vertices, normals)
+// ====================================================================== //
 
-/// OBJfile based ctor : Call to simpler constructor before load from obj
 Renderable::Renderable(const std::string&             objFilePath,
                        const std::shared_ptr<Shader>& shader,
                        const glm::vec3&               color)
@@ -34,31 +49,20 @@ Renderable::Renderable(const std::string&             objFilePath,
 }
 
 
-
-// ID
-uint64_t Renderable::ID() const { return m_ID; }
-
-// Shader
-std::shared_ptr<Shader> Renderable::shader() const { return m_shader; }
-void Renderable::shader(const std::shared_ptr<Shader>& newShader) {
-  m_shader = newShader;
-}
-// Color
-glm::vec3 Renderable::color() const { return m_color; }
-void      Renderable::color(glm::vec3 newColor) {
-  m_color = newColor;
-  m_shader->uFloat3("Color", m_color);
-}
-// Model
-glm::mat4 Renderable::model() const { return m_model; }
-void      Renderable::model(glm::mat4 newModel) { m_model = newModel; }
-
-
+// ====================================================================== //
+// ====================================================================== //
+// Bind this Renderable VAO(m_vao) as active to auto attach VBO, EBO, ...
+// ====================================================================== //
 
 void Renderable::bind() {
   GL_ASSERT(glBindVertexArray(m_vao));
   m_shader->bind();
 }
+
+// ====================================================================== //
+// ====================================================================== //
+// Unbind this Renderable VAO(m_vao) as active to avoid modify VBO, EBO, ...
+// ====================================================================== //
 
 void Renderable::unbind() {
   GL_ASSERT(glBindVertexArray(0));
@@ -67,6 +71,48 @@ void Renderable::unbind() {
   GL_ASSERT(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
+
+// ====================================================================== //
+// ====================================================================== //
+// Getter for ID
+// ====================================================================== //
+
+uint64_t Renderable::ID() const { return m_ID; }
+
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for shader
+// ====================================================================== //
+
+std::shared_ptr<Shader> Renderable::shader() const { return m_shader; }
+void Renderable::shader(const std::shared_ptr<Shader>& newShader) {
+  m_shader = newShader;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for color
+// ====================================================================== //
+
+glm::vec3 Renderable::color() const { return m_color; }
+void      Renderable::color(glm::vec3 newColor) {
+  m_color = newColor;
+  m_shader->uFloat3("Color", m_color);
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for model
+// ====================================================================== //
+
+glm::mat4 Renderable::model() const { return m_model; }
+void      Renderable::model(glm::mat4 newModel) { m_model = newModel; }
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Add a vertex attribute to this Renderable
+// ====================================================================== //
 
 template <typename T>
 void Renderable::addVBO(const std::vector<T>& data) {
@@ -90,6 +136,11 @@ void Renderable::addVBO(const std::vector<T>& data) {
 }
 
 
+// ====================================================================== //
+// ====================================================================== //
+// Store indices in the internal variable m_ebo
+// ====================================================================== //
+
 void Renderable::fillEBO(const std::vector<unsigned int>& indices) {
   this->bind();
   // Store indices count
@@ -105,6 +156,10 @@ void Renderable::fillEBO(const std::vector<unsigned int>& indices) {
   this->unbind();
 }
 
+// ====================================================================== //
+// ====================================================================== //
+// Draw execute the Renderable in the viewport using its shader and vbos
+// ====================================================================== //
 
 void Renderable::draw() {
   this->bind();
@@ -112,6 +167,10 @@ void Renderable::draw() {
   this->unbind();
 }
 
+// ====================================================================== //
+// ====================================================================== //
+// Transform operations wrappers
+// ====================================================================== //
 
 void Renderable::translate(const glm::vec3& T) { Math::dTranslate(m_model, T); }
 void Renderable::rotate(const glm::vec3& R) { Math::dRotate(m_model, R); }

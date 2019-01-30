@@ -11,14 +11,14 @@ private:
   glm::vec3 m_color;
 
 public:
-  // Ctor
-  Light(const glm::vec3& t_pos, const glm::vec3& t_color);
+  // Param constructor
+  Light(const glm::vec3& pos, const glm::vec3& color);
 
-  // Pos
+  // G/Setter for pos
   glm::vec3 pos() const;
   void      pos(const glm::vec3& newPos);
 
-  // Color
+  // G/Setter for color
   glm::vec3 color() const;
   void      color(const glm::vec3& newColor);
 };

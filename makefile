@@ -66,8 +66,8 @@ SOURCE_DIR    = src
 
 INCLUDES      = $(patsubst %,-I%,$(INCL_DIR) $(LIB_DIR))
 LIBS          = $(patsubst %,-L%,$(LIB_DIR))
+LIBS += -ldac
 LIBS += -lglad
-LIBS += -lDac
 LIBS += -lglfw3
 LIBS += -lopengl32 -lgdi32
 
@@ -100,7 +100,7 @@ release: $(PROJECT_NAME)
 
 #! EXECUTABLE
 $(PROJECT_NAME): $(OBJECTS)
-	@echo "Creating: $@.exe"
+	@echo "out: $@.exe"
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
 	@mv ./$@.exe ./$(BIN_DIR)/$@.exe
@@ -111,7 +111,7 @@ $(PROJECT_NAME): $(OBJECTS)
 
 # SOURCES COMPILATION : Called on $(OBJECTS)
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
-	@echo "Changes detected @ $^"
+	@echo " * $^"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXX_FLAGS) -c $^ -o $@ $(INCLUDES) $(LIBS)
 

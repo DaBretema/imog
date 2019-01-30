@@ -3,7 +3,7 @@
 #include <json.hpp>
 using json = nlohmann::json;
 
-#include <Dac/FileWatcher.hpp>
+#include <dac/FileWatcher.hpp>
 
 #include "wrap/Math.hpp"
 
@@ -15,7 +15,7 @@ private:
   static bool             m_corrupted;
   static std::string      m_path;
   static nlohmann::json   m_json;
-  static DAC::FileWatcher m_filewatcher;
+  static dac::FileWatcher m_filewatcher;
 
 public:
   static int         openglMajorV;

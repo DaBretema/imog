@@ -51,5 +51,5 @@ void main()
 	vec3 temp_Color = Color * vec3(0.5);
 	temp_Color += shadeIt();
 
-	f_Color = vec4(temp_Color,1);
+	f_Color = vec4(temp_Color,1.0);
 }
