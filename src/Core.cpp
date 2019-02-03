@@ -71,46 +71,20 @@ void Core::close() {
 
 // ====================================================================== //
 // ====================================================================== //
-// If camera and light are defined, upload its data to the shader
-// memory of renderable object, setup if renderable will be drawed
-// as solid or grid way and call renderable draw
+// If camera and light are defined, calls to shaders update
+// and renderables update and draw
 // ====================================================================== //
 
-void Core::draw(const std::shared_ptr<Renderable>& r, bool grid) {
+void Core::frame() {
 
   if (camera == nullptr || light == nullptr) {
     dErr("Camera or Light ar not defined");
     return;
   }
 
-  // --- Upload LIGHT data ------------------------------------------------- //
-  // ----------------------------------------------------------------------- //
-  r->shader()->uFloat3("u_lightPos", light->pos());
-  r->shader()->uFloat3("u_lightColor", light->color());
-  // ----------------------------------------------- / Upload LIGHT data --- //
-
-  // --- Upload CAMERA data ------------------------------------------------ //
-  // ----------------------------------------------------------------------- //
-  glm::mat4 matMV = camera->view() * r->model();
-  r->shader()->uMat4("u_matMV", matMV);
-  // ----------------------------------------------------------------------- //
-  glm::mat4 matN = glm::transpose(glm::inverse(matMV));
-  r->shader()->uMat4("u_matN", matN);
-  // ----------------------------------------------------------------------- //
-  r->shader()->uMat4("u_matM", r->model());
-  r->shader()->uMat4("u_matV", camera->view());
-  r->shader()->uMat4("u_matP", camera->proj());
-  r->shader()->uMat4("u_matVP", camera->viewproj());
-  r->shader()->uMat4("u_matMVP", camera->viewproj() * r->model());
-  // ---------------------------------------------- / Upload CAMERA data --- //
-
-  // --- DRAW CALL --------------------------------------------------------- //
-  // ----------------------------------------------------------------------- //
-  (grid) ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-         : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  // ----------------------------------------------------------------------- //
-  r->draw();
-  // ------------------------------------------------------- / DRAW CALL --- //
+  camera->frame();
+  for (const auto& s : BRAVE::Shader::pool) { s->update(); }
+  for (const auto& r : BRAVE::Renderable::pool) { r->draw(); }
 }
 
 // ====================================================================== //

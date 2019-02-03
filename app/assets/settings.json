@@ -1,4 +1,7 @@
 {
+  "quiet": false,
+  "promptUniformErrors": true,
+
   "openglMajorV": 4,
   "openglMinorV": 5,
 
@@ -15,7 +18,5 @@
   "mainCameraSpeed": 1.0,
 
   "mainLightPos": [0, 10.5, 0],
-  "mainLightColor": [1.0, 1.0, 0.0],
-
-  "promptUniformErrors": false
+  "mainLightColor": [1.0, 1.0, 0.0]
 }

@@ -3,8 +3,15 @@
 #include <mutex>
 #include <sstream>
 
+#include <dac/Logger.hpp>
+
+#include "Core.hpp"
 #include "LoaderOBJ.hpp"
+#include "Settings.hpp"
+
+#include "helpers/Paths.hpp"
 #include "helpers/GLAssert.hpp"
+
 
 
 namespace BRAVE {
@@ -14,14 +21,15 @@ namespace BRAVE {
 // Global Renderable objects counter
 // ====================================================================== //
 
-unsigned int Renderable::g_RenderablesLastID;
+unsigned int Renderable::g_RenderablesLastID{0u};
 
 // ====================================================================== //
 // ====================================================================== //
 // Global pool for shaders
 // ====================================================================== //
 
-std::vector<std::shared_ptr<Renderable>> Renderable::pool;
+std::vector<std::shared_ptr<Renderable>>      Renderable::pool{};
+std::unordered_map<std::string, unsigned int> Renderable::poolIndices{};
 
 
 // ====================================================================== //
@@ -29,36 +37,84 @@ std::vector<std::shared_ptr<Renderable>> Renderable::pool;
 // Param constructor w/o OBJ file
 // ====================================================================== //
 
-Renderable::Renderable(const std::shared_ptr<Shader>& shader,
-                       const glm::vec3&               color)
+Renderable::Renderable(const std::string&             objFilePath,
+                       const std::string&             texturePath,
+                       const glm::vec3&               color,
+                       const std::shared_ptr<Shader>& shader)
     : m_ID(g_RenderablesLastID++),
       m_shader(shader),
+      m_texture(Texture::create(texturePath)),
       m_color(color),
       m_model(glm::mat4(1.f)),
       m_vao(0),
       m_loc(0),
       m_eboSize(0) {
-  m_shader->uFloat3("Color", m_color);
+
   GL_ASSERT(glGenVertexArrays(1, &m_vao));
+
+  if (objFilePath != "") {
+    RenderData renderData = loadOBJ(objFilePath);
+    this->fillEBO(renderData.indices); // No location, just internal data.
+    this->addVBO(renderData.vertices); // Location = 0
+    this->addVBO(renderData.normals);  // Location = 1
+    this->addVBO(renderData.uvs);      // Location = 2
+  }
+
+  if (m_shader == nullptr) {
+    std::string sV = Paths::Shaders + "base.vert";
+    std::string sG = Paths::Shaders + "base.geom";
+    std::string sF = Paths::Shaders + "base.frag";
+    dInfo("SET SHADER");
+    m_shader = Shader::create("BASE", sV, sG, sF);
+    dInfo("/ SET SHADER");
+  }
 
   pool.push_back(std::shared_ptr<Renderable>(this));
 }
 
+
 // ====================================================================== //
 // ====================================================================== //
-// Param constructor w/ OBJ file, call basic constructor and link
-// render data of the OBJ file to EBO(indices) and
-// VBOs(vertices, normals)
+// Get a shared ptr to Renderable obj from global pool
+// by mixed data of Renderable, like id or objFilepath
 // ====================================================================== //
 
-Renderable::Renderable(const std::string&             objFilePath,
-                       const std::shared_ptr<Shader>& shader,
-                       const glm::vec3&               color)
-    : Renderable(shader, color) {
-  RenderData renderData = loadOBJ(objFilePath);
-  this->fillEBO(renderData.indices); // Location = 0
-  this->addVBO(renderData.vertices); // Location = 1
-  this->addVBO(renderData.normals);  // Location = 2
+std::shared_ptr<Renderable> Renderable::get(const std::string dataMix) {
+  if (poolIndices.count(dataMix) > 0) { return pool[poolIndices[dataMix]]; }
+  return nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Create a new Renderable if it isn't on the gloabl pool
+// ====================================================================== //
+
+std::shared_ptr<Renderable>
+    Renderable::create(const std::string&             objFilePath,
+                       const std::string&             texturePath,
+                       const glm::vec3&               color,
+                       const std::shared_ptr<Shader>& shader) {
+  std::string key = objFilePath + texturePath;
+  key += glm::to_string(color);
+  if (shader != nullptr) { key += shader->name(); }
+  if (auto R = get(key); R != nullptr) { return R; }
+
+  pool.push_back(
+      std::make_shared<Renderable>(objFilePath, texturePath, color, shader));
+
+  auto idx         = pool.size() - 1;
+  poolIndices[key] = idx;
+  return pool.at(idx);
+}
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Destructor
+// ====================================================================== //
+
+Renderable::~Renderable() {
+  if (!Settings::quiet) dInfo("ID: {}, Destroyed!", m_ID);
 }
 
 
@@ -67,10 +123,7 @@ Renderable::Renderable(const std::string&             objFilePath,
 // Bind this Renderable VAO(m_vao) as active to auto attach VBO, EBO, ...
 // ====================================================================== //
 
-void Renderable::bind() {
-  GL_ASSERT(glBindVertexArray(m_vao));
-  m_shader->bind();
-}
+void Renderable::bind() { GL_ASSERT(glBindVertexArray(m_vao)); }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -79,7 +132,6 @@ void Renderable::bind() {
 
 void Renderable::unbind() {
   GL_ASSERT(glBindVertexArray(0));
-  m_shader->unbind();
   GL_ASSERT(glBindBuffer(GL_ARRAY_BUFFER, 0));
   GL_ASSERT(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
@@ -108,10 +160,7 @@ void Renderable::shader(const std::shared_ptr<Shader>& newShader) {
 // ====================================================================== //
 
 glm::vec3 Renderable::color() const { return m_color; }
-void      Renderable::color(glm::vec3 newColor) {
-  m_color = newColor;
-  m_shader->uFloat3("Color", m_color);
-}
+void      Renderable::color(glm::vec3 newColor) { m_color = newColor; }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -176,7 +225,22 @@ void Renderable::fillEBO(const std::vector<unsigned int>& indices) {
 
 void Renderable::draw() {
   this->bind();
+  m_shader->bind();
+  m_texture->bind();
+
+
+  m_shader->uFloat3("u_color", m_color);
+  m_shader->uMat4("u_matM", m_model);
+  m_shader->uMat4("u_matMVP", BRAVE::Core::camera->viewproj() * m_model);
+
+  glm::mat4 matMV = BRAVE::Core::camera->view() * m_model;
+  m_shader->uMat4("u_matMV", matMV);
+  m_shader->uMat4("u_matN", glm::transpose(glm::inverse(matMV)));
+
   GL_ASSERT(glDrawElements(GL_TRIANGLES, m_eboSize, GL_UNSIGNED_INT, 0));
+
+  m_texture->unbind();
+  m_shader->unbind();
   this->unbind();
 }
 
@@ -185,8 +249,19 @@ void Renderable::draw() {
 // Transform operations wrappers
 // ====================================================================== //
 
-void Renderable::translate(const glm::vec3& T) { Math::dTranslate(m_model, T); }
-void Renderable::rotate(const glm::vec3& R) { Math::dRotate(m_model, R); }
-void Renderable::scale(const glm::vec3& S) { Math::dScale(m_model, S); }
+void Renderable::translate(const glm::vec3& T) { Math::translate(m_model, T); }
+void Renderable::translate(float x, float y, float z) {
+  this->translate(glm::vec3{x, y, z});
+}
+
+void Renderable::rotate(const glm::vec3& R) { Math::rotate(m_model, R); }
+void Renderable::rotate(float x, float y, float z) {
+  this->rotate(glm::vec3{x, y, z});
+}
+
+void Renderable::scale(const glm::vec3& S) { Math::scale(m_model, S); }
+void Renderable::scale(float x, float y, float z) {
+  this->scale(glm::vec3{x, y, z});
+}
 
 } // namespace BRAVE

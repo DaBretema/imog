@@ -47,6 +47,7 @@ dac::FileWatcher Settings::m_filewatcher;
 // Public variables definition
 // ====================================================================== //
 
+bool        Settings::quiet;
 int         Settings::openglMajorV;
 int         Settings::openglMinorV;
 int         Settings::windowWidth;
@@ -80,6 +81,7 @@ void Settings::init(const std::string& filePath) {
       m_json = json::parse(f);
       // -----------------------//
 
+      stdParse(quiet, true);
       stdParse(openglMajorV, 4);
       stdParse(openglMinorV, 5);
       stdParse(windowWidth, 800);
@@ -114,7 +116,9 @@ void Settings::init(const std::string& filePath) {
 
 void Settings::dump() {
 
-  dPrint("\nSETTINGS ({}) Corruption={}\n  ---", m_path, m_corrupted);
+  auto status = (m_corrupted) ? " / Corrupted" : "";
+  dPrint("\nSETTINGS. {}{}\n  ---", m_path, status);
+  stdPrint(quiet);
   stdPrint(openglMajorV);
   stdPrint(openglMinorV);
   stdPrint(windowWidth);

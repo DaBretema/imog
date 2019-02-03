@@ -1,6 +1,6 @@
 #pragma once
 
-#include "helpers/Math.hpp"
+#include "Math.hpp"
 
 namespace BRAVE {
 

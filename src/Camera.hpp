@@ -4,7 +4,7 @@
 
 #include <dac/Logger.hpp>
 
-#include "helpers/Math.hpp"
+#include "Math.hpp"
 
 #include "IO.hpp"
 #include "Renderable.hpp"

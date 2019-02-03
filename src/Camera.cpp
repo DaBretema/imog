@@ -187,7 +187,7 @@ void Camera::frame() {
     newFront.z = sinf(yRads) * cosf(xRads);
 
     m_front = glm::normalize(newFront);
-    m_right = glm::normalize(glm::cross(m_front, Math::VEC_Y));
+    m_right = glm::normalize(glm::cross(m_front, Math::unitVecY));
     m_up    = glm::normalize(glm::cross(m_right, m_front));
 
     // Update VIEW
@@ -208,7 +208,7 @@ void Camera::frame() {
     auto  newPos = glm::vec3(posX, 0.f, posZ) + target;
 
     // Update VIEW
-    m_view = glm::lookAt(newPos, target, Math::VEC_Y);
+    m_view = glm::lookAt(newPos, target, Math::unitVecY);
   }
 
 

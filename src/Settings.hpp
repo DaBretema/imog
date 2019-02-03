@@ -5,7 +5,7 @@ using json = nlohmann::json;
 
 #include <dac/FileWatcher.hpp>
 
-#include "helpers/Math.hpp"
+#include "Math.hpp"
 
 
 namespace BRAVE {
@@ -18,6 +18,7 @@ private:
   static dac::FileWatcher m_filewatcher;
 
 public:
+  static bool        quiet;
   static int         openglMajorV;
   static int         openglMinorV;
   static int         windowWidth;

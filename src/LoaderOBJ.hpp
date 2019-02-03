@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "helpers/Math.hpp"
+#include "Math.hpp"
 
 namespace BRAVE {
 
@@ -10,6 +10,7 @@ namespace BRAVE {
 struct RenderData {
   std::vector<glm::vec3>    vertices;
   std::vector<glm::vec3>    normals;
+  std::vector<glm::vec2>    uvs;
   std::vector<unsigned int> indices;
 };
 

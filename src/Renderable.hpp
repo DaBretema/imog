@@ -3,10 +3,11 @@
 #include <memory>
 #include <vector>
 
-#include "helpers/Math.hpp"
+#include "Math.hpp"
 #include "helpers/Colors.hpp"
 
 #include "Shader.hpp"
+#include "Texture.hpp"
 
 
 namespace BRAVE {
@@ -16,31 +17,43 @@ class Renderable {
   static unsigned int g_RenderablesLastID;
 
 public:
-  // Global pool for shaders
-  static std::vector<std::shared_ptr<Renderable>> pool;
+  // Global pool for renderables
+  static std::vector<std::shared_ptr<Renderable>>      pool;
+  static std::unordered_map<std::string, unsigned int> poolIndices;
 
 
 private:
-  unsigned int            m_ID;
-  std::shared_ptr<Shader> m_shader;
-  glm::vec3               m_color;
-  glm::mat4               m_model;
-  unsigned int            m_vao;
-  unsigned int            m_loc;
-  unsigned int            m_eboSize;
+  unsigned int             m_ID;
+  std::shared_ptr<Shader>  m_shader;
+  std::shared_ptr<Texture> m_texture;
+  // std::string  m_texturePath;
+  glm::vec3    m_color;
+  glm::mat4    m_model;
+  unsigned int m_vao;
+  unsigned int m_loc;
+  unsigned int m_eboSize;
+
 
 public:
   // Param constructor w/o OBJ file
-  Renderable(const std::shared_ptr<Shader>& shaderPath,
-             const glm::vec3&               color = Colors::Magenta);
+  Renderable(const std::string&             objFilePath = "",
+             const std::string&             texturePath = "",
+             const glm::vec3&               color       = Colors::Magenta,
+             const std::shared_ptr<Shader>& shader      = nullptr);
 
-  // Param constructor w/ OBJ file, call basic constructor and link
-  // render data of the OBJ file to EBO(indices) and
-  // VBOs(vertices, normals)
-  Renderable(const std::string&             objFilePath,
-             const std::shared_ptr<Shader>& shaderPath,
-             const glm::vec3&               color = Colors::Magenta);
+  // Get a shared ptr to Renderable obj from global pool
+  // by mixed data of Renderable, like id or objFilepath
+  static std::shared_ptr<Renderable> get(const std::string dataMix);
 
+  // Create a new Renderable if it isn't on the gloabl pool
+  static std::shared_ptr<Renderable>
+      create(const std::string&             objFilePath = "",
+             const std::string&             texturePath = "",
+             const glm::vec3&               color       = Colors::Magenta,
+             const std::shared_ptr<Shader>& shader      = nullptr);
+
+  // Destructor
+  ~Renderable();
 
   // Bind this Renderable VAO(m_vao) as active to auto attach VBO, EBO, ...
   void bind();
@@ -77,8 +90,11 @@ public:
 
   // Transform operations wrappers
   void translate(const glm::vec3& trans);
+  void translate(float x, float y, float z);
   void rotate(const glm::vec3& rot);
+  void rotate(float x, float y, float z);
   void scale(const glm::vec3& scl);
+  void scale(float x, float y, float z);
 };
 
 } // namespace BRAVE

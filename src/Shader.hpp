@@ -4,7 +4,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "helpers/Math.hpp"
+#include "Math.hpp"
 
 
 namespace BRAVE {
@@ -13,7 +13,8 @@ class Shader {
 
 public:
   // Global pool for shaders
-  static std::vector<std::shared_ptr<Shader>> pool;
+  static std::vector<std::shared_ptr<Shader>>          pool;
+  static std::unordered_map<std::string, unsigned int> poolIndices;
 
 private:
   std::string  m_name;
@@ -42,12 +43,33 @@ public:
          const std::string& geomPath,
          const std::string& fragPath);
 
+  // Get a shared ptr to the shader from the global pool
+  // by the concatenation of shaders paths
+  static std::shared_ptr<Shader> get(const std::string& paths);
+
+  // Get a shared ptr to the shader from the global pool by name
+  static std::shared_ptr<Shader> getByName(const std::string& name);
+
+  // Create a new shader if it isn't on the gloabl pool
+  static std::shared_ptr<Shader> create(const std::string& name,
+                                        const std::string& vertexPath,
+                                        const std::string& geomPath,
+                                        const std::string& fragPath);
+
+  // Destructor
+  ~Shader();
+
+  // Getter name
+  std::string name();
 
   // Bind set this program as active and use it to draw
   void bind();
 
   // Unbind unset this program as active so won't be used to draw
   void unbind();
+
+  // Update upload to the shader camera and light data
+  void update();
 
 
   // Returns the ID of the uniform associated to that string,

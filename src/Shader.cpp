@@ -7,6 +7,7 @@
 #include <dac/Logger.hpp>
 #include <dac/Strings.hpp>
 
+#include "Core.hpp"
 #include "Settings.hpp"
 
 
@@ -14,10 +15,11 @@ namespace BRAVE {
 
 // ====================================================================== //
 // ====================================================================== //
-// Global pool for shaders (static)
+// Global pool for shaders
 // ====================================================================== //
 
-std::vector<std::shared_ptr<Shader>> Shader::pool;
+std::vector<std::shared_ptr<Shader>>          Shader::pool{};
+std::unordered_map<std::string, unsigned int> Shader::poolIndices{};
 
 
 // ====================================================================== //
@@ -114,6 +116,66 @@ Shader::Shader(const std::string& name,
 
 // ====================================================================== //
 // ====================================================================== //
+// Get a shared ptr to the shader from the global pool
+// by the concatenation of shaders paths
+// ====================================================================== //
+
+std::shared_ptr<Shader> Shader::get(const std::string& paths) {
+  if (poolIndices.count(paths) > 0) { return pool[poolIndices[paths]]; }
+  return nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Get a shared ptr to the shader from the global pool by name
+// ====================================================================== //
+
+std::shared_ptr<Shader> Shader::getByName(const std::string& name) {
+  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
+  return nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Create a new shader if it isn't on the gloabl pool
+// ====================================================================== //
+
+std::shared_ptr<Shader> Shader::create(const std::string& name,
+                                       const std::string& vertexPath,
+                                       const std::string& geomPath,
+                                       const std::string& fragPath) {
+  auto paths = vertexPath + geomPath + fragPath;
+  if (auto S = get(paths); S != nullptr) { return S; }
+  pool.push_back(
+      std::make_shared<Shader>(name, vertexPath, geomPath, fragPath));
+
+  auto idx           = pool.size() - 1;
+  poolIndices[name]  = idx;
+  poolIndices[paths] = idx;
+  return pool.at(idx);
+}
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Destructor
+// ====================================================================== //
+
+Shader::~Shader() {
+  if (!Settings::quiet) dInfo("Destroyed!");
+}
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Getter name
+// ====================================================================== //
+
+std::string Shader::name() { return m_name; }
+
+
+// ====================================================================== //
+// ====================================================================== //
 // Bind set this program as active and use it to draw
 // ====================================================================== //
 
@@ -123,8 +185,22 @@ void Shader::bind() { glUseProgram(m_program); }
 // ====================================================================== //
 // Unbind unset this program as active so won't be used to draw
 // ====================================================================== //
+
 void Shader::unbind() { glUseProgram(0); }
 
+// ====================================================================== //
+// ====================================================================== //
+// Update upload to the shader camera and light data
+// ====================================================================== //
+
+void Shader::update() {
+  uFloat3("u_lightPos", Core::light->pos());
+  uFloat3("u_lightColor", Core::light->color());
+
+  uMat4("u_matV", Core::camera->view());
+  uMat4("u_matP", Core::camera->proj());
+  uMat4("u_matVP", Core::camera->viewproj());
+}
 
 // ====================================================================== //
 // ====================================================================== //

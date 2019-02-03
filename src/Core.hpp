@@ -27,10 +27,9 @@ public:
   // of threadsLive flag)
   static void close();
 
-  // If camera and light are defined, upload its data to the shader
-  // memory of renderable object, setup if renderable will be drawed
-  // as solid or grid way and call renderable draw
-  static void draw(const std::shared_ptr<Renderable>& r, bool grid = false);
+  // If camera and light are defined, calls to shaders update
+  // and renderables update and draw
+  static void frame();
 
   // Define desired variables to update from Settings and run
   // the window loop with the user defined render function
