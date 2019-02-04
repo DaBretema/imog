@@ -38,5 +38,5 @@ public:
 
 
 #define dInfo(...) SPDLOG_LOGGER_INFO(dac::Logger::info(), __VA_ARGS__);
-#define dErr(...) SPDLOG_LOGGER_INFO(dac::Logger::error(), __VA_ARGS__);
+#define dErr(...) SPDLOG_LOGGER_ERROR(dac::Logger::error(), __VA_ARGS__);
 #define dPrint(...) SPDLOG_LOGGER_INFO(dac::Logger::print(), __VA_ARGS__);

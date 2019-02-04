@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <sstream>
+#include <fstream>
 #include <unordered_map>
 
 #include <dac/Logger.hpp>
@@ -16,6 +17,10 @@ namespace BRAVE {
 // ====================================================================== //
 
 RenderData loadOBJ(const std::string& filePath) {
+
+  if (!std::fstream(filePath).good()) {
+    dErr("Problem loading OBJ \"{}\"", filePath);
+  }
 
   // --- AUX VARS ---------------------------------------------------- //
   // ----------------------------------------------------------------- //
@@ -107,15 +112,16 @@ RenderData loadOBJ(const std::string& filePath) {
         // vertex attibutes, so using the vertices indices as reference,
         // just place the normal in the corresponding vertex position
 
-        if (thereIsNorms && !normsCache.count(vIdx) < 1) {
-          normsCache.insert({vIdx, true});
-          out.normals[vIdx] = normsTemp.at(nIdx);
-        }
+        // if (thereIsNorms && !normsCache.count(vIdx) < 1) {
+        //   normsCache.insert({vIdx, true});
+        out.normals[vIdx] = normsTemp.at(nIdx);
+        // }
 
-        if (thereIsUVs && !uvsCache.count(vIdx) < 1) {
-          uvsCache.insert({vIdx, true});
-          out.uvs[vIdx] = uvsTemp.at(uvIdx);
-        }
+
+        // if (thereIsUVs && !uvsCache.count(vIdx) < 1) {
+        //   uvsCache.insert({vIdx, true});
+        out.uvs[vIdx] = uvsTemp.at(uvIdx);
+        // }
 
         // Store vertex index always
         out.indices.push_back(vIdx);

@@ -50,7 +50,7 @@ void IO::windowInit() {
   m_windowWidth  = Settings::windowWidth;
 
   // Creation
-  lam_WinERR(glfwInit(), "Initializing GLFW");
+  lam_WinERR(glfwInit(), "Couldn't initialize GLFW");
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Settings::openglMajorV);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Settings::openglMinorV);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -59,7 +59,7 @@ void IO::windowInit() {
 
   GLFWwindow* o_WINDOW = glfwCreateWindow(
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
-  lam_WinERR(o_WINDOW, "Creating GLFW window");
+  lam_WinERR(o_WINDOW, "Couldn't create GLFW window");
 
   // Set as main
   glfwMakeContextCurrent(o_WINDOW);
@@ -73,7 +73,7 @@ void IO::windowInit() {
 
   // Gl-Extensions
   GLADloadproc glwfProc = (GLADloadproc)glfwGetProcAddress;
-  lam_WinERR(gladLoadGLLoader(glwfProc), "Initializing OpenGL with GLAD");
+  lam_WinERR(gladLoadGLLoader(glwfProc), "Couldn't initialize GLAD");
 
   // Gl-Settings
   glFrontFace(GL_CCW);

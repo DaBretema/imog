@@ -60,7 +60,6 @@ glm::vec3   Settings::mainCameraPos;
 float       Settings::mainCameraSpeed;
 glm::vec3   Settings::mainLightPos;
 glm::vec3   Settings::mainLightColor;
-bool        Settings::promptUniformErrors;
 
 
 // ====================================================================== //
@@ -69,14 +68,15 @@ bool        Settings::promptUniformErrors;
 // ====================================================================== //
 
 void Settings::init(const std::string& filePath) {
-  if (!std::fstream(filePath).good()) {
+  std::fstream fsSettings(filePath);
+  if (!fsSettings.good()) {
     dErr("Settings file not found @ '{}' path", filePath);
     return;
   }
-
   m_path = filePath;
-  m_filewatcher.path(m_path);
-  m_filewatcher.callback([&](std::fstream f) {
+
+  // Define update process
+  auto callback = [&](std::fstream& f) {
     try {
       m_json = json::parse(f);
       // -----------------------//
@@ -94,7 +94,6 @@ void Settings::init(const std::string& filePath) {
       stdParse(mainCameraSpeed, 0.1f);
       glmParse(mainLightPos, glm::vec3(0, 10, 0));
       glmParse(mainLightColor, glm::vec3(0.5, 0.5, 0.25));
-      stdParse(promptUniformErrors, false);
 
       // -----------------------//
       m_corrupted = false;
@@ -102,8 +101,13 @@ void Settings::init(const std::string& filePath) {
       m_corrupted = true;
       dErr("'{}' Bad parsing:\n{}", m_path, e.what());
     }
-  });
-  m_filewatcher.launch();
+  };
+
+  // Load values
+  callback(fsSettings);
+
+  // Setup filewatcher to background auto update
+  m_filewatcher.launch(m_path, callback);
 }
 
 
@@ -112,7 +116,7 @@ void Settings::init(const std::string& filePath) {
 // Print object values
 // ====================================================================== //
 #define stdPrint(var) dPrint("{} => {}", #var, var);
-#define glmPrint(var) dPrint("{}: ({},{},{})", #var, var.x, var.y, var.z);
+#define glmPrint(var) dPrint("{}: {}", #var, glm::to_string(var));
 
 void Settings::dump() {
 
@@ -131,7 +135,6 @@ void Settings::dump() {
   stdPrint(mainCameraSpeed);
   glmPrint(mainLightPos);
   glmPrint(mainLightColor);
-  stdPrint(promptUniformErrors);
   dPrint("");
 }
 

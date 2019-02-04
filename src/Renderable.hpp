@@ -24,6 +24,7 @@ public:
 
 private:
   unsigned int             m_ID;
+  std::string              m_meshPath;
   std::shared_ptr<Shader>  m_shader;
   std::shared_ptr<Texture> m_texture;
   // std::string  m_texturePath;

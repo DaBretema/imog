@@ -162,7 +162,7 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
 // ====================================================================== //
 
 Shader::~Shader() {
-  if (!Settings::quiet) dInfo("Destroyed!");
+  if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_program, m_name);
 }
 
 
@@ -216,8 +216,8 @@ int Shader::uniform(const std::string& uName) {
 
   if (uLoc > -1)
     m_uCache.insert({uName, uLoc});
-  else if (Settings::promptUniformErrors && !m_alertCache[uName]) {
-    dErr("'{}': !{}", m_name, uName);
+  else if (!Settings::quiet && !m_alertCache[uName]) {
+    dErr("@{}: not found/used \"{}\"", m_name, uName);
     m_alertCache[uName] = true;
   }
 

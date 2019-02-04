@@ -15,8 +15,6 @@ class Texture {
 
 public:
   // Global pool for textures
-  // static std::vector<Texture> pool;
-  // static std::vector<std::shared_ptr<Texture>> pool;
   static std::unordered_map<std::string, std::shared_ptr<Texture>> pool;
 
 
@@ -24,7 +22,7 @@ private:
   unsigned int m_ID;
   unsigned int m_glID;
   std::string  m_path;
-  int          m_bits;
+  int          m_bytes;
   int          m_width;
   int          m_height;
 

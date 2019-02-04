@@ -67,6 +67,7 @@ void Core::init() {
 void Core::close() {
   pause       = true;
   threadsLive = false;
+  glfwTerminate();
 }
 
 // ====================================================================== //

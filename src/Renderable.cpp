@@ -42,6 +42,7 @@ Renderable::Renderable(const std::string&             objFilePath,
                        const glm::vec3&               color,
                        const std::shared_ptr<Shader>& shader)
     : m_ID(g_RenderablesLastID++),
+      m_meshPath(objFilePath),
       m_shader(shader),
       m_texture(Texture::create(texturePath)),
       m_color(color),
@@ -64,9 +65,7 @@ Renderable::Renderable(const std::string&             objFilePath,
     std::string sV = Paths::Shaders + "base.vert";
     std::string sG = Paths::Shaders + "base.geom";
     std::string sF = Paths::Shaders + "base.frag";
-    dInfo("SET SHADER");
-    m_shader = Shader::create("BASE", sV, sG, sF);
-    dInfo("/ SET SHADER");
+    m_shader       = Shader::create("BASE", sV, sG, sF);
   }
 
   pool.push_back(std::shared_ptr<Renderable>(this));
@@ -114,7 +113,7 @@ std::shared_ptr<Renderable>
 // ====================================================================== //
 
 Renderable::~Renderable() {
-  if (!Settings::quiet) dInfo("ID: {}, Destroyed!", m_ID);
+  if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_ID, m_meshPath);
 }
 
 

@@ -31,7 +31,6 @@ public:
   static float       mainCameraSpeed;
   static glm::vec3   mainLightPos;
   static glm::vec3   mainLightColor;
-  static bool        promptUniformErrors;
 
   // Initializer
   static void init(const std::string& filePath);

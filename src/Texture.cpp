@@ -41,25 +41,30 @@ Texture::Texture(const std::string& path)
     : m_ID(g_TexturesLastID++),
       m_glID(0),
       m_path(path),
-      m_bits(0),
+      m_bytes(0),
       m_width(0),
       m_height(0) {
 
-  stbi_set_flip_vertically_on_load(1);
-  auto img = stbi_load(m_path.c_str(), &m_width, &m_height, &m_bits, 4);
+  static bool __once_stbflip = []() {
+    stbi_set_flip_vertically_on_load(1);
+    return true;
+  }();
 
   GL_ASSERT(glGenTextures(1, &m_glID));
   GL_ASSERT(glBindTexture(GL_TEXTURE_2D, m_glID));
 
-  tex2DParamF(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  tex2DParamF(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  tex2DParamF(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  tex2DParamF(GL_TEXTURE_WRAP_S, GL_REPEAT);
+  tex2DParamF(GL_TEXTURE_WRAP_T, GL_REPEAT);
   tex2DParamF(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  GL_ASSERT(glGenerateMipmap(GL_TEXTURE_2D));
+  tex2DParamF(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-  tex2DImg(m_width, m_height, img);
-
-  if (img) { stbi_image_free(img); }
+  if (auto img = stbi_load(m_path.c_str(), &m_width, &m_height, &m_bytes, 4)) {
+    tex2DImg(m_width, m_height, img);           // This before mipmap gen
+    GL_ASSERT(glGenerateMipmap(GL_TEXTURE_2D)); // This after glTexImg2D
+    stbi_image_free(img);
+  } else {
+    if (!Settings::quiet) dErr("Failed loading texture \"{}\"", path);
+  }
 }
 
 
@@ -90,7 +95,7 @@ std::shared_ptr<Texture> Texture::create(const std::string& path) {
 // ====================================================================== //
 
 Texture::~Texture() {
-  if (!Settings::quiet) dInfo("Destroyed!");
+  if (!Settings::quiet) dInfo("Destroyed @ {}", m_path);
   GL_ASSERT(glDeleteTextures(1, &m_glID));
 }
 

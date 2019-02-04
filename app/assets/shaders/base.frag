@@ -67,8 +67,8 @@ void main()
 	V = normalize(-g_Pos);
 	N = normalize(g_Norm);
 
-	Kd = texture(u_texture, g_TexUV).rgb;
+	Kd = texture(u_texture, g_TexUV).rgb * 0.5;
 	if (Kd == vec3(0)) { Kd = u_color; }
 
-	f_Color = vec4(Kd * vec3(0.5) + shade(),1.0);
+	f_Color = vec4(Kd + shade(),1.0);
 }
