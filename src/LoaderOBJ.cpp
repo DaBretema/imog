@@ -9,7 +9,7 @@
 #include <dac/Strings.hpp>
 
 
-namespace BRAVE {
+namespace brave {
 
 // ====================================================================== //
 // ====================================================================== //
@@ -135,4 +135,4 @@ RenderData loadOBJ(const std::string& filePath) {
   return out;
 }
 
-} // namespace BRAVE
+} // namespace brave

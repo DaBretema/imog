@@ -11,7 +11,7 @@
 #include "Settings.hpp"
 
 
-namespace BRAVE {
+namespace brave {
 
 // ====================================================================== //
 // ====================================================================== //
@@ -144,8 +144,14 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
                                        const std::string& vertexPath,
                                        const std::string& geomPath,
                                        const std::string& fragPath) {
+  if (vertexPath.empty() || fragPath.empty()) {
+    if (!Settings::quiet) dErr("Undefined non-optional shaders");
+    return nullptr;
+  }
+
   auto paths = vertexPath + geomPath + fragPath;
-  if (auto S = get(paths); S != nullptr) { return S; }
+  if (auto S = get(paths)) { return S; }
+
   pool.push_back(
       std::make_shared<Shader>(name, vertexPath, geomPath, fragPath));
 
@@ -194,8 +200,11 @@ void Shader::unbind() { glUseProgram(0); }
 // ====================================================================== //
 
 void Shader::update() {
+  uFloat3("u_clearColor", Settings::clearColor);
+
   uFloat3("u_lightPos", Core::light->pos());
   uFloat3("u_lightColor", Core::light->color());
+  uFloat1("u_lightIntensity", Core::light->intensity());
 
   uMat4("u_matV", Core::camera->view());
   uMat4("u_matP", Core::camera->proj());
@@ -272,4 +281,4 @@ void Shader::uInt1(const std::string& uName, int i) {
   glProgramUniform1i(m_program, uniform(uName), i);
 }
 
-} // namespace BRAVE
+} // namespace brave

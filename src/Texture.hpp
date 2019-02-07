@@ -6,12 +6,9 @@
 
 #include "Shader.hpp"
 
-namespace BRAVE {
+namespace brave {
 
 class Texture {
-
-  // Global counter of generated textures
-  static unsigned int g_TexturesLastID;
 
 public:
   // Global pool for textures
@@ -19,7 +16,6 @@ public:
 
 
 private:
-  unsigned int m_ID;
   unsigned int m_glID;
   std::string  m_path;
   int          m_bytes;
@@ -54,4 +50,4 @@ public:
   int height() const;
 };
 
-} // namespace BRAVE
+} // namespace brave

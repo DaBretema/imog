@@ -4,7 +4,7 @@
 
 #include "Math.hpp"
 
-namespace BRAVE {
+namespace brave {
 
 // Basic data needed to render
 struct RenderData {
@@ -17,4 +17,4 @@ struct RenderData {
 // Return a struct with data needed to rendering from a OBJ file
 RenderData loadOBJ(const std::string& filePath);
 
-} // namespace BRAVE
+} // namespace brave

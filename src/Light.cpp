@@ -1,14 +1,26 @@
 #include "Light.hpp"
+#include "helpers/Consts.hpp"
 
-namespace BRAVE {
+namespace brave {
+
+unsigned int Light::g_lastLightID{0u};
 
 // ====================================================================== //
 // ====================================================================== //
 // Param constructor
 // ====================================================================== //
 
-Light::Light(const glm::vec3& pos, const glm::vec3& color)
-    : m_pos(pos), m_color(color) {}
+Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
+    : m_pos(pos),
+      m_color(color),
+      m_intensity(intensity),
+      m_renderable(Renderable::create(
+          std::string("Light_" + std::to_string(g_lastLightID++)),
+          Figures::cube,
+          "",
+          m_color,
+          Shader::getByName(Shaders::light),
+          false)) {}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -16,7 +28,10 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color)
 // ====================================================================== //
 
 glm::vec3 Light::pos() const { return m_pos; }
-void      Light::pos(const glm::vec3& newPos) { m_pos = newPos; }
+void      Light::pos(const glm::vec3& newPos) {
+  m_pos = newPos;
+  m_renderable->pos(m_pos);
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -24,6 +39,20 @@ void      Light::pos(const glm::vec3& newPos) { m_pos = newPos; }
 // ====================================================================== //
 
 glm::vec3 Light::color() const { return m_color; }
-void      Light::color(const glm::vec3& newColor) { m_color = newColor; }
+void      Light::color(const glm::vec3& newColor) {
+  m_color = newColor;
+  m_renderable->color(m_color * m_intensity);
+}
 
-} // namespace BRAVE
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for color
+// ====================================================================== //
+
+float Light::intensity() const { return m_intensity; }
+void  Light::intensity(float newIntensity) {
+  m_intensity = (newIntensity < 0.1f) ? 1.f : newIntensity;
+  m_renderable->color(m_color * m_intensity * 0.05f);
+}
+
+} // namespace brave

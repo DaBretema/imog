@@ -1,7 +1,7 @@
 #include "Math.hpp"
 
 
-namespace BRAVE {
+namespace brave {
 
 glm::vec3 Math::unitVecX{1.f, 0.f, 0.f};
 glm::vec3 Math::unitVecY{0.f, 1.f, 0.f};
@@ -55,4 +55,4 @@ glm::vec4 Math::glmVec4FromStr(const std::vector<std::string>& strVec) {
   return glm::vec4{x, y, z, w};
 }
 
-} // namespace BRAVE
+} // namespace brave

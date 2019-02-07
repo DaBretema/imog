@@ -10,7 +10,7 @@
 using _IO_FUNC = std::function<void()>;
 
 
-namespace BRAVE {
+namespace brave {
 class IO {
 
   // ====================================================================== //
@@ -71,4 +71,4 @@ public:
   static void keyboardAddAction(int key, const _IO_FUNC& action);
 };
 
-} // namespace BRAVE
+} // namespace brave

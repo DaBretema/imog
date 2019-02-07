@@ -6,22 +6,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-namespace BRAVE {
+namespace brave {
 
-#define tex2DParamF(id, mode) \
-  GL_ASSERT(glTexParameterf(GL_TEXTURE_2D, id, mode));
+#define tex2DParam(id, mode) \
+  GL_ASSERT(glTexParameteri(GL_TEXTURE_2D, id, mode));
 
 #define tex2DImg(w, h, img) \
   GL_ASSERT(glTexImage2D(   \
       GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img));
-
-
-// ====================================================================== //
-// ====================================================================== //
-// Global counter of generated textures
-// ====================================================================== //
-
-unsigned int Texture::g_TexturesLastID{0u};
 
 
 // ====================================================================== //
@@ -38,12 +30,7 @@ std::unordered_map<std::string, std::shared_ptr<Texture>> Texture::pool;
 // ====================================================================== //
 
 Texture::Texture(const std::string& path)
-    : m_ID(g_TexturesLastID++),
-      m_glID(0),
-      m_path(path),
-      m_bytes(0),
-      m_width(0),
-      m_height(0) {
+    : m_glID(0), m_path(path), m_bytes(0), m_width(0), m_height(0) {
 
   static bool __once_stbflip = []() {
     stbi_set_flip_vertically_on_load(1);
@@ -53,10 +40,10 @@ Texture::Texture(const std::string& path)
   GL_ASSERT(glGenTextures(1, &m_glID));
   GL_ASSERT(glBindTexture(GL_TEXTURE_2D, m_glID));
 
-  tex2DParamF(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  tex2DParamF(GL_TEXTURE_WRAP_T, GL_REPEAT);
-  tex2DParamF(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  tex2DParamF(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  tex2DParam(GL_TEXTURE_WRAP_S, GL_REPEAT);
+  tex2DParam(GL_TEXTURE_WRAP_T, GL_REPEAT);
+  tex2DParam(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  tex2DParam(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
   if (auto img = stbi_load(m_path.c_str(), &m_width, &m_height, &m_bytes, 4)) {
     tex2DImg(m_width, m_height, img);           // This before mipmap gen
@@ -84,7 +71,8 @@ std::shared_ptr<Texture> Texture::get(const std::string& path) {
 // ====================================================================== //
 
 std::shared_ptr<Texture> Texture::create(const std::string& path) {
-  if (auto T = get(path); T != nullptr) { return T; }
+  if (path.empty()) { return nullptr; }
+  if (auto T = get(path)) { return T; }
   pool[path] = std::make_shared<Texture>(path);
   return pool[path];
 }
@@ -105,7 +93,7 @@ Texture::~Texture() {
 // ====================================================================== //
 
 void Texture::bind() const {
-  GL_ASSERT(glActiveTexture(GL_TEXTURE0 + m_ID));
+  GL_ASSERT(glActiveTexture(GL_TEXTURE0 + m_glID));
   GL_ASSERT(glBindTexture(GL_TEXTURE_2D, m_glID));
 }
 
@@ -142,4 +130,4 @@ int Texture::width() const { return m_width; }
 // ====================================================================== //
 int Texture::height() const { return m_height; }
 
-} // namespace BRAVE
+} // namespace brave

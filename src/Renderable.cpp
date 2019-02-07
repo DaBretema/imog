@@ -9,12 +9,12 @@
 #include "LoaderOBJ.hpp"
 #include "Settings.hpp"
 
-#include "helpers/Paths.hpp"
+#include "helpers/Consts.hpp"
 #include "helpers/GLAssert.hpp"
 
 
 
-namespace BRAVE {
+namespace brave {
 
 // ====================================================================== //
 // ====================================================================== //
@@ -37,23 +37,32 @@ std::unordered_map<std::string, unsigned int> Renderable::poolIndices{};
 // Param constructor w/o OBJ file
 // ====================================================================== //
 
-Renderable::Renderable(const std::string&             objFilePath,
+Renderable::Renderable(const std::string&             name,
+                       const std::string&             objFilePath,
                        const std::string&             texturePath,
                        const glm::vec3&               color,
-                       const std::shared_ptr<Shader>& shader)
+                       const std::shared_ptr<Shader>& shader,
+                       bool                           culling)
     : m_ID(g_RenderablesLastID++),
+      m_name(name),
       m_meshPath(objFilePath),
       m_shader(shader),
       m_texture(Texture::create(texturePath)),
       m_color(color),
+      m_culling(culling),
       m_model(glm::mat4(1.f)),
       m_vao(0),
       m_loc(0),
-      m_eboSize(0) {
+      m_eboSize(0),
+      m_pos(glm::vec3(0)),
+      m_rot(glm::vec3(0)),
+      m_scl(glm::vec3(1)) {
 
   GL_ASSERT(glGenVertexArrays(1, &m_vao));
+  if (!m_shader) { m_shader = Shader::getByName(Shaders::base); }
+  if (m_name.empty()) { m_name = std::string("R_" + std::to_string(m_ID)); }
 
-  if (objFilePath != "") {
+  if (!objFilePath.empty()) {
     RenderData renderData = loadOBJ(objFilePath);
     this->fillEBO(renderData.indices); // No location, just internal data.
     this->addVBO(renderData.vertices); // Location = 0
@@ -61,14 +70,16 @@ Renderable::Renderable(const std::string&             objFilePath,
     this->addVBO(renderData.uvs);      // Location = 2
   }
 
-  if (m_shader == nullptr) {
-    std::string sV = Paths::Shaders + "base.vert";
-    std::string sG = Paths::Shaders + "base.geom";
-    std::string sF = Paths::Shaders + "base.frag";
-    m_shader       = Shader::create("BASE", sV, sG, sF);
-  }
-
   pool.push_back(std::shared_ptr<Renderable>(this));
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Destructor
+// ====================================================================== //
+
+Renderable::~Renderable() {
+  if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_ID, m_name);
 }
 
 
@@ -89,31 +100,23 @@ std::shared_ptr<Renderable> Renderable::get(const std::string dataMix) {
 // ====================================================================== //
 
 std::shared_ptr<Renderable>
-    Renderable::create(const std::string&             objFilePath,
+    Renderable::create(const std::string&             name,
+                       const std::string&             objFilePath,
                        const std::string&             texturePath,
                        const glm::vec3&               color,
-                       const std::shared_ptr<Shader>& shader) {
+                       const std::shared_ptr<Shader>& shader,
+                       bool                           culling) {
   std::string key = objFilePath + texturePath;
   key += glm::to_string(color);
-  if (shader != nullptr) { key += shader->name(); }
-  if (auto R = get(key); R != nullptr) { return R; }
+  if (shader) { key += shader->name(); }
+  if (auto R = get(key)) { return R; }
 
-  pool.push_back(
-      std::make_shared<Renderable>(objFilePath, texturePath, color, shader));
+  pool.push_back(std::make_shared<Renderable>(
+      name, objFilePath, texturePath, color, shader, culling));
 
   auto idx         = pool.size() - 1;
   poolIndices[key] = idx;
   return pool.at(idx);
-}
-
-
-// ====================================================================== //
-// ====================================================================== //
-// Destructor
-// ====================================================================== //
-
-Renderable::~Renderable() {
-  if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_ID, m_meshPath);
 }
 
 
@@ -145,6 +148,13 @@ unsigned int Renderable::ID() const { return m_ID; }
 
 // ====================================================================== //
 // ====================================================================== //
+// Getter for name
+// ====================================================================== //
+
+std::string Renderable::name() const { return m_name; }
+
+// ====================================================================== //
+// ====================================================================== //
 // G/Setter for shader
 // ====================================================================== //
 
@@ -168,7 +178,61 @@ void      Renderable::color(glm::vec3 newColor) { m_color = newColor; }
 
 glm::mat4 Renderable::model() const { return m_model; }
 void      Renderable::model(glm::mat4 newModel) { m_model = newModel; }
+void      Renderable::updateModel() {
+  glm::mat4 aux(1.f);
+  Math::translate(aux, m_pos);
+  Math::rotate(aux, m_rot);
+  Math::scale(aux, m_scl);
+  m_model = aux;
+}
 
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for pos
+// ====================================================================== //
+
+glm::vec3 Renderable::pos() const { return m_pos; }
+void      Renderable::pos(const glm::vec3 newPos) {
+  m_pos = newPos;
+  updateModel();
+}
+void Renderable::pos(float x, float y, float z) { pos(glm::vec3{x, y, z}); }
+void Renderable::accumPos(const glm::vec3 addPos) { pos(m_pos + addPos); }
+void Renderable::accumPos(float x, float y, float z) {
+  accumPos(glm::vec3{x, y, z});
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for rot
+// ====================================================================== //
+
+glm::vec3 Renderable::rot() const { return m_rot; }
+void      Renderable::rot(const glm::vec3 newRot) {
+  m_rot = newRot;
+  updateModel();
+}
+void Renderable::rot(float x, float y, float z) { rot(glm::vec3{x, y, z}); }
+void Renderable::accumRot(const glm::vec3 addRot) { rot(m_rot + addRot); }
+void Renderable::accumRot(float x, float y, float z) {
+  accumRot(glm::vec3{x, y, z});
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for scl
+// ====================================================================== //
+
+glm::vec3 Renderable::scl() const { return m_scl; }
+void      Renderable::scl(const glm::vec3 newScl) {
+  m_scl = newScl;
+  updateModel();
+}
+void Renderable::scl(float x, float y, float z) { scl(glm::vec3{x, y, z}); }
+void Renderable::accumScl(const glm::vec3 addScl) { scl(m_scl + addScl); }
+void Renderable::accumScl(float x, float y, float z) {
+  accumScl(glm::vec3{x, y, z});
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -225,42 +289,43 @@ void Renderable::fillEBO(const std::vector<unsigned int>& indices) {
 void Renderable::draw() {
   this->bind();
   m_shader->bind();
-  m_texture->bind();
-
+  if (m_texture) m_texture->bind(m_shader);
 
   m_shader->uFloat3("u_color", m_color);
   m_shader->uMat4("u_matM", m_model);
-  m_shader->uMat4("u_matMVP", BRAVE::Core::camera->viewproj() * m_model);
+  m_shader->uMat4("u_matMVP", Core::camera->viewproj() * m_model);
 
-  glm::mat4 matMV = BRAVE::Core::camera->view() * m_model;
+  glm::mat4 matMV = Core::camera->view() * m_model;
   m_shader->uMat4("u_matMV", matMV);
   m_shader->uMat4("u_matN", glm::transpose(glm::inverse(matMV)));
 
+  if (!m_culling) { glDisable(GL_CULL_FACE); }
   GL_ASSERT(glDrawElements(GL_TRIANGLES, m_eboSize, GL_UNSIGNED_INT, 0));
+  if (!m_culling) { glEnable(GL_CULL_FACE); }
 
-  m_texture->unbind();
+  if (m_texture) m_texture->unbind();
   m_shader->unbind();
   this->unbind();
 }
 
-// ====================================================================== //
-// ====================================================================== //
-// Transform operations wrappers
-// ====================================================================== //
+// // ====================================================================== //
+// // ====================================================================== //
+// // Transform operations wrappers
+// // ====================================================================== //
 
-void Renderable::translate(const glm::vec3& T) { Math::translate(m_model, T); }
-void Renderable::translate(float x, float y, float z) {
-  this->translate(glm::vec3{x, y, z});
-}
+// void Renderable::translate(const glm::vec3& T) { Math::translate(m_model, T); }
+// void Renderable::translate(float x, float y, float z) {
+//   this->translate(glm::vec3{x, y, z});
+// }
 
-void Renderable::rotate(const glm::vec3& R) { Math::rotate(m_model, R); }
-void Renderable::rotate(float x, float y, float z) {
-  this->rotate(glm::vec3{x, y, z});
-}
+// void Renderable::rotate(const glm::vec3& R) { Math::rotate(m_model, R); }
+// void Renderable::rotate(float x, float y, float z) {
+//   this->rotate(glm::vec3{x, y, z});
+// }
 
-void Renderable::scale(const glm::vec3& S) { Math::scale(m_model, S); }
-void Renderable::scale(float x, float y, float z) {
-  this->scale(glm::vec3{x, y, z});
-}
+// void Renderable::scale(const glm::vec3& S) { Math::scale(m_model, S); }
+// void Renderable::scale(float x, float y, float z) {
+//   this->scale(glm::vec3{x, y, z});
+//}
 
-} // namespace BRAVE
+} // namespace brave

@@ -8,7 +8,7 @@
 
 
 
-namespace BRAVE {
+namespace brave {
 
 class Core {
 public:
@@ -20,7 +20,7 @@ public:
 
   // Initialize process, set variables init values and
   // define keyboard actions
-  static void init();
+  static void init(const std::string settingsPath = "");
 
   // Close process, pause the sim execution and kill threads launched
   // during the engine execution (the threads must be dependents
@@ -36,4 +36,4 @@ public:
   static void onUpdate(const _IO_FUNC& fn);
 };
 
-} // namespace BRAVE
+} // namespace brave

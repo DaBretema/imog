@@ -1,7 +1,7 @@
 #include "Camera.hpp"
 
 
-namespace BRAVE {
+namespace brave {
 
 // ====================================================================== //
 // ====================================================================== //
@@ -56,7 +56,7 @@ void  Camera::speed(float newSpeed) { m_speed = newSpeed; }
 // ====================================================================== //
 
 void Camera::attach(const std::shared_ptr<Renderable>& target) {
-  if (target != nullptr) {
+  if (target) {
     m_target    = target;
     m_following = true;
     m_pos       = glm::vec3{0.f};
@@ -69,7 +69,7 @@ void Camera::attach(const std::shared_ptr<Renderable>& target) {
 // ====================================================================== //
 
 glm::vec3 Camera::targetPos() {
-  if (m_target != nullptr) { return m_target->model()[3].xyz(); }
+  if (m_target) { return m_target->model()[3].xyz(); }
   m_following = false;
   return glm::vec3{0.f};
 }
@@ -219,4 +219,4 @@ void Camera::frame() {
   m_viewproj = m_proj * m_view;
 }
 
-} // namespace BRAVE
+} // namespace brave

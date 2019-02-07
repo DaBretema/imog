@@ -14,7 +14,7 @@
 #include <stdexcept>
 
 
-namespace BRAVE {
+namespace brave {
 
 class Math {
 public:
@@ -42,4 +42,4 @@ public:
   static glm::vec4 glmVec4FromStr(const std::vector<std::string>& strVec);
 };
 
-} // namespace BRAVE
+} // namespace brave

@@ -7,7 +7,7 @@
 
 
 
-namespace BRAVE {
+namespace brave {
 
 // ========================================================================= //
 // ========================================================================= //
@@ -60,6 +60,7 @@ glm::vec3   Settings::mainCameraPos;
 float       Settings::mainCameraSpeed;
 glm::vec3   Settings::mainLightPos;
 glm::vec3   Settings::mainLightColor;
+float       Settings::mainLightIntensity;
 
 
 // ====================================================================== //
@@ -68,46 +69,47 @@ glm::vec3   Settings::mainLightColor;
 // ====================================================================== //
 
 void Settings::init(const std::string& filePath) {
-  std::fstream fsSettings(filePath);
-  if (!fsSettings.good()) {
-    dErr("Settings file not found @ '{}' path", filePath);
-    return;
-  }
+
   m_path = filePath;
+  std::fstream fsSettings(m_path);
 
   // Define update process
   auto callback = [&](std::fstream& f) {
-    try {
-      m_json = json::parse(f);
-      // -----------------------//
+    retry_pase:
+      try {
+        m_json = (!m_path.empty()) ? json::parse(f) : "{}"_json;
+        // -----------------------//
 
-      stdParse(quiet, true);
-      stdParse(openglMajorV, 4);
-      stdParse(openglMinorV, 5);
-      stdParse(windowWidth, 800);
-      stdParse(windowHeight, 600);
-      stdParse(windowTitle, "Brave engine");
-      glmParse(clearColor, glm::vec3(0.2, 0.3, 0.3));
-      stdParse(mouseSensitivity, 1.0);
-      stdParse(pollEvents, false);
-      glmParse(mainCameraPos, glm::vec3(0.f));
-      stdParse(mainCameraSpeed, 0.1f);
-      glmParse(mainLightPos, glm::vec3(0, 10, 0));
-      glmParse(mainLightColor, glm::vec3(0.5, 0.5, 0.25));
+        stdParse(quiet, true);
+        stdParse(openglMajorV, 4);
+        stdParse(openglMinorV, 5);
+        stdParse(windowWidth, 800);
+        stdParse(windowHeight, 600);
+        stdParse(windowTitle, "Brave engine");
+        glmParse(clearColor, glm::vec3(0.2, 0.3, 0.3));
+        stdParse(mouseSensitivity, 1.0);
+        stdParse(pollEvents, false);
+        glmParse(mainCameraPos, glm::vec3(0.f));
+        stdParse(mainCameraSpeed, 0.1f);
+        glmParse(mainLightPos, glm::vec3(0, 0, 0));
+        glmParse(mainLightColor, glm::vec3(1.0, 0, 1.0));
+        stdParse(mainLightIntensity, 1.f);
 
-      // -----------------------//
-      m_corrupted = false;
-    } catch (json::exception& e) {
-      m_corrupted = true;
-      dErr("'{}' Bad parsing:\n{}", m_path, e.what());
-    }
+        // -----------------------//
+        m_corrupted = false;
+      } catch (json::exception& e) {
+        m_corrupted = true;
+        dErr("'{}' Bad parsing:\n{}", m_path, e.what());
+
+        goto retry_pase;
+      }
   };
 
   // Load values
   callback(fsSettings);
 
   // Setup filewatcher to background auto update
-  m_filewatcher.launch(m_path, callback);
+  if (!m_path.empty()) m_filewatcher.launch(m_path, callback);
 }
 
 
@@ -135,6 +137,7 @@ void Settings::dump() {
   stdPrint(mainCameraSpeed);
   glmPrint(mainLightPos);
   glmPrint(mainLightColor);
+  stdPrint(mainLightIntensity);
   dPrint("");
 }
 
@@ -146,4 +149,4 @@ void Settings::dump() {
 
 bool Settings::corrupted() { return m_corrupted; }
 
-} // namespace BRAVE
+} // namespace brave

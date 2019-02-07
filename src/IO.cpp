@@ -6,7 +6,7 @@
 #include "Settings.hpp"
 
 
-namespace BRAVE {
+namespace brave {
 
 // ====================================================================== //
 // ====================================================================== //
@@ -30,6 +30,8 @@ std::unordered_map<int, _IO_FUNC> IO::m_keyboardActions{};
 
 
 // * --- WINDOW --- * //
+
+GLFWwindow* IO::window(){ return m_windowPtr; }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -65,10 +67,11 @@ void IO::windowInit() {
   glfwMakeContextCurrent(o_WINDOW);
 
   // Callbacks
-  glfwSetKeyCallback(o_WINDOW, keyboardOnPress);
-  glfwSetCursorPosCallback(o_WINDOW, mouseOnMove);
+  glfwSetKeyCallback(o_WINDOW, keyboardOnPress); // -- Keyboard
+  glfwSetCursorPosCallback(o_WINDOW, mouseOnMove); // -- Mouse
   glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
   glfwSetMouseButtonCallback(o_WINDOW, mouseOnClick);
+  glfwSetWindowCloseCallback(o_WINDOW, windowOnClose); // -- Window
   glfwSetWindowSizeCallback(o_WINDOW, windowOnScaleChange);
 
   // Gl-Extensions
@@ -151,7 +154,7 @@ void IO::windowOnScaleChange(GLFWwindow* w, int width, int height) {
 // ====================================================================== //
 
 void IO::windowOnClose(GLFWwindow* w) {
-  Core::close();
+  if(!Settings::quiet) dInfo("Closing GLFW window.");
   glfwSetWindowShouldClose(w, GL_TRUE);
 }
 
@@ -244,4 +247,4 @@ void IO::keyboardAddAction(int key, const _IO_FUNC& action) {
   }
 }
 
-} // namespace BRAVE
+} // namespace brave

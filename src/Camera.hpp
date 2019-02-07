@@ -10,7 +10,7 @@
 #include "Renderable.hpp"
 
 
-namespace BRAVE {
+namespace brave {
 
 enum struct CamDir { front, back, right, left, up, down };
 
@@ -93,4 +93,4 @@ public:
   void frame();
 };
 
-} // namespace BRAVE
+} // namespace brave

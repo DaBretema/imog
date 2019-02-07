@@ -7,7 +7,7 @@
 #include "Math.hpp"
 
 
-namespace BRAVE {
+namespace brave {
 
 class Shader {
 
@@ -93,4 +93,4 @@ public:
   void uInt1(const std::string& uniformName, int i);
 };
 
-} // namespace BRAVE
+} // namespace brave

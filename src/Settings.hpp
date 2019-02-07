@@ -8,7 +8,7 @@ using json = nlohmann::json;
 #include "Math.hpp"
 
 
-namespace BRAVE {
+namespace brave {
 
 class Settings {
 private:
@@ -31,6 +31,7 @@ public:
   static float       mainCameraSpeed;
   static glm::vec3   mainLightPos;
   static glm::vec3   mainLightColor;
+  static float   mainLightIntensity;
 
   // Initializer
   static void init(const std::string& filePath);
@@ -43,4 +44,4 @@ public:
   static bool corrupted();
 };
 
-} // namespace BRAVE
+} // namespace brave

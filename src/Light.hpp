@@ -1,18 +1,26 @@
 #pragma once
 
-#include "Math.hpp"
+#include <memory>
 
-namespace BRAVE {
+#include "Math.hpp"
+#include "Renderable.hpp"
+
+namespace brave {
 
 class Light {
 
+  static unsigned int g_lastLightID;
+
 private:
-  glm::vec3 m_pos;
-  glm::vec3 m_color;
+  glm::vec3 m_pos{0.1f};
+  glm::vec3 m_color{0.5f};
+  float     m_intensity;
+
+  std::shared_ptr<Renderable> m_renderable;
 
 public:
   // Param constructor
-  Light(const glm::vec3& pos, const glm::vec3& color);
+  Light(const glm::vec3& pos, const glm::vec3& color, float intensity = 1.f);
 
   // G/Setter for pos
   glm::vec3 pos() const;
@@ -21,6 +29,10 @@ public:
   // G/Setter for color
   glm::vec3 color() const;
   void      color(const glm::vec3& newColor);
+
+  // G/Setter for intensity
+  float intensity() const;
+  void  intensity(float newIntensity);
 };
 
-} // namespace BRAVE
+} // namespace brave
