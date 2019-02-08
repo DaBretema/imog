@@ -63,7 +63,7 @@ vec3 toon(in vec3 color, in float toonFactor) {
 void main() {
 
   vec3 norm = normalize(g_norm);
-  float ambient = clamp(0.25, 0.1, 0.9);
+  float ambient = clamp(0.75, 0.1, 0.9);
   vec3 lightPos = (u_matMV * vec4(u_lightPos,1)).xyz;
 
   // Obj color and texture read
@@ -77,10 +77,10 @@ void main() {
   vec3 light = u_lightColor * (u_lightIntensity / (lightDist*lightDist));
 
   // Diffuse
-  float diffuse = max(dot(lightDir, norm), ambient);
+  float diffuse = max(dot(lightDir, norm), 0.0);
 
   // Final color with gamma correction for sRGB
-  color *= diffuse * light;
+  color *= (diffuse * light) + ambient;
 
   // Output gamma corrected color
   f_color = vec4(color, 1.0);

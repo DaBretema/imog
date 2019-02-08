@@ -52,7 +52,7 @@ void      Light::color(const glm::vec3& newColor) {
 float Light::intensity() const { return m_intensity; }
 void  Light::intensity(float newIntensity) {
   m_intensity = (newIntensity < 0.1f) ? 1.f : newIntensity;
-  m_renderable->color(m_color * m_intensity * 0.05f);
+  m_renderable->color(m_color * m_intensity * 0.085f);
 }
 
 } // namespace brave
