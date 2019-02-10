@@ -10,15 +10,15 @@ namespace brave {
 
 Camera::Camera(const glm::vec3& pos,
                float            speed,
-               float            fov,
                float            pitch,
-               float            yaw)
+               float            yaw,
+               float            fov)
     : m_pos(pos),
       m_fov(fov),
       m_speed(speed),
       m_multSpeed(1.f),
       m_pitch(pitch),
-      m_yaw(yaw),
+      m_yaw(-90.f + yaw),
       m_target(nullptr),
       m_following(false),
       m_centeredOnTarget(false) {}

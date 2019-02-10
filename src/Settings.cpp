@@ -57,6 +57,7 @@ glm::vec3   Settings::clearColor;
 float       Settings::mouseSensitivity;
 bool        Settings::pollEvents;
 glm::vec3   Settings::mainCameraPos;
+glm::vec2   Settings::mainCameraRot;
 float       Settings::mainCameraSpeed;
 glm::vec3   Settings::mainLightPos;
 glm::vec3   Settings::mainLightColor;
@@ -90,6 +91,7 @@ void Settings::init(const std::string& filePath) {
         stdParse(mouseSensitivity, 1.0);
         stdParse(pollEvents, false);
         glmParse(mainCameraPos, glm::vec3(0.f));
+        glmParse(mainCameraRot, glm::vec2(0.f));
         stdParse(mainCameraSpeed, 0.1f);
         glmParse(mainLightPos, glm::vec3(0, 0, 0));
         glmParse(mainLightColor, glm::vec3(1.0, 0, 1.0));
@@ -134,6 +136,7 @@ void Settings::dump() {
   stdPrint(mouseSensitivity);
   stdPrint(pollEvents);
   glmPrint(mainCameraPos);
+  glmPrint(mainCameraRot);
   stdPrint(mainCameraSpeed);
   glmPrint(mainLightPos);
   glmPrint(mainLightColor);

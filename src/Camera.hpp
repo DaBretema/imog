@@ -45,9 +45,9 @@ private:
 public:
   Camera(const glm::vec3& pos,
          float            speed = 1.f,
-         float            fov   = 0.5f,
          float            pitch = 0.f,
-         float            yaw   = -90.f);
+         float            yaw   = 0.f,
+         float            fov   = 0.5f);
 
 
   // Getter for view

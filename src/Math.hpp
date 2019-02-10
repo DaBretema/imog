@@ -18,6 +18,7 @@ namespace brave {
 
 class Math {
 public:
+  // Unit vectors
   static glm::vec3 unitVecX;
   static glm::vec3 unitVecY;
   static glm::vec3 unitVecZ;

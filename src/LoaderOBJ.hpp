@@ -14,7 +14,10 @@ struct RenderData {
   std::vector<unsigned int> indices;
 };
 
-// Return a struct with data needed to rendering from a OBJ file
-RenderData loadOBJ(const std::string& filePath);
+namespace loader {
 
+  // Return a struct with data needed to rendering from a OBJ file
+  RenderData OBJ(const std::string& filePath);
+
+} // namespace loader
 } // namespace brave

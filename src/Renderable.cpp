@@ -37,13 +37,15 @@ std::unordered_map<std::string, unsigned int> Renderable::poolIndices{};
 // Param constructor w/o OBJ file
 // ====================================================================== //
 
-Renderable::Renderable(const std::string&             name,
+Renderable::Renderable(bool                           allowGlobalDraw,
+                       const std::string&             name,
                        const std::string&             objFilePath,
                        const std::string&             texturePath,
                        const glm::vec3&               color,
                        const std::shared_ptr<Shader>& shader,
                        bool                           culling)
-    : m_ID(g_RenderablesLastID++),
+    : m_allowGlobalDraw(allowGlobalDraw),
+      m_ID(g_RenderablesLastID++),
       m_name(name),
       m_meshPath(objFilePath),
       m_shader(shader),
@@ -63,7 +65,7 @@ Renderable::Renderable(const std::string&             name,
   if (m_name.empty()) { m_name = std::string("R_" + std::to_string(m_ID)); }
 
   if (!objFilePath.empty()) {
-    RenderData renderData = loadOBJ(objFilePath);
+    RenderData renderData = loader::OBJ(objFilePath);
     this->fillEBO(renderData.indices); // No location, just internal data.
     this->addVBO(renderData.vertices); // Location = 0
     this->addVBO(renderData.normals);  // Location = 1
@@ -89,8 +91,19 @@ Renderable::~Renderable() {
 // by mixed data of Renderable, like id or objFilepath
 // ====================================================================== //
 
-std::shared_ptr<Renderable> Renderable::get(const std::string dataMix) {
+std::shared_ptr<Renderable> Renderable::get(const std::string& dataMix) {
   if (poolIndices.count(dataMix) > 0) { return pool[poolIndices[dataMix]]; }
+  return nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Get a shared ptr to Renderable obj from global pool
+// by name
+// ====================================================================== //
+
+std::shared_ptr<Renderable> Renderable::getByName(const std::string& name) {
+  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
   return nullptr;
 }
 
@@ -100,22 +113,23 @@ std::shared_ptr<Renderable> Renderable::get(const std::string dataMix) {
 // ====================================================================== //
 
 std::shared_ptr<Renderable>
-    Renderable::create(const std::string&             name,
+    Renderable::create(bool                           allowGlobalDraw,
+                       const std::string&             name,
                        const std::string&             objFilePath,
                        const std::string&             texturePath,
                        const glm::vec3&               color,
                        const std::shared_ptr<Shader>& shader,
                        bool                           culling) {
-  std::string key = objFilePath + texturePath;
-  key += glm::to_string(color);
+  std::string key = objFilePath + texturePath + glm::to_string(color);
   if (shader) { key += shader->name(); }
   if (auto R = get(key)) { return R; }
 
   pool.push_back(std::make_shared<Renderable>(
-      name, objFilePath, texturePath, color, shader, culling));
+      allowGlobalDraw, name, objFilePath, texturePath, color, shader, culling));
 
-  auto idx         = pool.size() - 1;
-  poolIndices[key] = idx;
+  auto idx          = pool.size() - 1;
+  poolIndices[name] = idx;
+  poolIndices[key]  = idx;
   return pool.at(idx);
 }
 
@@ -138,6 +152,14 @@ void Renderable::unbind() {
   GL_ASSERT(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Getter for global
+// ====================================================================== //
+
+bool Renderable::allowGlobalDraw() const { return m_allowGlobalDraw; }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -169,7 +191,7 @@ void Renderable::shader(const std::shared_ptr<Shader>& newShader) {
 // ====================================================================== //
 
 glm::vec3 Renderable::color() const { return m_color; }
-void      Renderable::color(glm::vec3 newColor) { m_color = newColor; }
+void      Renderable::color(const glm::vec3& newColor) { m_color = newColor; }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -177,7 +199,7 @@ void      Renderable::color(glm::vec3 newColor) { m_color = newColor; }
 // ====================================================================== //
 
 glm::mat4 Renderable::model() const { return m_model; }
-void      Renderable::model(glm::mat4 newModel) { m_model = newModel; }
+void      Renderable::model(const glm::mat4& newModel) { m_model = newModel; }
 void      Renderable::updateModel() {
   glm::mat4 aux(1.f);
   Math::translate(aux, m_pos);
@@ -192,12 +214,12 @@ void      Renderable::updateModel() {
 // ====================================================================== //
 
 glm::vec3 Renderable::pos() const { return m_pos; }
-void      Renderable::pos(const glm::vec3 newPos) {
+void      Renderable::pos(const glm::vec3& newPos) {
   m_pos = newPos;
   updateModel();
 }
 void Renderable::pos(float x, float y, float z) { pos(glm::vec3{x, y, z}); }
-void Renderable::accumPos(const glm::vec3 addPos) { pos(m_pos + addPos); }
+void Renderable::accumPos(const glm::vec3& addPos) { pos(m_pos + addPos); }
 void Renderable::accumPos(float x, float y, float z) {
   accumPos(glm::vec3{x, y, z});
 }
@@ -208,12 +230,12 @@ void Renderable::accumPos(float x, float y, float z) {
 // ====================================================================== //
 
 glm::vec3 Renderable::rot() const { return m_rot; }
-void      Renderable::rot(const glm::vec3 newRot) {
+void      Renderable::rot(const glm::vec3& newRot) {
   m_rot = newRot;
   updateModel();
 }
 void Renderable::rot(float x, float y, float z) { rot(glm::vec3{x, y, z}); }
-void Renderable::accumRot(const glm::vec3 addRot) { rot(m_rot + addRot); }
+void Renderable::accumRot(const glm::vec3& addRot) { rot(m_rot + addRot); }
 void Renderable::accumRot(float x, float y, float z) {
   accumRot(glm::vec3{x, y, z});
 }
@@ -224,12 +246,12 @@ void Renderable::accumRot(float x, float y, float z) {
 // ====================================================================== //
 
 glm::vec3 Renderable::scl() const { return m_scl; }
-void      Renderable::scl(const glm::vec3 newScl) {
+void      Renderable::scl(const glm::vec3& newScl) {
   m_scl = newScl;
   updateModel();
 }
 void Renderable::scl(float x, float y, float z) { scl(glm::vec3{x, y, z}); }
-void Renderable::accumScl(const glm::vec3 addScl) { scl(m_scl + addScl); }
+void Renderable::accumScl(const glm::vec3& addScl) { scl(m_scl + addScl); }
 void Renderable::accumScl(float x, float y, float z) {
   accumScl(glm::vec3{x, y, z});
 }
@@ -289,15 +311,17 @@ void Renderable::fillEBO(const std::vector<unsigned int>& indices) {
 void Renderable::draw() {
   this->bind();
   m_shader->bind();
-  if (m_texture) m_texture->bind(m_shader);
+  (m_texture) ? m_texture->bind(m_shader)
+              : m_shader->uInt1("u_texture", 99); // "Disable" texture
 
   m_shader->uFloat3("u_color", m_color);
-  m_shader->uMat4("u_matM", m_model);
-  m_shader->uMat4("u_matMVP", Core::camera->viewproj() * m_model);
 
   glm::mat4 matMV = Core::camera->view() * m_model;
   m_shader->uMat4("u_matMV", matMV);
   m_shader->uMat4("u_matN", glm::transpose(glm::inverse(matMV)));
+
+  m_shader->uMat4("u_matM", m_model);
+  m_shader->uMat4("u_matMVP", Core::camera->viewproj() * m_model);
 
   if (!m_culling) { glDisable(GL_CULL_FACE); }
   GL_ASSERT(glDrawElements(GL_TRIANGLES, m_eboSize, GL_UNSIGNED_INT, 0));
@@ -307,25 +331,5 @@ void Renderable::draw() {
   m_shader->unbind();
   this->unbind();
 }
-
-// // ====================================================================== //
-// // ====================================================================== //
-// // Transform operations wrappers
-// // ====================================================================== //
-
-// void Renderable::translate(const glm::vec3& T) { Math::translate(m_model, T); }
-// void Renderable::translate(float x, float y, float z) {
-//   this->translate(glm::vec3{x, y, z});
-// }
-
-// void Renderable::rotate(const glm::vec3& R) { Math::rotate(m_model, R); }
-// void Renderable::rotate(float x, float y, float z) {
-//   this->rotate(glm::vec3{x, y, z});
-// }
-
-// void Renderable::scale(const glm::vec3& S) { Math::scale(m_model, S); }
-// void Renderable::scale(float x, float y, float z) {
-//   this->scale(glm::vec3{x, y, z});
-//}
 
 } // namespace brave

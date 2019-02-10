@@ -34,12 +34,14 @@ namespace Figures {
   const std::string cube   = Paths::figures + "cube.obj";
   const std::string monkey = Paths::figures + "monkey.obj";
   const std::string light  = Paths::figures + "light.obj";
+  const std::string mark   = Paths::figures + "mark.obj";
 } // namespace Figures
 
 
 namespace Textures {
-  const std::string chess = Paths::textures + "chess.jpg";
-  const std::string metal = Paths::textures + "metal.jpg";
+  const std::string chess      = Paths::textures + "chess.jpg";
+  const std::string metal      = Paths::textures + "metal.jpg";
+  const std::string markborder = Paths::textures + "markborder.png";
 } // namespace Textures
 
 

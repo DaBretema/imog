@@ -23,6 +23,8 @@ public:
 
 
 private:
+  bool m_allowGlobalDraw;
+
   unsigned int m_ID;
   std::string  m_name;
   std::string  m_meshPath;
@@ -48,12 +50,13 @@ private:
 
 public:
   // Param constructor w/o OBJ file
-  Renderable(const std::string&             name        = "",
-             const std::string&             objFilePath = "",
-             const std::string&             texturePath = "",
-             const glm::vec3&               color       = Colors::magenta,
-             const std::shared_ptr<Shader>& shader      = nullptr,
-             bool                           culling     = true);
+  Renderable(bool                           allowGlobalDraw = true,
+             const std::string&             name            = "",
+             const std::string&             objFilePath     = "",
+             const std::string&             texturePath     = "",
+             const glm::vec3&               color           = Colors::magenta,
+             const std::shared_ptr<Shader>& shader          = nullptr,
+             bool                           culling         = true);
 
   // Destructor
   ~Renderable();
@@ -61,16 +64,21 @@ public:
 
   // Get a shared ptr to Renderable obj from global pool
   // by mixed data of Renderable, like id or objFilepath
-  static std::shared_ptr<Renderable> get(const std::string dataMix);
+  static std::shared_ptr<Renderable> get(const std::string& dataMix);
+
+  // Get a shared ptr to Renderable obj from global pool
+  // by name
+  static std::shared_ptr<Renderable> getByName(const std::string& name);
 
   // Create a new Renderable if it isn't on the gloabl pool
   static std::shared_ptr<Renderable>
-      create(const std::string&             name        = "",
-             const std::string&             objFilePath = "",
-             const std::string&             texturePath = "",
-             const glm::vec3&               color       = Colors::magenta,
-             const std::shared_ptr<Shader>& shader      = nullptr,
-             bool                           culling     = true);
+      create(bool                           allowGlobalDraw = true,
+             const std::string&             name            = "",
+             const std::string&             objFilePath     = "",
+             const std::string&             texturePath     = "",
+             const glm::vec3&               color           = Colors::magenta,
+             const std::shared_ptr<Shader>& shader          = nullptr,
+             bool                           culling         = true);
 
 
   // Bind this Renderable VAO(m_vao) as active to auto attach VBO, EBO, ...
@@ -79,6 +87,9 @@ public:
   // Unbind this Renderable VAO(m_vao) as active to avoid modify VBO, EBO, ...
   void unbind();
 
+
+  // Getter for global
+  bool allowGlobalDraw() const;
 
   // Getter for ID
   unsigned int ID() const;
@@ -92,31 +103,31 @@ public:
 
   // G/Setter for color
   glm::vec3 color() const;
-  void      color(glm::vec3 newColor);
+  void      color(const glm::vec3& newColor);
 
   // G/Setter for model
   glm::mat4 model() const;
-  void      model(glm::mat4 newModel);
+  void      model(const glm::mat4& newModel);
 
   // G/Setter for pos
   glm::vec3 pos() const;
-  void      pos(const glm::vec3 newPos);
+  void      pos(const glm::vec3& newPos);
   void      pos(float x, float y, float z);
-  void      accumPos(const glm::vec3 addPos);
+  void      accumPos(const glm::vec3& addPos);
   void      accumPos(float x, float y, float z);
 
   // G/Setter for rot
   glm::vec3 rot() const;
-  void      rot(const glm::vec3 newRot);
+  void      rot(const glm::vec3& newRot);
   void      rot(float x, float y, float z);
-  void      accumRot(const glm::vec3 addRot);
+  void      accumRot(const glm::vec3& addRot);
   void      accumRot(float x, float y, float z);
 
   // G/Setter for scl
   glm::vec3 scl() const;
-  void      scl(const glm::vec3 newScl);
+  void      scl(const glm::vec3& newScl);
   void      scl(float x, float y, float z);
-  void      accumScl(const glm::vec3 addScl);
+  void      accumScl(const glm::vec3& addScl);
   void      accumScl(float x, float y, float z);
 
 
@@ -129,15 +140,6 @@ public:
 
   // Draw execute the Renderable in the viewport using its shader and vbos
   void draw();
-
-
-  // Transform operations wrappers
-  // void translate(const glm::vec3& trans);
-  // void translate(float x, float y, float z);
-  // void rotate(const glm::vec3& rot);
-  // void rotate(float x, float y, float z);
-  // void scale(const glm::vec3& scl);
-  // void scale(float x, float y, float z);
 };
 
 } // namespace brave

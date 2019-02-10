@@ -13,10 +13,11 @@
 
   "mouseSensitivity": 0.1,
 
-  "mainCameraPos": [0.0, 1.3, 7.5],
+  "mainCameraPos": [0.0, 25.0, 27.5],
+  "mainCameraRot": [-45.0, 0.0],
   "mainCameraSpeed": 0.1,
 
-  "mainLightPos": [0, 5.0, 0],
+  "mainLightPos": [0, 3.0, 0],
   "mainLightColor": [0.3, 1.0, 0.3],
-  "mainLightIntensity": 300.0
+  "mainLightIntensity": 30.0
 }

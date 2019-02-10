@@ -6,6 +6,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <dac/Files.hpp>
+
 namespace brave {
 
 #define tex2DParam(id, mode) \
@@ -71,7 +73,7 @@ std::shared_ptr<Texture> Texture::get(const std::string& path) {
 // ====================================================================== //
 
 std::shared_ptr<Texture> Texture::create(const std::string& path) {
-  if (path.empty()) { return nullptr; }
+  if (path.empty() || !dac::Files::ok(path, true)) { return nullptr; }
   if (auto T = get(path)) { return T; }
   pool[path] = std::make_shared<Texture>(path);
   return pool[path];

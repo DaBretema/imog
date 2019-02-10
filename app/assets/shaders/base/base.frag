@@ -63,8 +63,8 @@ vec3 toon(in vec3 color, in float toonFactor) {
 void main() {
 
   vec3 norm = normalize(g_norm);
-  float ambient = clamp(0.75, 0.1, 0.9);
   vec3 lightPos = (u_matMV * vec4(u_lightPos,1)).xyz;
+  vec3 ambient = clamp(0.35, 0.1, 0.9) * vec3(1.0);
 
   // Obj color and texture read
 	vec3 color = texture(u_texture, g_texUV).rgb;

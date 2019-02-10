@@ -45,15 +45,22 @@ void Core::init(const std::string settingsPath) {
       // 2. Init GLFW window
       IO::windowInit();
 
-      // 3. Create shaders
+      // 3.1 Create shaders
       defShaderCreation(Shaders::base, true);
       defShaderCreation(Shaders::light, false);
+
+      // 3.2 Crate renderables
+      Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
+      Renderable::create(true, "Floor", Figures::plane, Textures::chess);
+
 
       // 4. Setup core variables
       threadsLive = true;
       pause       = false;
       camera      = std::make_shared<Camera>(Settings::mainCameraPos,
-                                        Settings::mainCameraSpeed);
+                                        Settings::mainCameraSpeed,
+                                        Settings::mainCameraRot.x,
+                                        Settings::mainCameraRot.y);
       light       = std::make_shared<Light>(Settings::mainLightPos,
                                       Settings::mainLightColor,
                                       Settings::mainLightIntensity);
@@ -107,7 +114,9 @@ void Core::frame() {
 
   camera->frame();
   for (const auto& s : Shader::pool) { s->update(); }
-  for (const auto& r : Renderable::pool) { r->draw(); }
+  for (const auto& r : Renderable::pool) {
+    if (r->allowGlobalDraw()) r->draw();
+  }
 }
 
 // ====================================================================== //

@@ -15,8 +15,9 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
       m_color(color),
       m_intensity(intensity),
       m_renderable(Renderable::create(
+          true,
           std::string("Light_" + std::to_string(g_lastLightID++)),
-          Figures::cube,
+          Figures::mark,
           "",
           m_color,
           Shader::getByName(Shaders::light),
@@ -41,18 +42,17 @@ void      Light::pos(const glm::vec3& newPos) {
 glm::vec3 Light::color() const { return m_color; }
 void      Light::color(const glm::vec3& newColor) {
   m_color = newColor;
-  m_renderable->color(m_color * m_intensity);
+  m_renderable->color(m_color);
 }
 
 // ====================================================================== //
 // ====================================================================== //
-// G/Setter for color
+// G/Setter for intensity
 // ====================================================================== //
 
 float Light::intensity() const { return m_intensity; }
 void  Light::intensity(float newIntensity) {
   m_intensity = (newIntensity < 0.1f) ? 1.f : newIntensity;
-  m_renderable->color(m_color * m_intensity * 0.085f);
 }
 
 } // namespace brave
