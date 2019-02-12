@@ -25,7 +25,7 @@ unsigned int Renderable::g_RenderablesLastID{0u};
 
 // ====================================================================== //
 // ====================================================================== //
-// Global pool for shaders
+// Global pool for renderables
 // ====================================================================== //
 
 std::vector<std::shared_ptr<Renderable>>      Renderable::pool{};
@@ -50,8 +50,8 @@ Renderable::Renderable(bool                           allowGlobalDraw,
       m_meshPath(objFilePath),
       m_shader(shader),
       m_texture(Texture::create(texturePath)),
-      m_color(color),
       m_culling(culling),
+      m_color(color),
       m_model(glm::mat4(1.f)),
       m_vao(0),
       m_loc(0),
@@ -153,10 +153,9 @@ void Renderable::unbind() {
 }
 
 
-
 // ====================================================================== //
 // ====================================================================== //
-// Getter for global
+// Getter for global draw privileges
 // ====================================================================== //
 
 bool Renderable::allowGlobalDraw() const { return m_allowGlobalDraw; }
@@ -201,11 +200,11 @@ void      Renderable::color(const glm::vec3& newColor) { m_color = newColor; }
 glm::mat4 Renderable::model() const { return m_model; }
 void      Renderable::model(const glm::mat4& newModel) { m_model = newModel; }
 void      Renderable::updateModel() {
-  glm::mat4 aux(1.f);
-  Math::translate(aux, m_pos);
-  Math::rotate(aux, m_rot);
-  Math::scale(aux, m_scl);
-  m_model = aux;
+  glm::mat4 T(1.f), R(1.f), S(1.f);
+  Math::translate(T, m_pos);
+  Math::rotate(R, m_rot);
+  Math::scale(S, m_scl);
+  m_model = T * R * S;
 }
 
 // ====================================================================== //

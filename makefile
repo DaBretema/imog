@@ -76,13 +76,17 @@ OBJECTS       = $(patsubst $(SOURCE_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
 
 # --- TARGETS --------------------------------------------------------------- #
 
-default_target: debug
+default_target: noflags
 
 # CLEAN
 clean:
 	@rm -rf $(DIST_DIR)/$(PROJECT_NAME).exe
 	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)
 	@rm -rf $(BUILD_DIR)/*
+
+# DEBUG
+noflags: CXX_FLAGS += -DNDEBUG
+noflags: $(PROJECT_NAME)
 
 # DEBUG
 debug: CXX_FLAGS += $(DEBUG_FLAGS)

@@ -79,7 +79,7 @@ Shader::Shader(const std::string& name,
     : m_name(name) {
 
   auto addShader = [&](unsigned int p, const std::string& s, unsigned int t) {
-    if (!s.empty() || !dac::Files::ok(s, true)) {
+    if (!s.empty() && dac::Files::ok(s, true)) {
       unsigned int sID = loadShader(s, t);
       glAttachShader(p, sID);
       glDeleteShader(sID);

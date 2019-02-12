@@ -23,9 +23,9 @@ std::shared_ptr<Camera> Core::camera;
 // ====================================================================== //
 
 void Core::init(const std::string settingsPath) {
-  static std::once_flag OF_Init;
+  static std::once_flag coreInitOnceFlag;
   try {
-    std::call_once(OF_Init, [&]() {
+    std::call_once(coreInitOnceFlag, [&]() {
 
 #define defShaderCreation(name, hasGeom)                    \
   {                                                         \
@@ -51,8 +51,9 @@ void Core::init(const std::string settingsPath) {
 
       // 3.2 Crate renderables
       Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
-      Renderable::create(true, "Floor", Figures::plane, Textures::chess);
-
+      Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange);
+      Renderable::create(false, "Bone", Figures::cylinder, "", Colors::blue);
+      // Renderable::create(true, "Floor", Figures::plane, Textures::chess);
 
       // 4. Setup core variables
       threadsLive = true;

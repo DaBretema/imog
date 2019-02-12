@@ -47,7 +47,6 @@ private:
 
   void updateModel();
 
-
 public:
   // Param constructor w/o OBJ file
   Renderable(bool                           allowGlobalDraw = true,
@@ -88,7 +87,7 @@ public:
   void unbind();
 
 
-  // Getter for global
+  // Getter for global draw privileges
   bool allowGlobalDraw() const;
 
   // Getter for ID

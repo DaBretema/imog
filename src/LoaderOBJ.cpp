@@ -26,43 +26,42 @@ namespace loader {
     // ----------------------------------------------------------------- //
 
     // UVs vars
+    unsigned int                           uvIdx;
     std::vector<glm::vec2>                 uvsTemp;
     std::unordered_map<unsigned int, bool> uvsCache;
     std::once_flag                         uvsOnceFlag;
+    auto resizeUVs = [&]() { out.uvs.resize(out.vertices.size()); };
+
 
     // Normals vars
+    unsigned int                           nIdx;
     std::vector<glm::vec3>                 normsTemp;
     std::unordered_map<unsigned int, bool> normsCache;
     std::once_flag                         normsOnceFlag;
+    auto resizeNorms = [&]() { out.normals.resize(out.vertices.size()); };
 
     // Faces vars
     std::vector<std::string> face;
     unsigned int             vIdx;
 
-    unsigned int uvIdx;
-    auto         resizeUVs = [&]() { out.uvs.resize(out.vertices.size()); };
-
-    unsigned int nIdx;
-    auto resizeNorms = [&]() { out.normals.resize(out.vertices.size()); };
-
     // Str vars
-    std::string       lineStream;
-    std::stringstream objStream(dac::Strings::fromFile(filePath));
+    std::string       linestream;
+    std::stringstream filestream(dac::Strings::fromFile(filePath));
 
     // ----------------------------------------------------------------- //
     // -------------------------------------------------- / AUX VARS --- //
 
 
-    while (std::getline(objStream, lineStream)) {
-      std::vector<std::string> LINE  = dac::Strings::split(lineStream, " ");
-      auto                     token = LINE.at(0);
+    while (std::getline(filestream, linestream)) {
+      auto LINE   = dac::Strings::split(linestream, " "); // ! First
+      auto lToken = LINE.at(0);                           // ! Second
 
-      if ((token == "#") || (token == "s")) { continue; }
-      if (token == "v") { out.vertices.push_back(Math::glmVec3FromStr(LINE)); }
-      if (token == "vt") { uvsTemp.push_back(Math::glmVec2FromStr(LINE)); }
-      if (token == "vn") { normsTemp.push_back(Math::glmVec3FromStr(LINE)); }
+      if ((lToken == "#") || (lToken == "s")) { continue; }
+      if (lToken == "v") { out.vertices.push_back(Math::glmVec3FromStr(LINE)); }
+      if (lToken == "vt") { uvsTemp.push_back(Math::glmVec2FromStr(LINE)); }
+      if (lToken == "vn") { normsTemp.push_back(Math::glmVec3FromStr(LINE)); }
 
-      if (token == "f") {
+      if (lToken == "f") {
         bool thereIsUVs   = uvsTemp.size() > 0;
         bool thereIsNorms = normsTemp.size() > 0;
 

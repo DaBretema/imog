@@ -1,12 +1,15 @@
 #include "Texture.hpp"
 
-#include "helpers/GLAssert.hpp"
-#include "Settings.hpp"
+#include <mutex>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <dac/Files.hpp>
+
+#include "helpers/GLAssert.hpp"
+#include "Settings.hpp"
+
 
 namespace brave {
 
@@ -34,10 +37,8 @@ std::unordered_map<std::string, std::shared_ptr<Texture>> Texture::pool;
 Texture::Texture(const std::string& path)
     : m_glID(0), m_path(path), m_bytes(0), m_width(0), m_height(0) {
 
-  static bool __once_stbflip = []() {
-    stbi_set_flip_vertically_on_load(1);
-    return true;
-  }();
+  static std::once_flag onceflag_stbflip;
+  std::call_once(onceflag_stbflip, stbi_set_flip_vertically_on_load, 1);
 
   GL_ASSERT(glGenTextures(1, &m_glID));
   GL_ASSERT(glBindTexture(GL_TEXTURE_2D, m_glID));

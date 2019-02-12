@@ -138,15 +138,47 @@ void Joint::parent(std::shared_ptr<Joint> newParent) { m_parent = newParent; }
 // Define draw process
 // ====================================================================== //
 
-void Joint::draw() {
-  // static bool __once_Renderable = [&]() {
-  //   Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
-  //   return true;
-  // }();
 
-  auto re = Renderable::getByName("Joint");
+
+void Joint::draw(int frame) {
+
+  auto bone = [&]() {
+    // Parent and current pos
+    glm::vec3 F1 = this->currPos();
+    glm::vec3 I1 = m_parent->currPos();
+    // Bone init pos
+    auto boneInitPos = (F1 + I1) * 0.5f;
+    auto F2          = boneInitPos + glm::vec3{0.f, 0.5f, 0.f};
+    auto I2          = boneInitPos - glm::vec3{0.f, 0.5f, 0.f};
+    // Vectors
+    auto V1 = glm::normalize(F1 - I1);
+    auto V2 = glm::normalize(F2 - I2);
+    // Rot
+    auto cross21 = glm::cross(V2, V1);
+    auto angle21 = glm::angle(V2, V1);
+    // Scale
+    auto SCL = glm::vec3{1.f, glm::distance(F1, I1) * 0.5f, 1.f};
+    // Compute bone model
+    glm::mat4 boneModel(1.f);
+    boneModel = glm::translate(boneModel, boneInitPos);
+    boneModel = glm::rotate(boneModel, angle21, cross21);
+    boneModel = glm::scale(boneModel, SCL);
+    // Return
+    auto BONE = Renderable::getByName("Bone");
+    BONE->model(boneModel);
+    BONE->draw();
+  };
+
+  std::string parentName = "";
+  if (m_parent) { parentName = m_parent->name(); }
+
+  // Draw JOINT renderable
+  auto re = (parentName != "Head") ? Renderable::getByName("Joint")
+                                   : Renderable::getByName("Monkey");
   re->model(m_model);
   re->draw();
+
+  if (m_parent) { bone(); }
 }
 
 } // namespace brave

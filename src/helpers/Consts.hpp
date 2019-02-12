@@ -10,21 +10,17 @@ namespace brave {
 
 
 namespace Paths {
-
   const std::string exePath = []() {
     auto s = dac::Runtime::exePath();
     std::replace(s.begin(), s.end(), '\\', '/');
-    return s;
+    return s + "/";
   }();
-
-  const std::string assets = exePath + "/assets/";
-
-  const std::string bvhs     = assets + "bvhs/";
-  const std::string shaders  = assets + "shaders/";
+  const std::string assets   = exePath + "assets/";
   const std::string figures  = assets + "figures/";
+  const std::string motions  = assets + "motions/";
+  const std::string shaders  = assets + "shaders/";
   const std::string textures = assets + "textures/";
   const std::string settings = assets + "settings.json";
-
 } // namespace Paths
 
 
@@ -35,7 +31,21 @@ namespace Figures {
   const std::string monkey = Paths::figures + "monkey.obj";
   const std::string light  = Paths::figures + "light.obj";
   const std::string mark   = Paths::figures + "mark.obj";
+  const std::string cylinder   = Paths::figures + "cylinder.obj";
 } // namespace Figures
+
+
+namespace Motions {
+  const std::string jump = Paths::motions + "jump.bvh";
+  const std::string run  = Paths::motions + "run.bvh";
+  const std::string walk = Paths::motions + "walk.bvh";
+} // namespace Motions
+
+
+namespace Shaders {
+  const std::string base  = "base";
+  const std::string light = "light";
+} // namespace Shaders
 
 
 namespace Textures {
@@ -45,9 +55,5 @@ namespace Textures {
 } // namespace Textures
 
 
-namespace Shaders {
-  const std::string base  = "base";
-  const std::string light = "light";
-} // namespace Shaders
 
 } // namespace brave

@@ -8,6 +8,7 @@
 #include <dac/Files.hpp>
 
 #include "Math.hpp"
+#include "Settings.hpp"
 
 // ========================================================================= //
 // ===================== BRAVE - Loader BVH *HELPERS* ====================== //
@@ -164,37 +165,60 @@ namespace loader {
 
   std::tuple<std::vector<std::shared_ptr<Joint>>, float>
       BVH(const std::string& bvhFilePath) {
-    dac::Files::ok(bvhFilePath, true);
-    dac::Timer timer("Parsing \"" + bvhFilePath + "\"");
 
-    std::stack<std::shared_ptr<Joint>> P{};
-    std::string                        fileLine{""};
-    _MODES                             mode{_MODES::hierarchy};
-    std::stringstream bvhStream{dac::Strings::fromFile(bvhFilePath)};
-
-    _TOKEN T{_TOKEN::none};
-
-    std::vector<std::shared_ptr<Joint>> J{};
+    // Output vars
+    std::vector<std::shared_ptr<Joint>> joints{};
     float                               frameTime{0.f};
 
-    while (std::getline(bvhStream, fileLine)) {
+    // File sanity check
+    if (!dac::Files::ok(bvhFilePath, true)) {
+      return std::make_tuple(joints, frameTime); // Returns empty
+    }
 
-      auto L = dac::Strings::split(fileLine, " "); // ! First
-      auto T = Token(L.at(0));                     // ! Second
+    // --- AUX VARS ---------------------------------------------------- //
+    // ----------------------------------------------------------------- //
+
+    if (!Settings::quiet) dac::Timer timer("Parsing \"" + bvhFilePath + "\"");
+
+    _MODES mode{_MODES::hierarchy};
+
+    std::stack<std::shared_ptr<Joint>> parents{};
+
+    std::string       linestream{""};
+    std::stringstream filestream{dac::Strings::fromFile(bvhFilePath)};
+
+    // ----------------------------------------------------------------- //
+    // -------------------------------------------------- / AUX VARS --- //
+
+
+    while (std::getline(filestream, linestream)) {
+      auto LINE   = dac::Strings::split(linestream, " "); // ! First
+      auto lToken = Token(LINE.at(0));                    // ! Second
 
       switch (mode) {
 
         // HIERARCHY
         case _MODES::hierarchy:
-          switch (T) {
-            case _TOKEN::braceR: P.pop(); break;
-            case _TOKEN::root: addNewJoint("Root", P, J); break;
-            case _TOKEN::joint: addNewJoint(L.at(1), P, J); break;
+          switch (lToken) {
+
+            case _TOKEN::braceR: parents.pop(); break;
+
+            case _TOKEN::root: addNewJoint("Root", parents, joints); break;
+
+            case _TOKEN::joint: addNewJoint(LINE.at(1), parents, joints); break;
+
             case _TOKEN::offset:
-              P.top()->offset(Math::glmVec3FromStr(L));
+              parents.top()->offset(Math::glmVec3FromStr(LINE));
               break;
-            case _TOKEN::channel: addChannelsOfCurrentLine(L, P); break;
-            case _TOKEN::endSite: addNewJoint("EndSite", P, J); break;
+
+            case _TOKEN::channel:
+              addChannelsOfCurrentLine(LINE, parents);
+              break;
+
+            case _TOKEN::endSite:
+              addNewJoint("EndSite", parents, joints);
+              break;
+
             case _TOKEN::hierarchy:
             default: continue; break;
 
@@ -204,11 +228,14 @@ namespace loader {
 
         // MOTION
         case _MODES::motion:
-          switch (T) {
+          switch (lToken) {
+
             case _TOKEN::motion:
             case _TOKEN::frameNum: break;
-            case _TOKEN::frameTime: frameTime = std::stof(L.at(2u)); break;
-            default: processMotionLine(L, J); break;
+
+            case _TOKEN::frameTime: frameTime = std::stof(LINE.at(2u)); break;
+
+            default: processMotionLine(LINE, joints); break;
           }
           break;
 
@@ -217,7 +244,7 @@ namespace loader {
       }
     }
 
-    return std::make_tuple(J, frameTime);
+    return std::make_tuple(joints, frameTime);
   }
 
 } // namespace loader

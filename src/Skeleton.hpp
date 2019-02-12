@@ -17,16 +17,17 @@ class Skeleton {
   static unsigned int g_lastSkeletonID;
 
 public:
-  static std::vector<std::shared_ptr<Skeleton>> pool;
-  static std::unordered_map<std::string,unsigned int> poolIndices;
+  static std::vector<std::shared_ptr<Skeleton>>        pool;
+  static std::unordered_map<std::string, unsigned int> poolIndices;
 
 private:
   unsigned int m_id;
+  std::string  m_path;
   bool         m_show;
   bool         m_play;
-  bool         m_attendDrawCallback;
 
   std::once_flag m_animFlag;
+  bool           m_animThread;
 
   glm::vec3 m_initPos;
   int       m_initFrame;
@@ -39,27 +40,39 @@ private:
 
 
 public:
-  Skeleton() = default;
+  // Constructor, init default variables and load from bvh file
   Skeleton(const std::string& bvhFilePath);
-  static std::shared_ptr<Skeleton> Ptr(const std::string& bvhFilePath);
+
+  // Destructor, stops animation and kills its threads
+  ~Skeleton();
+
+  // Get a shared ptr to Skeleton obj from global pool
+  // by bvh file of Skeleton
+  static std::shared_ptr<Skeleton> get(const std::string& bvhFilePath);
+
+  // Create a new Renderable if it isn't on the gloabl pool
+  static std::shared_ptr<Skeleton> create(const std::string& bvhFilePath);
+
 
   // Getter for frame-time
   float frameTime() const;
 
-  // Root renderer
-  //   std::shared_ptr<Renderer> rootRenderer() const;
+  // Getter for root pos
+  glm::vec3 rootPos() const;
+
 
   // Plays skeleton animation
   void play(int atFrame = -1, bool showIfIsHidden = true);
 
   // Stops skeleton animation
-  void stop(bool hideIfIsShowed = true);
+  void stop(bool hideIfIsShowed = false);
 
   // Launch a detached thread where is computed the animation loop
   // That loop have a delay between each iteration, equal to m_frameTime
   void animate();
 
-  // Should be called inside the render loop.
+  // Draw the skelenton joints
+  // Should be called inside the render loop
   void draw();
 };
 

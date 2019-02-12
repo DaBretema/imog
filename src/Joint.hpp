@@ -69,7 +69,7 @@ public:
   void                   parent(std::shared_ptr<Joint> parentJoint);
 
   // Define draw process
-  void draw();
+  void draw(int frame);
 };
 
 } // namespace brave
