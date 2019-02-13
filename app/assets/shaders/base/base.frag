@@ -76,11 +76,15 @@ void main() {
   lightDir = normalize(lightDir);
   vec3 light = u_lightColor ;//* (u_lightIntensity / (lightDist*lightDist));
 
+  // View
+  vec3 viewDir = normalize(-g_pos);
+
   // Diffuse
-  float diffuse = max(dot(lightDir, norm), 0.0);
+  float diffuse_alt = max(dot(viewDir, norm), 0.0);
+  float diffuse = max(dot(lightDir, norm), 0.0) + diffuse_alt;
 
   // Final color with gamma correction for sRGB
-  color *= (diffuse * light) + ambient;
+  color *= (diffuse * light);
 
   // Output gamma corrected color
   f_color = vec4(color, 1.0);

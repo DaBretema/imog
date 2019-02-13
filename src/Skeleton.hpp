@@ -38,10 +38,12 @@ private:
   int                                 m_frames;
   float                               m_frameTime;
 
+  float m_scale;
+
 
 public:
   // Constructor, init default variables and load from bvh file
-  Skeleton(const std::string& bvhFilePath);
+  Skeleton(const std::string& bvhFilePath, float scale = 1.f);
 
   // Destructor, stops animation and kills its threads
   ~Skeleton();
@@ -51,7 +53,8 @@ public:
   static std::shared_ptr<Skeleton> get(const std::string& bvhFilePath);
 
   // Create a new Renderable if it isn't on the gloabl pool
-  static std::shared_ptr<Skeleton> create(const std::string& bvhFilePath);
+  static std::shared_ptr<Skeleton> create(const std::string& bvhFilePath,
+                                          float              scale = 1.f);
 
 
   // Getter for frame-time

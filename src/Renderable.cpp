@@ -202,7 +202,7 @@ void      Renderable::model(const glm::mat4& newModel) { m_model = newModel; }
 void      Renderable::updateModel() {
   glm::mat4 T(1.f), R(1.f), S(1.f);
   Math::translate(T, m_pos);
-  Math::rotate(R, m_rot);
+  Math::rotateXYZ(R, m_rot);
   Math::scale(S, m_scl);
   m_model = T * R * S;
 }

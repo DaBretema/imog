@@ -17,11 +17,12 @@ glm::vec3 Math::unitVecZ{0.f, 0.f, 1.f};
 // Wrap mat4 translation
 // ====================================================================== //
 
-void Math::translate(glm::mat4& mat, const glm::vec3& T) {
+glm::mat4 Math::translate(glm::mat4& mat, const glm::vec3& T) {
   mat = glm::translate(mat, T);
+  return mat;
 }
-void Math::translate(glm::mat4& mat, float x, float y, float z) {
-  translate(mat, glm::vec3{x, y, z});
+glm::mat4 Math::translate(glm::mat4& mat, float x, float y, float z) {
+  return translate(mat, glm::vec3{x, y, z});
 }
 
 // ====================================================================== //
@@ -29,13 +30,18 @@ void Math::translate(glm::mat4& mat, float x, float y, float z) {
 // Wrap mat4 rotation
 // ====================================================================== //
 
-void Math::rotate(glm::mat4& mat, const glm::vec3& R) {
-  mat = glm::rotate(mat, glm::radians(R.z), unitVecZ);
-  mat = glm::rotate(mat, glm::radians(R.y), unitVecY);
-  mat = glm::rotate(mat, glm::radians(R.x), unitVecX);
+glm::mat4 Math::rotate(glm::mat4& mat, float angle, const glm::vec3& axes) {
+  mat = glm::rotate(mat, angle, axes);
+  return mat;
 }
-void Math::rotate(glm::mat4& mat, float x, float y, float z) {
-  rotate(mat, glm::vec3{x, y, z});
+glm::mat4 Math::rotateXYZ(glm::mat4& mat, const glm::vec3& angles) {
+  mat = glm::rotate(mat, glm::radians(angles.z), unitVecZ);
+  mat = glm::rotate(mat, glm::radians(angles.y), unitVecY);
+  mat = glm::rotate(mat, glm::radians(angles.x), unitVecX);
+  return mat;
+}
+glm::mat4 Math::rotateXYZ(glm::mat4& mat, float x, float y, float z) {
+  return rotateXYZ(mat, glm::vec3{x, y, z});
 }
 
 // ====================================================================== //
@@ -43,11 +49,12 @@ void Math::rotate(glm::mat4& mat, float x, float y, float z) {
 // Wrap mat4 scale
 // ====================================================================== //
 
-void Math::scale(glm::mat4& mat, const glm::vec3& S) {
+glm::mat4 Math::scale(glm::mat4& mat, const glm::vec3& S) {
   mat = glm::scale(mat, S);
+  return mat;
 }
-void Math::scale(glm::mat4& mat, float x, float y, float z) {
-  scale(mat, glm::vec3{x, y, z});
+glm::mat4 Math::scale(glm::mat4& mat, float x, float y, float z) {
+  return scale(mat, glm::vec3{x, y, z});
 }
 
 // ====================================================================== //

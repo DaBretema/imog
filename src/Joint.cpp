@@ -68,13 +68,13 @@ glm::vec3 Joint::rots(unsigned int idx) const { return m_rots.at(idx); }
 void      Joint::rots(const std::vector<glm::vec3>& Rs) { m_rots = Rs; }
 void      Joint::addRot(const glm::vec3& R) { m_rots.push_back(R); }
 
-void Joint::updateRot(unsigned int frame) {
+void Joint::updateRot(unsigned int frame, float scale) {
   // 1.- Compute hierarchy
   if (m_parent) { m_model = m_parent->model(); }
   // 2.- Apply local offset
-  Math::translate(m_model, m_offset);
+  Math::translate(m_model, m_offset * scale);
   // 3.- Apply local rotation
-  if (m_name != "EndSite") { Math::rotate(m_model, rots(frame)); }
+  if (m_name != "EndSite") { Math::rotateXYZ(m_model, rots(frame)); }
 }
 
 // ====================================================================== //
@@ -138,7 +138,7 @@ void Joint::parent(std::shared_ptr<Joint> newParent) { m_parent = newParent; }
 // Define draw process
 // ====================================================================== //
 
-void Joint::draw(int frame) {
+void Joint::draw() {
 
   auto bone = [&]() {
     // Parent and current pos
@@ -167,16 +167,14 @@ void Joint::draw(int frame) {
     BONE->draw();
   };
 
-  std::string parentName = "";
-  if (m_parent) { parentName = m_parent->name(); }
-
-  // Draw JOINT renderable
-  auto re = (parentName != "Head") ? Renderable::getByName("Joint")
-                                   : Renderable::getByName("Monkey");
-  re->model(m_model);
-  re->draw();
-
-  if (m_parent) { bone(); }
+  if (m_parent) {
+    if (m_parent->name() == "Head") {
+      auto head = Renderable::getByName("Monkey");
+      head->model(m_model);
+      head->draw();
+    }
+    bone();
+  }
 }
 
 } // namespace brave

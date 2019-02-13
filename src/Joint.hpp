@@ -42,7 +42,7 @@ public:
   glm::vec3              rots(unsigned int idx) const;
   void                   rots(const std::vector<glm::vec3>& Rs);
   void                   addRot(const glm::vec3& R);
-  void                   updateRot(unsigned int frame);
+  void                   updateRot(unsigned int frame, float scale = 1.f);
 
   // G/Setter for translations
   std::vector<glm::vec3> trans() const;
@@ -69,7 +69,7 @@ public:
   void                   parent(std::shared_ptr<Joint> parentJoint);
 
   // Define draw process
-  void draw(int frame);
+  void draw();
 };
 
 } // namespace brave

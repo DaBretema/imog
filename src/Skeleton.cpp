@@ -30,7 +30,7 @@ std::unordered_map<std::string, unsigned int> Skeleton::poolIndices;
 // Constructor, init default variables and load from bvh file
 // ====================================================================== //
 
-Skeleton::Skeleton(const std::string& bvhFilePath)
+Skeleton::Skeleton(const std::string& bvhFilePath, float scale)
     : m_id(g_lastSkeletonID++),
       m_path(bvhFilePath),
       m_show(true),
@@ -39,7 +39,8 @@ Skeleton::Skeleton(const std::string& bvhFilePath)
       m_initPos(0.f),
       m_initFrame(0),
       m_currFrame(m_initFrame),
-      m_frameDespl(0.f) {
+      m_frameDespl(0.f),
+      m_scale(scale) {
 
   std::tie(m_joints, m_frameTime) = loader::BVH(bvhFilePath);
   this->animate();
@@ -73,10 +74,11 @@ std::shared_ptr<Skeleton> Skeleton::get(const std::string& path) {
 // Create a new Skeleton if it isn't on the gloabl pool
 // ====================================================================== //
 
-std::shared_ptr<Skeleton> Skeleton::create(const std::string& bvhFilePath) {
+std::shared_ptr<Skeleton> Skeleton::create(const std::string& bvhFilePath,
+                                           float              scale) {
   if (auto Sk = get(bvhFilePath)) { return Sk; }
 
-  pool.push_back(std::make_shared<Skeleton>(bvhFilePath));
+  pool.push_back(std::make_shared<Skeleton>(bvhFilePath, scale));
 
   auto idx                 = pool.size() - 1;
   poolIndices[bvhFilePath] = idx;
@@ -147,7 +149,7 @@ void Skeleton::animate() {
           m_joints.at(0)->updateTrans(m_currFrame, m_frameDespl);
 
           // Rotate
-          for (auto& J : m_joints) { J->updateRot(m_currFrame); }
+          for (auto& J : m_joints) { J->updateRot(m_currFrame, m_scale); }
 
           // On init frame, store current pos
           if (m_currFrame == m_initFrame) {
@@ -162,6 +164,8 @@ void Skeleton::animate() {
 
           // Increment value of current frame
           ++m_currFrame;
+
+          // Request a draw
           glfwPostEmptyEvent();
         }
       });
@@ -177,7 +181,7 @@ void Skeleton::animate() {
 
 void Skeleton::draw() {
   if (m_show)
-    for (const auto& J : m_joints) J->draw(m_currFrame);
+    for (const auto& J : m_joints) J->draw();
 }
 
 } // namespace brave

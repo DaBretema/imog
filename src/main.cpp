@@ -18,7 +18,7 @@ using namespace brave;
 int main(int argc, char const* argv[]) {
   Core::init(Paths::settings);
 
-  auto sk1 = Skeleton::create(Motions::run);
+  auto sk1 = Skeleton::create(Motions::run, 0.33f);
 
   IO::keyboardAddAction(GLFW_KEY_1, [&]() { sk1->play(); });
   IO::keyboardAddAction(GLFW_KEY_2, [&]() { sk1->stop(); });
@@ -53,7 +53,7 @@ int main(int argc, char const* argv[]) {
   Core::onUpdate([&]() {
     Core::frame();
     sk1->draw();
-    // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 0.f, 15.f));
+    Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
   });
 
   return 0;

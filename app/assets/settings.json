@@ -18,6 +18,6 @@
   "mainCameraSpeed": 0.1,
 
   "mainLightPos": [0, 3.0, 0],
-  "mainLightColor": [0.3, 1.0, 0.3],
+  "mainLightColor": [1.0, 1.0, 1.0],
   "mainLightIntensity": 500.0
 }

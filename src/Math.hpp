@@ -26,16 +26,17 @@ public:
   static glm::vec3 unitVecZ;
 
   // Wrap mat4 translation
-  static void translate(glm::mat4& mat, const glm::vec3& T);
-  static void translate(glm::mat4& mat, float x, float y, float z);
+  static glm::mat4 translate(glm::mat4& mat, const glm::vec3& T);
+  static glm::mat4 translate(glm::mat4& mat, float x, float y, float z);
 
   // Wrap mat4 rotation
-  static void rotate(glm::mat4& mat, const glm::vec3& R);
-  static void rotate(glm::mat4& mat, float x, float y, float z);
+  static glm::mat4 rotate(glm::mat4& mat, float angle, const glm::vec3& axes);
+  static glm::mat4 rotateXYZ(glm::mat4& mat, const glm::vec3& angles);
+  static glm::mat4 rotateXYZ(glm::mat4& mat, float x, float y, float z);
 
   // Wrap mat4 scale
-  static void scale(glm::mat4& mat, const glm::vec3& S);
-  static void scale(glm::mat4& mat, float x, float y, float z);
+  static glm::mat4 scale(glm::mat4& mat, const glm::vec3& S);
+  static glm::mat4 scale(glm::mat4& mat, float x, float y, float z);
 
   // Numeric string vector of size 3(-1) to glm::vec3
   static glm::vec2 glmVec2FromStr(const std::vector<std::string>& strVec);
