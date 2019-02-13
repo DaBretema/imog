@@ -50,10 +50,10 @@ void Core::init(const std::string settingsPath) {
       defShaderCreation(Shaders::light, false);
 
       // 3.2 Crate renderables
-      Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
       Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange);
-      Renderable::create(false, "Bone", Figures::cylinder, "", Colors::blue);
-      // Renderable::create(true, "Floor", Figures::plane, Textures::chess);
+      Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
+      Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
+      Renderable::create(true, "Floor", Figures::plane, Textures::chess);
 
       // 4. Setup core variables
       threadsLive = true;
@@ -71,12 +71,12 @@ void Core::init(const std::string settingsPath) {
       KBAA(GLFW_KEY_ESCAPE, close());
       KBAA(GLFW_KEY_P, pause = !pause);
 
-      KBAA(GLFW_KEY_W, camera->move(CamDir::front));
-      KBAA(GLFW_KEY_S, camera->move(CamDir::back));
-      KBAA(GLFW_KEY_A, camera->move(CamDir::left));
-      KBAA(GLFW_KEY_D, camera->move(CamDir::right));
       KBAA(GLFW_KEY_Q, camera->move(CamDir::up));
       KBAA(GLFW_KEY_E, camera->move(CamDir::down));
+      KBAA(GLFW_KEY_S, camera->move(CamDir::back));
+      KBAA(GLFW_KEY_W, camera->move(CamDir::front));
+      KBAA(GLFW_KEY_A, camera->move(CamDir::left));
+      KBAA(GLFW_KEY_D, camera->move(CamDir::right));
 
       KBAA(GLFW_KEY_F, static bool __brave_camSpeedFlag;
            (!__brave_camSpeedFlag) ? camera->multSpeed(10.f)
@@ -128,7 +128,7 @@ void Core::frame() {
 
 void Core::onUpdate(const _IO_FUNC& fn) {
   auto updateFn = [&]() {
-    light->pos(Settings::mainLightPos);
+    // light->pos(Settings::mainLightPos);
     light->color(Settings::mainLightColor);
     light->intensity(Settings::mainLightIntensity);
 

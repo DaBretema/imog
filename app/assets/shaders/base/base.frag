@@ -74,7 +74,7 @@ void main() {
   vec3 lightDir = lightPos - g_pos;
   float lightDist = length(lightDir);
   lightDir = normalize(lightDir);
-  vec3 light = u_lightColor * (u_lightIntensity / (lightDist*lightDist));
+  vec3 light = u_lightColor ;//* (u_lightIntensity / (lightDist*lightDist));
 
   // Diffuse
   float diffuse = max(dot(lightDir, norm), 0.0);

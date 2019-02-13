@@ -19,5 +19,5 @@
 
   "mainLightPos": [0, 3.0, 0],
   "mainLightColor": [0.3, 1.0, 0.3],
-  "mainLightIntensity": 30.0
+  "mainLightIntensity": 500.0
 }

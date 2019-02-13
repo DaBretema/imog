@@ -53,6 +53,7 @@ int main(int argc, char const* argv[]) {
   Core::onUpdate([&]() {
     Core::frame();
     sk1->draw();
+    // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 0.f, 15.f));
   });
 
   return 0;

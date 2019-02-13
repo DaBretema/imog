@@ -2,8 +2,8 @@
 
 #include <dac/Logger.hpp>
 
-#include "helpers/Consts.hpp"
 #include "Settings.hpp"
+#include "helpers/Consts.hpp"
 
 namespace brave {
 
@@ -137,8 +137,6 @@ void Joint::parent(std::shared_ptr<Joint> newParent) { m_parent = newParent; }
 // ====================================================================== //
 // Define draw process
 // ====================================================================== //
-
-
 
 void Joint::draw(int frame) {
 

@@ -1,6 +1,9 @@
 #include "Skeleton.hpp"
 #include "LoaderBVH.hpp"
 
+#define GLFW_INCLUDE_NONE
+#include <glfw/glfw3.h>
+
 #include <dac/Async.hpp>
 #include <dac/Logger.hpp>
 
@@ -159,6 +162,7 @@ void Skeleton::animate() {
 
           // Increment value of current frame
           ++m_currFrame;
+          glfwPostEmptyEvent();
         }
       });
     });
