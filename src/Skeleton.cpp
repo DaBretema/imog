@@ -7,6 +7,8 @@
 #include <dac/Async.hpp>
 #include <dac/Logger.hpp>
 
+#include "Math.hpp"
+
 namespace brave {
 
 // ====================================================================== //
@@ -137,6 +139,8 @@ void Skeleton::animate() {
   // genLoop(m_joints);
   m_frames = m_joints.at(0)->frames();
   if (m_frames != -1) {
+    static glm::mat4 temp_model;
+    temp_model = glm::mat4(1.f);
 
     std::call_once(m_animFlag, [&]() {
       dac::Async::periodic(m_frameTime, &m_animThread, [&]() {
@@ -145,6 +149,9 @@ void Skeleton::animate() {
         if (m_play && m_currFrame < m_frames &&
             m_joints.at(0)->name() == "Root") {
 
+          // --- OLD System ---
+
+          // /*
           // Translate
           m_joints.at(0)->updateTrans(m_currFrame, m_frameDespl);
 
@@ -164,7 +171,7 @@ void Skeleton::animate() {
 
           // Increment value of current frame
           ++m_currFrame;
-
+          // */
           // Request a draw
           glfwPostEmptyEvent();
         }

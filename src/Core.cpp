@@ -128,7 +128,7 @@ void Core::frame() {
 
 void Core::onUpdate(const _IO_FUNC& fn) {
   auto updateFn = [&]() {
-    // light->pos(Settings::mainLightPos);
+    light->pos(Settings::mainLightPos);
     light->color(Settings::mainLightColor);
     light->intensity(Settings::mainLightIntensity);
 

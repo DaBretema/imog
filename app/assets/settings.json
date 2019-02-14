@@ -17,7 +17,7 @@
   "mainCameraRot": [-45.0, 0.0],
   "mainCameraSpeed": 0.1,
 
-  "mainLightPos": [0, 3.0, 0],
+  "mainLightPos": [0, 5.0, 0],
   "mainLightColor": [1.0, 1.0, 1.0],
   "mainLightIntensity": 500.0
 }

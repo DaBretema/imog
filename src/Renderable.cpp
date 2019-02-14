@@ -200,11 +200,10 @@ void      Renderable::color(const glm::vec3& newColor) { m_color = newColor; }
 glm::mat4 Renderable::model() const { return m_model; }
 void      Renderable::model(const glm::mat4& newModel) { m_model = newModel; }
 void      Renderable::updateModel() {
-  glm::mat4 T(1.f), R(1.f), S(1.f);
-  Math::translate(T, m_pos);
-  Math::rotateXYZ(R, m_rot);
-  Math::scale(S, m_scl);
-  m_model = T * R * S;
+  m_model = glm::mat4(1.f);
+  Math::translate(m_model, m_pos);
+  Math::rotateXYZ(m_model, m_rot);
+  Math::scale(m_model, m_scl);
 }
 
 // ====================================================================== //

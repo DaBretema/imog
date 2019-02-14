@@ -24,6 +24,28 @@ int main(int argc, char const* argv[]) {
   IO::keyboardAddAction(GLFW_KEY_2, [&]() { sk1->stop(); });
 
 
+  auto cube =
+      Renderable::create(false, "cube", Figures::monkey, "", Colors::red);
+  cube->scl(cube->scl() * 3.f);
+  cube->pos(0, 0, 0);
+  cube->rot(0, -90.f, 0);
+
+  auto getFront = [&](glm::vec3 rotVec) {
+    glm::mat4 rot(1.f);
+    Math::rotateXYZ(rot, rotVec);
+    return glm::normalize(-1.0f * glm::vec3(rot[2].x, rot[2].y, rot[2].z));
+  };
+
+  IO::keyboardAddAction(GLFW_KEY_I,
+                        [&]() { cube->accumPos(-getFront(cube->rot())); });
+  IO::keyboardAddAction(GLFW_KEY_K,
+                        [&]() { cube->accumPos(getFront(cube->rot())); });
+  IO::keyboardAddAction(GLFW_KEY_J, [&]() { cube->accumRot(0, -1.f, 0); });
+  IO::keyboardAddAction(GLFW_KEY_L, [&]() { cube->accumRot(0, 1.f, 0); });
+
+
+  auto cube2 =
+      Renderable::create(false, "cube2", Figures::cube, "", Colors::blue);
 
   // auto dbg = Renderable::create(false,
   //                               "dbg",
@@ -52,8 +74,9 @@ int main(int argc, char const* argv[]) {
 
   Core::onUpdate([&]() {
     Core::frame();
-    sk1->draw();
-    Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
+    // sk1->draw();
+    // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
+    cube->draw();
   });
 
   return 0;
