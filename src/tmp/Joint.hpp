@@ -53,7 +53,7 @@ public:
 
   // Getter for model
   glm::mat4 model() const;
-  // void      model(const glm::mat4 newModel);
+  void      model(const glm::mat4 newModel);
 
   // G/Setter for offset
   glm::vec3 offset() const;

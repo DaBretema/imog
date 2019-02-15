@@ -103,7 +103,7 @@ void Joint::updateTrans(unsigned int frame, const glm::vec3& despl) {
 // ====================================================================== //
 
 glm::mat4 Joint::model() const { return m_model; }
-// void      Joint::model(const glm::mat4 newModel) { m_model = newModel; }
+void      Joint::model(const glm::mat4 newModel) { m_model = newModel; }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -141,30 +141,20 @@ void Joint::parent(std::shared_ptr<Joint> newParent) { m_parent = newParent; }
 void Joint::draw() {
 
   auto bone = [&]() {
-    // Parent and current pos
-    glm::vec3 F1 = this->currPos();
-    glm::vec3 I1 = m_parent->currPos();
-    // Bone init pos
-    auto boneInitPos = (F1 + I1) * 0.5f;
-    auto F2          = boneInitPos + glm::vec3{0.f, 0.5f, 0.f};
-    auto I2          = boneInitPos - glm::vec3{0.f, 0.5f, 0.f};
-    // Vectors
-    auto V1 = glm::normalize(F1 - I1);
-    auto V2 = glm::normalize(F2 - I2);
-    // Rot
-    auto cross21 = glm::cross(V2, V1);
-    auto angle21 = glm::angle(V2, V1);
-    // Scale
-    auto SCL = glm::vec3{1.f, glm::distance(F1, I1) * 0.5f, 1.f};
-    // Compute bone model
     glm::mat4 boneModel(1.f);
-    boneModel = glm::translate(boneModel, boneInitPos);
-    boneModel = glm::rotate(boneModel, angle21, cross21);
-    boneModel = glm::scale(boneModel, SCL);
-    // Return
-    auto BONE = Renderable::getByName("Bone");
-    BONE->model(boneModel);
-    BONE->draw();
+    // T
+    auto bonePos = (this->currPos() + m_parent->currPos()) * 0.5f;
+    Math::translate(boneModel, bonePos);
+    // R
+    auto vJ = glm::normalize(this->currPos() - m_parent->currPos());
+    auto vB = glm::normalize(bonePos + glm::vec3(0, .5f, 0) - bonePos); // !
+    Math::rotate(boneModel, glm::angle(vB, vJ), glm::cross(vB, vJ));
+    // S
+    auto distJ = glm::distance(this->currPos(), m_parent->currPos()) * 0.5f;
+    Math::scale(boneModel, Math::unitVecY * distJ);
+    // Draw
+    Renderable::getByName("Bone")->model(boneModel);
+    Renderable::getByName("Bone")->draw();
   };
 
   if (m_parent) {

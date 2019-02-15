@@ -53,7 +53,7 @@ void Core::init(const std::string settingsPath) {
       Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange);
       Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
       Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
-      Renderable::create(true, "Floor", Figures::plane, Textures::chess);
+      // Renderable::create(true, "Floor", Figures::plane, Textures::chess);
 
       // 4. Setup core variables
       threadsLive = true;

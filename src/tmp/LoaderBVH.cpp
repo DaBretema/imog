@@ -1,5 +1,4 @@
-#include "Loader.hpp"
-
+#include "LoaderBVH.hpp"
 
 #include <regex>
 #include <unordered_map>
@@ -15,7 +14,6 @@
 // ===================== BRAVE - Loader BVH *HELPERS* ====================== //
 // ========================================================================= //
 
-using _join_t = brave::Skeleton::Joint;
 
 // ====================================================================== //
 // ====================================================================== //
@@ -96,14 +94,13 @@ _TOKEN Token(const std::string& tokenStr) {
 // Add new joint to the joint list with the gived name
 // ====================================================================== //
 
-void addNewJoint(const std::string&                     name,
-                 std::stack<std::shared_ptr<_join_t>>&  parents,
-                 std::vector<std::shared_ptr<_join_t>>& joints) {
+void addNewJoint(const std::string&                          name,
+                 std::stack<std::shared_ptr<brave::Joint>>&  parents,
+                 std::vector<std::shared_ptr<brave::Joint>>& joints) {
 
-  auto j  = std::make_shared<_join_t>();
-  j->name = name;
+  auto j = std::make_shared<brave::Joint>(name);
 
-  if (!parents.empty()) { j->parent = parents.top(); }
+  if (!parents.empty()) { j->parent(parents.top()); }
   parents.push(j);
 
   joints.push_back(j);
@@ -114,8 +111,9 @@ void addNewJoint(const std::string&                     name,
 // For the gived line (called if is channel) iter and catch the channel info
 // ====================================================================== //
 
-void addChannelsOfCurrentLine(const std::vector<std::string>&       currLine,
-                              std::stack<std::shared_ptr<_join_t>>& parents) {
+void addChannelsOfCurrentLine(
+    const std::vector<std::string>&            currLine,
+    std::stack<std::shared_ptr<brave::Joint>>& parents) {
 
   for (auto i{2u}; i < currLine.size(); ++i) {
     parents.top()->addChannel(_chMap.at(currLine.at(i)));
@@ -127,8 +125,8 @@ void addChannelsOfCurrentLine(const std::vector<std::string>&       currLine,
 // A wrap for digest the data of each Motion slice line
 // ====================================================================== //
 
-void processMotionLine(const std::vector<std::string>&        currLine,
-                       std::vector<std::shared_ptr<_join_t>>& joints) {
+void processMotionLine(const std::vector<std::string>&             currLine,
+                       std::vector<std::shared_ptr<brave::Joint>>& joints) {
 
   glm::vec3 aux{0.f};
   auto      dataIdx{0u};
@@ -165,9 +163,17 @@ void processMotionLine(const std::vector<std::string>&        currLine,
 namespace brave {
 namespace loader {
 
-  bvh_t BVH(const std::string& bvhFilePath) {
-    bvh_t out; //! ADAPT ALL TO THIS... And change Channels strategy :D
-    if (!dac::Files::ok(bvhFilePath, true)) { return out; }
+  std::tuple<std::vector<std::shared_ptr<Joint>>, float>
+      BVH(const std::string& bvhFilePath) {
+
+    // Output vars
+    std::vector<std::shared_ptr<Joint>> joints{};
+    float                               frameTime{0.f};
+
+    // File sanity check
+    if (!dac::Files::ok(bvhFilePath, true)) {
+      return std::make_tuple(joints, frameTime); // Returns empty
+    }
 
     // --- AUX VARS ---------------------------------------------------- //
     // ----------------------------------------------------------------- //

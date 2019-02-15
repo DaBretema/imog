@@ -1,4 +1,4 @@
-#include "LoaderOBJ.hpp"
+#include "Loader.hpp"
 
 #include <mutex>
 #include <sstream>
@@ -12,14 +12,13 @@
 namespace brave {
 namespace loader {
 
-
   // ====================================================================== //
   // ====================================================================== //
   // Wrap the process to load a 3D obj from OBJ file
   // ====================================================================== //
 
-  RenderData OBJ(const std::string& filePath) {
-    RenderData out;
+  Renderable::data OBJ(const std::string& filePath) {
+    Renderable::data out;
     if (!dac::Files::ok(filePath, true)) { return out; }
 
     // --- AUX VARS ---------------------------------------------------- //

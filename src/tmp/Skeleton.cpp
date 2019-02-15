@@ -42,7 +42,8 @@ Skeleton::Skeleton(const std::string& bvhFilePath, float scale)
       m_initFrame(0),
       m_currFrame(m_initFrame),
       m_frameDespl(0.f),
-      m_scale(scale) {
+      m_scale(scale),
+      m_model(1.f) {
 
   std::tie(m_joints, m_frameTime) = loader::BVH(bvhFilePath);
   this->animate();
@@ -102,6 +103,14 @@ float Skeleton::frameTime() const { return m_frameTime; }
 
 glm::vec3 Skeleton::rootPos() const { return m_joints.at(0)->currPos(); }
 
+// ====================================================================== //
+// ====================================================================== //
+// G/Setter for model
+// ====================================================================== //
+
+glm::mat4 Skeleton::model() const { return m_model; }
+void      Skeleton::model(const glm::mat4& newModel) { m_model = newModel; }
+
 
 // ====================================================================== //
 // ====================================================================== //
@@ -146,8 +155,21 @@ void Skeleton::animate() {
       dac::Async::periodic(m_frameTime, &m_animThread, [&]() {
         // Check thats playing, currframe dont exceed the frames number and
         // that joint zero is the root
-        if (m_play && m_currFrame < m_frames &&
+        if (m_play && m_currFrame < m_frames - 1 &&
             m_joints.at(0)->name() == "Root") {
+
+          auto root = m_joints.at(0);
+
+          auto  currFramePos = root->trans(m_currFrame);
+          auto  nextFramePos = root->trans(m_currFrame + 1);
+          float step         = glm::distance(nextFramePos, currFramePos);
+
+          auto front = glm::normalize(m_model[2]);
+          m_joints.at(0)->model(Math::translate(m_model, front * step));
+
+          root->model(m_model);
+
+
 
           // --- OLD System ---
 

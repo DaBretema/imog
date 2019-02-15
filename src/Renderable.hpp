@@ -12,11 +12,18 @@
 
 namespace brave {
 
-class Renderable {
 
+class Renderable {
   static unsigned int g_RenderablesLastID;
 
 public:
+  struct data {
+    std::vector<glm::vec3>    vertices;
+    std::vector<glm::vec3>    normals;
+    std::vector<glm::vec2>    uvs;
+    std::vector<unsigned int> indices;
+  };
+
   // Global pool for renderables
   static std::vector<std::shared_ptr<Renderable>>      pool;
   static std::unordered_map<std::string, unsigned int> poolIndices;
