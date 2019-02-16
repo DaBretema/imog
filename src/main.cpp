@@ -11,6 +11,7 @@
 
 // temp
 #include "Math.hpp"
+#include "Loader.hpp"
 
 
 using namespace brave;
@@ -36,22 +37,22 @@ int main(int argc, char const* argv[]) {
   // IO::keyboardAddAction(GLFW_KEY_2, [&]() { sk1->stop(); });
 
 
-  auto cube =
-      Renderable::create(false, "cube", Figures::monkey, "", Colors::white);
-  cube->scl(cube->scl() * 3.f);
-  cube->pos(0, 2.f, 0);
+  // auto cube =
+  //     Renderable::create(false, "cube", Figures::monkey, "", Colors::white);
+  // cube->scl(cube->scl() * 3.f);
+  // cube->pos(0, 2.f, 0);
 
-  // Pro
-  float step     = 1.5f;
-  auto  getFront = [&]() { return glm::normalize(cube->model()[2]); };
+  // // Pro
+  // float step     = 1.5f;
+  // auto  getFront = [&]() { return glm::normalize(cube->model()[2]); };
 
-  // Keyboard, add flag for RELEASE or PRESS
-  IO::keyboardAddAction(GLFW_KEY_I,
-                        [&]() { cube->accumPos(getFront() * step); });
-  IO::keyboardAddAction(GLFW_KEY_K,
-                        [&]() { cube->accumPos(-getFront() * step); });
-  IO::keyboardAddAction(GLFW_KEY_J, [&]() { cube->accumRot(0, -1.f, 0); });
-  IO::keyboardAddAction(GLFW_KEY_L, [&]() { cube->accumRot(0, 1.f, 0); });
+  // // Keyboard, add flag for RELEASE or PRESS
+  // IO::keyboardAddAction(GLFW_KEY_I,
+  //                       [&]() { cube->accumPos(getFront() * step); });
+  // IO::keyboardAddAction(GLFW_KEY_K,
+  //                       [&]() { cube->accumPos(-getFront() * step); });
+  // IO::keyboardAddAction(GLFW_KEY_J, [&]() { cube->accumRot(0, -1.f, 0); });
+  // IO::keyboardAddAction(GLFW_KEY_L, [&]() { cube->accumRot(0, 1.f, 0); });
 
 
 
@@ -64,12 +65,25 @@ int main(int argc, char const* argv[]) {
   // };
 
 
-  Core::onUpdate([&]() {
-    Core::frame();
-    // sk1->draw();
-    // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
-    cube->draw();
-  });
+  // Core::onUpdate([&]() {
+  //   Core::frame();
+  //   // sk1->draw();
+  //   // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
+  //   // cube->draw();
+  // });
+
+  auto testbvh = loader::BVH(Motions::run);
+  int  i       = 0;
+  int  r       = 0;
+
+  for (auto frame : testbvh->frames) {
+    dPrint("----------\nFrame{}", i++);
+    dPrint("T : {}", glm::to_string(frame.translation));
+    for (auto rot : frame.rotations)
+      dPrint("R{} : {}", r++, glm::to_string(rot));
+    r = 0;
+  }
+
 
   return 0;
 }

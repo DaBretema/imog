@@ -16,13 +16,13 @@ namespace brave {
 
 class Skeleton {
 
-  using motion_t = std::shared_ptr<Motion>;
-
 public:
   struct Joint {
     std::string            name;
     glm::vec3              offset;
     std::shared_ptr<Joint> parent;
+    std::shared_ptr<Joint> endsite;
+    Joint(const std::string& name) : name(name) {}
   };
   struct Frame {
     glm::vec3 translation;
@@ -34,13 +34,15 @@ public:
     std::vector<glm::vec3> rotations;
   };
   struct Motion {
-    std::string        name;
-    std::vector<Joint> joints;
-    std::vector<Frame> frames;
-    float              frameTime;
+    std::string                         name;
+    std::vector<std::shared_ptr<Joint>> joints;
+    std::vector<Frame>                  frames;
+    float                               frameTime;
   };
 
 private:
+  using motion_t = std::shared_ptr<Motion>;
+
   glm::mat4      m_model;
   bool           m_animThread;
   std::once_flag animationOnceFlag;
@@ -65,59 +67,59 @@ public:
   Skeleton(const std::string& idlePath);
   ~Skeleton();
 
-  // Run a detached thread for animation process
-  void animation() {
+  // // Run a detached thread for animation process
+  // void animation() {
 
-    auto skRotation = [&](bool right, float step = 1.f) {
-      float dir = (right) ? 1.f : -1.f;
-      Math::rotateXYZ(m_model, Math::unitVecY * dir * step);
-    };
+  //   auto skRotation = [&](bool right, float step = 1.f) {
+  //     float dir = (right) ? 1.f : -1.f;
+  //     Math::rotateXYZ(m_model, Math::unitVecY * dir * step);
+  //   };
 
-    auto skMovement = [&](bool forward, float step = 1.f) {
-      float dir = (forward) ? 1.f : -1.f;
-      Math::translate(m_model, glm::normalize(dir * m_model[2]) * step);
-    };
+  //   auto skMovement = [&](bool forward, float step = 1.f) {
+  //     float dir = (forward) ? 1.f : -1.f;
+  //     Math::translate(m_model, glm::normalize(dir * m_model[2]) * step);
+  //   };
 
-    std::call_once(animationOnceFlag, [&]() {
-      dac::Async::periodic(1.f, &m_animThread, [&]() {
-        /*
-			Movement by user input
-			! [KEYBOARD] Add flag for RELEASE or PRESS. (The 2nd parameter)
+  //   std::call_once(animationOnceFlag, [&]() {
+  //     dac::Async::periodic(1.f, &m_animThread, [&]() {
+  //       /*
+  // 		Movement by user input
+  // 		! [KEYBOARD] Add flag for RELEASE or PRESS. (The 2nd parameter)
 
-			1. SETUP
-			IO::keyboardAddAction(GLFW_KEY_I, true, [&]() { m_moveForward = true });
-			IO::keyboardAddAction(GLFW_KEY_I, false, [&]() { m_moveForward = false });
-			IO::keyboardAddAction(GLFW_KEY_K, true, [&]() { m_moveBackward = true });
-			IO::keyboardAddAction(GLFW_KEY_K, false, [&]() { m_moveBackward = false });
-			IO::keyboardAddAction(GLFW_KEY_J, true, [&]() { m_rotateLeft = true });
-			IO::keyboardAddAction(GLFW_KEY_J, false, [&]() { m_rotateLeft = false });
-			IO::keyboardAddAction(GLFW_KEY_L, true, [&]() { m_rotateRight = true });
-			IO::keyboardAddAction(GLFW_KEY_L, false, [&]() { m_rotateRight = false });
+  // 		1. SETUP
+  // 		IO::keyboardAddAction(GLFW_KEY_I, true, [&]() { m_moveForward = true });
+  // 		IO::keyboardAddAction(GLFW_KEY_I, false, [&]() { m_moveForward = false });
+  // 		IO::keyboardAddAction(GLFW_KEY_K, true, [&]() { m_moveBackward = true });
+  // 		IO::keyboardAddAction(GLFW_KEY_K, false, [&]() { m_moveBackward = false });
+  // 		IO::keyboardAddAction(GLFW_KEY_J, true, [&]() { m_rotateLeft = true });
+  // 		IO::keyboardAddAction(GLFW_KEY_J, false, [&]() { m_rotateLeft = false });
+  // 		IO::keyboardAddAction(GLFW_KEY_L, true, [&]() { m_rotateRight = true });
+  // 		IO::keyboardAddAction(GLFW_KEY_L, false, [&]() { m_rotateRight = false });
 
-			2. FOR MORE REALISM...
-			Right and Left keys, should not rotate, should generate a motion
-			like those that we can see in "unity blend tree" and rotate the
-			model in that direction and then move forward.
-		*/
-        if (m_rotateLeft) { skRotation(false); }
-        if (m_rotateRight) { skRotation(true); }
-        if (m_moveForward) { skMovement(true); }
-        if (m_moveBackward) { skMovement(false); }
+  // 		2. FOR MORE REALISM...
+  // 		Right and Left keys, should not rotate, should generate a motion
+  // 		like those that we can see in "unity blend tree" and rotate the
+  // 		model in that direction and then move forward.
+  // 	*/
+  //       if (m_rotateLeft) { skRotation(false); }
+  //       if (m_rotateRight) { skRotation(true); }
+  //       if (m_moveForward) { skMovement(true); }
+  //       if (m_moveBackward) { skMovement(false); }
 
-        // Idle state
-        if (!(m_rotateLeft && m_rotateRight && m_moveForward &&
-              m_moveBackward)) {}
+  //       // Idle state
+  //       if (!(m_rotateLeft && m_rotateRight && m_moveForward &&
+  //             m_moveBackward)) {}
 
-        // Update hierarchy
-        for (const auto& joint : moJoints()) {}
-      });
-    });
-  }
+  //       // Update hierarchy
+  //       for (const auto& joint : moJoints()) {}
+  //     });
+  //   });
+  // }
 };
 
-Skeleton::Skeleton(const std::string& idlePath) {}
+// Skeleton::Skeleton(const std::string& idlePath) {}
 
-Skeleton::~Skeleton() {}
+// Skeleton::~Skeleton() {}
 
 
 

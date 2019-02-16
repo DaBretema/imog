@@ -6,7 +6,7 @@
 #include <dac/Logger.hpp>
 
 #include "Core.hpp"
-#include "LoaderOBJ.hpp"
+#include "Loader.hpp"
 #include "Settings.hpp"
 
 #include "helpers/Consts.hpp"
@@ -65,7 +65,7 @@ Renderable::Renderable(bool                           allowGlobalDraw,
   if (m_name.empty()) { m_name = std::string("R_" + std::to_string(m_ID)); }
 
   if (!objFilePath.empty()) {
-    RenderData renderData = loader::OBJ(objFilePath);
+    Renderable::data renderData = loader::OBJ(objFilePath);
     this->fillEBO(renderData.indices); // No location, just internal data.
     this->addVBO(renderData.vertices); // Location = 0
     this->addVBO(renderData.normals);  // Location = 1

@@ -1,6 +1,5 @@
 #include "Loader.hpp"
 
-
 #include <regex>
 #include <unordered_map>
 
@@ -15,21 +14,21 @@
 // ===================== BRAVE - Loader BVH *HELPERS* ====================== //
 // ========================================================================= //
 
-using _join_t = brave::Skeleton::Joint;
+using joint_t = std::shared_ptr<brave::Skeleton::Joint>;
 
 // ====================================================================== //
 // ====================================================================== //
 // To know where the parser is
 // ====================================================================== //
 
-enum struct _MODES { none, hierarchy, motion };
+enum struct MODES { none, hierarchy, motion };
 
 // ====================================================================== //
 // ====================================================================== //
 // Tokens order is gived by appear the function TYPE must have the same order
 // ====================================================================== //
 
-enum struct _TOKEN {
+enum struct TOKEN {
   none,
   braceR,
   hierarchy,
@@ -48,12 +47,12 @@ enum struct _TOKEN {
 // Wrap strings to values (avoid tons of if-else at parsing)
 // ====================================================================== //
 
-const std::unordered_map<std::string, unsigned int> _chMap{{"Xposition", 0u},
-                                                           {"Yposition", 1u},
-                                                           {"Zposition", 2u},
-                                                           {"Xrotation", 0u},
-                                                           {"Yrotation", 1u},
-                                                           {"Zrotation", 2u}};
+const std::unordered_map<std::string, unsigned int> CHANMAP{{"Xposition", 0u},
+                                                            {"Yposition", 1u},
+                                                            {"Zposition", 2u},
+                                                            {"Xrotation", 0u},
+                                                            {"Yrotation", 1u},
+                                                            {"Zrotation", 2u}};
 
 // ====================================================================== //
 // ====================================================================== //
@@ -76,7 +75,7 @@ const std::array<std::regex, 10> _tokenREs{std::regex(".*\\}"),
 // Get token enum from a string
 // ====================================================================== //
 
-_TOKEN Token(const std::string& tokenStr) {
+TOKEN Token(const std::string& tokenStr) {
   bool         matched{false};
   unsigned int tokenValue{0u};
 
@@ -88,7 +87,7 @@ _TOKEN Token(const std::string& tokenStr) {
     };
   }
 
-  return (matched) ? static_cast<_TOKEN>(tokenValue) : _TOKEN::none;
+  return (matched) ? static_cast<TOKEN>(tokenValue) : TOKEN::none;
 };
 
 // ====================================================================== //
@@ -96,64 +95,19 @@ _TOKEN Token(const std::string& tokenStr) {
 // Add new joint to the joint list with the gived name
 // ====================================================================== //
 
-void addNewJoint(const std::string&                     name,
-                 std::stack<std::shared_ptr<_join_t>>&  parents,
-                 std::vector<std::shared_ptr<_join_t>>& joints) {
+void addNewJoint(const std::string&    name,
+                 std::stack<joint_t>&  parents,
+                 std::vector<joint_t>& joints,
+                 bool                  isEndSite = false) {
 
-  auto j  = std::make_shared<_join_t>();
-  j->name = name;
+  auto j    = std::make_shared<brave::Skeleton::Joint>(name);
+  j->parent = (!parents.empty()) ? parents.top() : nullptr;
 
-  if (!parents.empty()) { j->parent = parents.top(); }
   parents.push(j);
-
-  joints.push_back(j);
+  if (!isEndSite) { joints.push_back(j); }
+  if (isEndSite && j->parent) { j->parent->endsite = j; }
+  if (isEndSite && !j->parent) { dErr("An EndSite, should have parent!") }
 };
-
-// ====================================================================== //
-// ====================================================================== //
-// For the gived line (called if is channel) iter and catch the channel info
-// ====================================================================== //
-
-void addChannelsOfCurrentLine(const std::vector<std::string>&       currLine,
-                              std::stack<std::shared_ptr<_join_t>>& parents) {
-
-  for (auto i{2u}; i < currLine.size(); ++i) {
-    parents.top()->addChannel(_chMap.at(currLine.at(i)));
-  }
-};
-
-// ====================================================================== //
-// ====================================================================== //
-// A wrap for digest the data of each Motion slice line
-// ====================================================================== //
-
-void processMotionLine(const std::vector<std::string>&        currLine,
-                       std::vector<std::shared_ptr<_join_t>>& joints) {
-
-  glm::vec3 aux{0.f};
-  auto      dataIdx{0u};
-  auto      root{joints.at(0)};
-
-  // Root translation // ! Iter positions 0,1,2.
-  for (auto i : {0, 1, 2})
-    aux[root->channels(i)] = std::stof(currLine.at(dataIdx++));
-  root->addTrans(aux);
-
-  // Root rotation  // ! Iter positions 3,4,5.
-  for (auto i : {3, 4, 5})
-    aux[root->channels(i)] = std::stof(currLine.at(dataIdx++));
-  root->addRot(aux);
-
-  // Other joints rotations // ! Iter positions 0,1,2.
-  for (auto j = 1u; j < joints.size(); ++j) {
-    auto J = joints.at(j);
-    if (!J->channels().empty()) {
-      for (auto i : {0, 1, 2})
-        aux[J->channels(i)] = std::stof(currLine.at(dataIdx++));
-      J->addRot(aux);
-    }
-  }
-}
 
 
 
@@ -166,7 +120,8 @@ namespace brave {
 namespace loader {
 
   bvh_t BVH(const std::string& bvhFilePath) {
-    bvh_t out; //! ADAPT ALL TO THIS... And change Channels strategy :D
+
+    bvh_t out = std::make_shared<Skeleton::Motion>();
     if (!dac::Files::ok(bvhFilePath, true)) { return out; }
 
     // --- AUX VARS ---------------------------------------------------- //
@@ -174,9 +129,10 @@ namespace loader {
 
     if (!Settings::quiet) dac::Timer timer("Parsing \"" + bvhFilePath + "\"");
 
-    _MODES mode{_MODES::hierarchy};
+    MODES mode{MODES::hierarchy};
 
-    std::stack<std::shared_ptr<Joint>> parents{};
+    std::stack<joint_t>       parents{};
+    std::vector<unsigned int> channels; // Read order for motion
 
     std::string       linestream{""};
     std::stringstream filestream{dac::Strings::fromFile(bvhFilePath)};
@@ -192,44 +148,69 @@ namespace loader {
       switch (mode) {
 
         // HIERARCHY
-        case _MODES::hierarchy:
+        case MODES::hierarchy:
           switch (lToken) {
 
-            case _TOKEN::braceR: parents.pop(); break;
+            case TOKEN::braceR: parents.pop(); break;
 
-            case _TOKEN::root: addNewJoint("Root", parents, joints); break;
+            case TOKEN::root: addNewJoint("Root", parents, out->joints); break;
 
-            case _TOKEN::joint: addNewJoint(LINE.at(1), parents, joints); break;
-
-            case _TOKEN::offset:
-              parents.top()->offset(Math::glmVec3FromStr(LINE));
+            case TOKEN::joint:
+              addNewJoint(LINE.at(1), parents, out->joints);
               break;
 
-            case _TOKEN::channel:
-              addChannelsOfCurrentLine(LINE, parents);
+            case TOKEN::offset:
+              parents.top()->offset = Math::glmVec3FromStr(LINE);
               break;
 
-            case _TOKEN::endSite:
-              addNewJoint("EndSite", parents, joints);
+            case TOKEN::channel:
+              for (auto i{2u}; i < LINE.size(); ++i)
+                channels.push_back(CHANMAP.at(LINE.at(i)));
               break;
 
-            case _TOKEN::hierarchy:
+            case TOKEN::endSite:
+              addNewJoint("EndSite", parents, out->joints, true);
+              break;
+
+            case TOKEN::hierarchy:
             default: continue; break;
 
-            case _TOKEN::motion: mode = _MODES::motion; break;
+            case TOKEN::motion: mode = MODES::motion; break;
           }
           break;
 
         // MOTION
-        case _MODES::motion:
+        case MODES::motion:
           switch (lToken) {
 
-            case _TOKEN::motion:
-            case _TOKEN::frameNum: break;
+            case TOKEN::motion:
+            case TOKEN::frameNum: break;
 
-            case _TOKEN::frameTime: frameTime = std::stof(LINE.at(2u)); break;
+            case TOKEN::frameTime:
+              out->frameTime = std::stof(LINE.at(2u));
+              break;
 
-            default: processMotionLine(LINE, joints); break;
+            default:
+              Skeleton::Frame currFrame;
+              glm::vec3       aux{0.f};
+              auto            dataIdx{0u};
+
+              assert(LINE.size() == channels.size());
+
+              // Translation
+              for (auto i : {0, 1, 2})
+                aux[channels.at(i)] = std::stof(LINE.at(i));
+              currFrame.translation = aux;
+
+              // Rotations
+              for (auto i = 3u; i < LINE.size(); i += 3) {
+                for (auto j = i; j < i + 3; ++j)
+                  aux[channels.at(j)] = std::stof(LINE.at(j));
+                currFrame.rotations.push_back(aux);
+              }
+
+              out->frames.push_back(currFrame);
+              break;
           }
           break;
 
@@ -238,8 +219,7 @@ namespace loader {
       }
     }
 
-    return std::make_tuple(joints, frameTime);
+    return out;
   }
-
 } // namespace loader
 } // namespace brave
