@@ -100,8 +100,8 @@ void addNewJoint(const std::string&    name,
                  std::vector<joint_t>& joints,
                  bool                  isEndSite = false) {
 
-  auto j    = std::make_shared<brave::Skeleton::Joint>(name);
-  j->parent = (!parents.empty()) ? parents.top() : nullptr;
+  auto j = std::make_shared<brave::Skeleton::Joint>(
+      name, (!parents.empty()) ? parents.top() : nullptr);
 
   parents.push(j);
   if (!isEndSite) { joints.push_back(j); }
@@ -119,9 +119,9 @@ void addNewJoint(const std::string&    name,
 namespace brave {
 namespace loader {
 
-  bvh_t BVH(const std::string& bvhFilePath) {
-
-    bvh_t out = std::make_shared<Skeleton::Motion>();
+  std::shared_ptr<Skeleton::Motion> BVH(const std::string& bvhFilePath) {
+    std::shared_ptr<Skeleton::Motion> out =
+        std::make_shared<Skeleton::Motion>();
     if (!dac::Files::ok(bvhFilePath, true)) { return out; }
 
     // --- AUX VARS ---------------------------------------------------- //
@@ -187,13 +187,12 @@ namespace loader {
             case TOKEN::frameNum: break;
 
             case TOKEN::frameTime:
-              out->frameTime = std::stof(LINE.at(2u));
+              out->timeStep = std::stof(LINE.at(2u));
               break;
 
             default:
               Skeleton::Frame currFrame;
               glm::vec3       aux{0.f};
-              auto            dataIdx{0u};
 
               assert(LINE.size() == channels.size());
 

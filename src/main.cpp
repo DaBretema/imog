@@ -27,9 +27,29 @@ void DBG_VEC(glm::vec3 vec, glm::vec3 color = glm::vec3(1, 0, 0)) {
   }
 };
 
+void DBG_BVH(const std::string& path) {
+  auto testbvh = loader::BVH(path);
+  int  i       = 0;
+  int  r       = 0;
+  for (auto frame : testbvh->frames) {
+    dPrint("----------\nFrame{}", i++);
+    dPrint("T : {}", glm::to_string(frame.translation));
+    for (auto rot : frame.rotations)
+      dPrint("R{} : {}", r++, glm::to_string(rot));
+    r = 0;
+  }
+};
+
+
+
+// ------------- //
+//  ENTRY-POINT  //
+// ------------- //
+
 
 int main(int argc, char const* argv[]) {
   Core::init(Paths::settings);
+
 
   // auto sk1 = Skeleton::create(Motions::run, 0.33f);
 
@@ -64,25 +84,17 @@ int main(int argc, char const* argv[]) {
   //   dbg->draw();
   // };
 
+  auto sk1 = Skeleton(0.33f);
+  sk1.setAnimFromBVH("run", Motions::run);
+  sk1.animation();
 
-  // Core::onUpdate([&]() {
-  //   Core::frame();
-  //   // sk1->draw();
-  //   // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
-  //   // cube->draw();
-  // });
+  Core::onUpdate([&]() {
+    Core::frame();
+    sk1.draw();
+    // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
+    // cube->draw();
+  });
 
-  auto testbvh = loader::BVH(Motions::run);
-  int  i       = 0;
-  int  r       = 0;
-
-  for (auto frame : testbvh->frames) {
-    dPrint("----------\nFrame{}", i++);
-    dPrint("T : {}", glm::to_string(frame.translation));
-    for (auto rot : frame.rotations)
-      dPrint("R{} : {}", r++, glm::to_string(rot));
-    r = 0;
-  }
 
 
   return 0;

@@ -18,31 +18,26 @@ class Skeleton {
 
 public:
   struct Joint {
-    std::string            name;
-    glm::vec3              offset;
+    std::string            name{""};
+    glm::mat4              model{1.f};
+    glm::vec3              offset{0.f};
     std::shared_ptr<Joint> parent;
     std::shared_ptr<Joint> endsite;
-    Joint(const std::string& name) : name(name) {}
+    Joint(const std::string& name, std::shared_ptr<Joint> parent)
+        : name(name), parent(parent) {}
   };
   struct Frame {
-    glm::vec3 translation;
-    /*
-	Rotations should be stored with channel correction,
-	which may differ, between motions (bvh files), so the channel
-	should be corrected during bvh file parsing.
-  */
     std::vector<glm::vec3> rotations;
+    glm::vec3              translation;
   };
   struct Motion {
     std::string                         name;
     std::vector<std::shared_ptr<Joint>> joints;
     std::vector<Frame>                  frames;
-    float                               frameTime;
+    float                               timeStep;
   };
 
 private:
-  using motion_t = std::shared_ptr<Motion>;
-
   glm::mat4      m_model;
   bool           m_animThread;
   std::once_flag animationOnceFlag;
@@ -52,76 +47,52 @@ private:
   bool m_moveForward;
   bool m_moveBackward;
 
+  bool  m_play;
+  float m_scale;
+  unsigned int   m_currFrame;
+
   // For intermediate steps between two motions, we create two new motions
   // one from animation 1 to animation 2 and viceversa, storing them
   // in that map, setting the key as "idxFrom_idxTo" (for both cases)
   // to easy swith from one to other
-  std::unordered_map<std::string, motion_t> m_motions;
-  std::string                               m_currMotion;
+  std::unordered_map<std::string, std::shared_ptr<Skeleton::Motion>> m_motions;
+  std::string m_currMotion;
   // Easy wrappers
+  auto moTimeStep() const { return m_motions.at(m_currMotion)->timeStep; };
   auto moName() const { return m_motions.at(m_currMotion)->name; };
   auto moFrames() const { return m_motions.at(m_currMotion)->frames; };
+  auto moCurrFrame() const { return moFrames().at(m_currFrame); }
+  auto moNextFrame() const { return moFrames().at(m_currFrame + 1); }
   auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
 
 public:
-  Skeleton(const std::string& idlePath);
-  ~Skeleton();
+  Skeleton(float scale = 1.f);
 
-  // // Run a detached thread for animation process
-  // void animation() {
+  // tmp
+  void setAnimFromBVH(const std::string& name, const std::string& file);
 
-  //   auto skRotation = [&](bool right, float step = 1.f) {
-  //     float dir = (right) ? 1.f : -1.f;
-  //     Math::rotateXYZ(m_model, Math::unitVecY * dir * step);
-  //   };
+  // Run a detached thread for animation process
+  /*
+  * SETUP User input for movement
+    ! [KEYBOARD] Add flag for RELEASE or PRESS. (The 2nd parameter)
+    IO::keyboardAddAction(GLFW_KEY_I, true, [&]() { m_moveForward = true });
+    IO::keyboardAddAction(GLFW_KEY_I, false, [&]() { m_moveForward = false });
+    IO::keyboardAddAction(GLFW_KEY_K, true, [&]() { m_moveBackward = true });
+    IO::keyboardAddAction(GLFW_KEY_K, false, [&]() { m_moveBackward = false });
+    IO::keyboardAddAction(GLFW_KEY_J, true, [&]() { m_rotateLeft = true });
+    IO::keyboardAddAction(GLFW_KEY_J, false, [&]() { m_rotateLeft = false });
+    IO::keyboardAddAction(GLFW_KEY_L, true, [&]() { m_rotateRight = true });
+    IO::keyboardAddAction(GLFW_KEY_L, false, [&]() { m_rotateRight = false });
+  * FOR MORE REALISM...
+    Right and Left keys, should not rotate, should generate a motion
+    like those that we can see in "unity blend tree" and rotate the
+    model in that direction and then move forward.
+  */
+  void animation();
 
-  //   auto skMovement = [&](bool forward, float step = 1.f) {
-  //     float dir = (forward) ? 1.f : -1.f;
-  //     Math::translate(m_model, glm::normalize(dir * m_model[2]) * step);
-  //   };
-
-  //   std::call_once(animationOnceFlag, [&]() {
-  //     dac::Async::periodic(1.f, &m_animThread, [&]() {
-  //       /*
-  // 		Movement by user input
-  // 		! [KEYBOARD] Add flag for RELEASE or PRESS. (The 2nd parameter)
-
-  // 		1. SETUP
-  // 		IO::keyboardAddAction(GLFW_KEY_I, true, [&]() { m_moveForward = true });
-  // 		IO::keyboardAddAction(GLFW_KEY_I, false, [&]() { m_moveForward = false });
-  // 		IO::keyboardAddAction(GLFW_KEY_K, true, [&]() { m_moveBackward = true });
-  // 		IO::keyboardAddAction(GLFW_KEY_K, false, [&]() { m_moveBackward = false });
-  // 		IO::keyboardAddAction(GLFW_KEY_J, true, [&]() { m_rotateLeft = true });
-  // 		IO::keyboardAddAction(GLFW_KEY_J, false, [&]() { m_rotateLeft = false });
-  // 		IO::keyboardAddAction(GLFW_KEY_L, true, [&]() { m_rotateRight = true });
-  // 		IO::keyboardAddAction(GLFW_KEY_L, false, [&]() { m_rotateRight = false });
-
-  // 		2. FOR MORE REALISM...
-  // 		Right and Left keys, should not rotate, should generate a motion
-  // 		like those that we can see in "unity blend tree" and rotate the
-  // 		model in that direction and then move forward.
-  // 	*/
-  //       if (m_rotateLeft) { skRotation(false); }
-  //       if (m_rotateRight) { skRotation(true); }
-  //       if (m_moveForward) { skMovement(true); }
-  //       if (m_moveBackward) { skMovement(false); }
-
-  //       // Idle state
-  //       if (!(m_rotateLeft && m_rotateRight && m_moveForward &&
-  //             m_moveBackward)) {}
-
-  //       // Update hierarchy
-  //       for (const auto& joint : moJoints()) {}
-  //     });
-  //   });
-  // }
+  // Compute joints models and draw its renderable bone
+  void draw();
 };
-
-// Skeleton::Skeleton(const std::string& idlePath) {}
-
-// Skeleton::~Skeleton() {}
-
-
 
 } // namespace brave
 
