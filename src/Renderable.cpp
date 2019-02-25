@@ -117,7 +117,7 @@ std::shared_ptr<Renderable>
                        const glm::vec3&               color,
                        const std::shared_ptr<Shader>& shader,
                        bool                           culling) {
-  std::string key = objFilePath + texturePath + glm::to_string(color);
+  std::string key = name + objFilePath + texturePath + glm::to_string(color);
   if (shader) { key += shader->name(); }
   if (auto R = get(key)) { return R; }
 

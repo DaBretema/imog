@@ -50,7 +50,6 @@ void Core::init(const std::string settingsPath) {
       defShaderCreation(Shaders::light, false);
 
       // 3.2 Crate renderables
-      Renderable::create(false, "cube_pivot", Figures::cube);
       Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange);
       Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
       Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
@@ -59,11 +58,10 @@ void Core::init(const std::string settingsPath) {
       // 4. Setup core variables
       threadsLive = true;
       pause       = false;
-      camera      = std::make_shared<Camera>(Settings::mainCameraPos,
-                                        Settings::mainCameraSpeed,
+      camera = std::make_shared<Camera>(Settings::mainCameraSpeed,
                                         Settings::mainCameraRot.x,
                                         Settings::mainCameraRot.y);
-      light       = std::make_shared<Light>(Settings::mainLightPos,
+      light = std::make_shared<Light>(Settings::mainLightPos,
                                       Settings::mainLightColor,
                                       Settings::mainLightIntensity);
 
@@ -75,14 +73,14 @@ void Core::init(const std::string settingsPath) {
 
       // KBAA(GLFW_KEY_Q, defaultState, camera->move(CamDir::up));
       // KBAA(GLFW_KEY_E, defaultState, camera->move(CamDir::down));
-      KBAA(
-          GLFW_KEY_W,
-          defaultState,
-          camera->transform.pos += camera->transform.front() * camera->speed());
-      KBAA(
-          GLFW_KEY_S,
-          defaultState,
-          camera->transform.pos -= camera->transform.front() * camera->speed());
+      // KBAA(
+      //     GLFW_KEY_W,
+      //     defaultState,
+      //     camera->transform.pos += camera->transform.front() * camera->speed());
+      // KBAA(
+      //     GLFW_KEY_S,
+      //     defaultState,
+      //     camera->transform.pos -= camera->transform.front() * camera->speed());
       // KBAA(GLFW_KEY_W, defaultState, camera->move(CamDir::front));
       // KBAA(GLFW_KEY_A, defaultState, camera->move(CamDir::left));
       // KBAA(GLFW_KEY_D, defaultState, camera->move(CamDir::right));

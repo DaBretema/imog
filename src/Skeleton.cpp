@@ -9,26 +9,30 @@
 namespace brave {
 
 Skeleton::Skeleton(float scale)
-    : m_model(1.f),
-      m_animThread(true),
-      // m_rotateLeft(false),
-      // m_rotateRight(false),
-      // m_moveForward(false),
-      // m_moveBackward(false),
+    : m_animThread(true),
+      m_rotateLeft(false),
+      m_rotateRight(false),
+      m_moveForward(false),
+      m_moveBackward(false),
       m_play(true),
       m_scale(scale),
       m_currFrame(0u),
-      m_currMotion("Idle"),
-      ptrPos(std::make_shared<glm::vec3>(0.f)) {
+      m_currMotion("Idle") {
   // Load idle animation //!(define its path on Consts.hpp)
   // and set mechanisms to load it easyly
   // Core::camera->attach(ptrPos);
+  Core::camera->target = std::shared_ptr<Transform>(&this->transform);
 
   // Move
   IO::keyboardAddAction(
       GLFW_KEY_I, IO::kbState::release, [&]() { m_move = 0; });
   IO::keyboardAddAction(GLFW_KEY_I, IO::kbState::press, [&]() { m_move = 1; });
   IO::keyboardAddAction(GLFW_KEY_I, IO::kbState::repeat, [&]() { m_move = 2; });
+}
+Skeleton::~Skeleton() {
+  if (!Settings::quiet) dInfo("Skeleton destroyed!");
+  // stop();
+  m_animThread = false;
 }
 
 void Skeleton::setAnimFromBVH(const std::string& name,
@@ -50,7 +54,7 @@ void Skeleton::animation() {
       auto hierarchy = [&]() {
         int rotIdx = 0;
         for (const auto& joint : moJoints()) {
-          if (joint->name == "Root") joint->model = m_model;
+          if (joint->name == "Root") joint->model = this->transform.model();
           // 1. Hierarchy of joints
           if (joint->parent) { joint->model = joint->parent->model; }
           Math::translate(joint->model, joint->offset * m_scale);
@@ -75,26 +79,17 @@ void Skeleton::animation() {
 
       // Camera sync
 
-
-      // auto angle = -glm::angle(-Core::camera->frontY(), this->front()) * 2.f;
-      // dInfo("angle: {}", angle);
-      // auto angle = glm::angle(Core::camera->frontY(), this->front());
-
-
-
-      // *ptrPos        = m_model[3].xyz();
-      // auto radCamYaw = glm::radians(-Core::camera->yaw() * 2.f);
-
-      // m_model = glm::translate(glm::mat4(1.f), *ptrPos);
-      // m_model = glm::rotate(m_model, radCamYaw, Math::unitVecY);
-      // // Core::camera->pos(currPos + this->front() * 3.5f +
-      //                   Settings::mainCameraPos);
-
-      // User input reply
-      if (m_move == 1 || m_move == 2)
-        m_model = glm::translate(m_model, -this->front() * step);
+      if (m_move == 1 || m_move == 2) {
+        auto camFront       = Core::camera->transform.front();
+        camFront.y          = 0.f;
+        this->transform.rot = Core::camera->pivot.rot;
+        this->transform.pos += camFront * step;
+      }
 
       hierarchy();
+
+      // Call to action if it's not automatically done
+      if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
     });
   });
 }
@@ -114,17 +109,17 @@ void Skeleton::draw() {
     auto bonePos        = (JPos + JParentPos) * 0.5f;
     BONE->transform.pos = bonePos;
     // R
-    auto vJ             = glm::normalize(JPos - JParentPos);
-    auto vB2            = bonePos + glm::vec3(0, .5f, 0);
-    auto vB1            = bonePos - glm::vec3(0, .5f, 0);
-    auto vB             = glm::normalize(vB2 - vB1);
-    BONE->transform.rot = glm::rotate(
-        BONE->transform.rot, glm::angle(vB, vJ), glm::cross(vB, vJ));
+    auto vJ                  = glm::normalize(JPos - JParentPos);
+    auto vB2                 = bonePos + glm::vec3(0, .5f, 0);
+    auto vB1                 = bonePos - glm::vec3(0, .5f, 0);
+    auto vB                  = glm::normalize(vB2 - vB1);
+    BONE->transform.rotAngle = glm::angle(vB, vJ);
+    BONE->transform.rotAxis  = glm::cross(vB, vJ);
     // S
     auto boneSize = glm::vec3{1.f, glm::distance(JPos, JParentPos) * 0.5f, 1.f};
     BONE->transform.scl = boneSize;
     // Draw
-    Renderable::getByName("Bone")->draw();
+    BONE->draw();
   };
 
 

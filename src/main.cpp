@@ -50,20 +50,16 @@ void DBG_BVH(const std::string& path) {
 int main(int argc, char const* argv[]) {
   Core::init(Paths::settings);
 
-  // auto sk1 = Skeleton(0.33f);
-  // sk1.setAnimFromBVH("run", Motions::run);
-  // sk1.animation();
-  auto re              = Renderable::getByName("cube_pivot");
-  Core::camera->target = std::shared_ptr<Transform>(&re->transform);
+  auto sk1 = Skeleton(0.33f);
+  sk1.setAnimFromBVH("run", Motions::run);
+  sk1.animation();
+  // auto re              = Renderable::getByName("cube_pivot");
+  // Core::camera->target = std::shared_ptr<Transform>(&re->transform);
 
   Core::onUpdate([&]() {
     Core::frame();
+    sk1.draw();
 
-    // Core::camera->pos(re->pos() - re->model()[2].xyz() * -3.f);
-    // dInfo("pos_camera: {}", glm::to_string(Core::camera->pos()));
-
-
-    // sk1.draw();
     // DBG_VEC(Core::camera->frontY(), Colors::green);
     // DBG_VEC(sk1.front());
     // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));

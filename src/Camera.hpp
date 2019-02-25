@@ -24,56 +24,36 @@ private:
 
   float m_fov;
   float m_speed;
-  float m_multSpeed;
-  float m_pitch;
+
   float m_yaw;
+  float m_pitch;
+  float m_multSpeed;
 
   bool m_following;
   bool m_centeredOnTarget;
 
-
 public:
-  Transform                  transform;
   Transform                  pivot;
   std::shared_ptr<Transform> target;
+  Transform                  transform;
 
-  Camera(const glm::vec3& pos,
-         float            speed = 1.f,
-         float            pitch = 0.f,
-         float            yaw   = 0.f,
-         float            fov   = 0.5f);
+  Camera(float speed = 1.f,
+         float pitch = 0.f,
+         float yaw   = 0.f,
+         float fov   = 0.5f);
 
   // Getter for view
   glm::mat4 view() const;
-
   // Getter for proj
   glm::mat4 proj() const;
-
   // Getter for viewproj
   glm::mat4 viewproj() const;
 
   // G/Setter for speed
   float speed() const;
   void  speed(float newSpeed);
-
-
-  // // Attach a renderable object to follow it
-  // void attach(const std::shared_ptr<glm::vec3>& objToFollow = nullptr);
-
-  // // Detach a previously attached renderable object
-  // void detach();
-
   // MultSpeed multiply m_speed by passed factor
   void multSpeed(float factor);
-
-  // Move the camera position based on its local axis
-  // void move(CamDir dir);
-
-  // Rotate the camera over X axis
-  // void rotateX(float angle);
-
-  // Rotate the camera over Y axis
-  // void rotateY(float angle);
 
   // Modify camera fov (a.k.a. zoom)
   void zoom(float variation);

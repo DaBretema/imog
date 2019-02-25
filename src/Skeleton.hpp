@@ -9,6 +9,7 @@
 #include <dac/Logger.hpp>
 
 #include "Math.hpp"
+#include "Transform.hpp"
 
 
 namespace brave {
@@ -36,20 +37,16 @@ public:
   };
 
 private:
-  glm::mat4      m_model;
   bool           m_animThread;
   std::once_flag animationOnceFlag;
 
   int m_moving = 0;
   int m_move   = -1;
 
-  // bool m_rotateLeft;
-  // bool m_rotateRight;
-  // bool m_moveForward;
-  // bool m_moveBackward;
-
-  // bool m_leftRelease;
-  // bool m_leftPress;
+  bool m_rotateLeft;
+  bool m_rotateRight;
+  bool m_moveForward;
+  bool m_moveBackward;
 
   bool         m_play;
   float        m_scale;
@@ -70,15 +67,12 @@ private:
   auto moNextFrame() const { return moFrames().at(m_currFrame + 1); }
   auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
 
-
-  // For camera following
-  std::shared_ptr<glm::vec3> ptrPos;
-
 public:
+  Transform transform;
   Skeleton(float scale = 1.f);
+  ~Skeleton();
 
   // tmp
-  auto front() const { return m_model[2].xyz(); }
   void setAnimFromBVH(const std::string& name, const std::string& file);
 
   // Run a detached thread for animation process
