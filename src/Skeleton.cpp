@@ -80,7 +80,7 @@ void Skeleton::animation() {
       // Camera sync
 
       if (m_move == 1 || m_move == 2) {
-        auto camFront       = Core::camera->transform.front();
+        auto camFront       = Core::camera->pivot.front();
         camFront.y          = 0.f;
         this->transform.rot = Core::camera->pivot.rot;
         this->transform.pos += camFront * step;
