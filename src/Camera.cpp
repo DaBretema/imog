@@ -85,9 +85,11 @@ void Camera::frame() {
   // Math::translate(auxView, transform.pos - glm::vec3(0, 0, -3.f));
   // Math::translate(auxView, auxPos);
 
+  if (target) { pivot.pos = target->pos; }
+
   m_view =
-      glm::lookAt(target->pos - target->front() * -10.f + Math::unitVecY * 10.f,
-                  target->pos,
+      glm::lookAt(pivot.pos - pivot.front() * -10.f + Math::unitVecY * 10.f,
+                  pivot.pos,
                   Math::unitVecY);
   m_proj = glm::perspective(m_fov, IO::windowAspectRatio(), m_near, m_far);
 

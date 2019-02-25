@@ -34,6 +34,7 @@ private:
 
 public:
   Transform                  transform;
+  Transform                  pivot;
   std::shared_ptr<Transform> target;
 
   Camera(const glm::vec3& pos,

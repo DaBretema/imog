@@ -181,8 +181,7 @@ void IO::mouseOnMove(GLFWwindow* w, double mouseCurrX, double mouseCurrY) {
     float yRot = (mouseCurrX - m_mouseLastX) * Settings::mouseSensitivity;
     float xRot = (mouseCurrY - m_mouseLastY) * Settings::mouseSensitivity;
 
-    auto pivot = Renderable::getByName("cube_pivot");
-    pivot->transform.rot += glm::vec3(0, yRot, 0);
+    Core::camera->pivot.rot += glm::vec3(0, yRot, 0);
   }
   m_mouseLastX = mouseCurrX;
   m_mouseLastY = mouseCurrY;

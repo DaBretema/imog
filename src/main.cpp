@@ -53,7 +53,6 @@ int main(int argc, char const* argv[]) {
   // auto sk1 = Skeleton(0.33f);
   // sk1.setAnimFromBVH("run", Motions::run);
   // sk1.animation();
-
   auto re              = Renderable::getByName("cube_pivot");
   Core::camera->target = std::shared_ptr<Transform>(&re->transform);
 
