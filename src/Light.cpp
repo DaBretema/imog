@@ -30,8 +30,8 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
 
 glm::vec3 Light::pos() const { return m_pos; }
 void      Light::pos(const glm::vec3& newPos) {
-  m_pos = newPos;
-  m_renderable->pos(m_pos);
+  m_pos                       = newPos;
+  m_renderable->transform.pos = m_pos;
 }
 
 // ====================================================================== //

@@ -36,7 +36,7 @@ void Core::init(const std::string settingsPath) {
     Shader::create(name, sV, sG, sF);                       \
   }
 
-#define KBAA(key, fn) IO::keyboardAddAction(key, [&]() { fn; });
+#define KBAA(key, state, fn) IO::keyboardAddAction(key, state, [&]() { fn; });
       //
 
       // 1. Init settings
@@ -50,10 +50,11 @@ void Core::init(const std::string settingsPath) {
       defShaderCreation(Shaders::light, false);
 
       // 3.2 Crate renderables
+      Renderable::create(false, "cube_pivot", Figures::cube);
       Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange);
       Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
       Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
-      // Renderable::create(true, "Floor", Figures::plane, Textures::chess);
+      Renderable::create(true, "Floor", Figures::plane, Textures::chess);
 
       // 4. Setup core variables
       threadsLive = true;
@@ -67,18 +68,26 @@ void Core::init(const std::string settingsPath) {
                                       Settings::mainLightIntensity);
 
       // 5. Define keyboard actions
+      auto defaultState = IO::kbState::press_and_repeat;
 
-      KBAA(GLFW_KEY_ESCAPE, close());
-      KBAA(GLFW_KEY_P, pause = !pause);
+      KBAA(GLFW_KEY_ESCAPE, defaultState, close());
+      KBAA(GLFW_KEY_P, defaultState, pause = !pause);
 
-      KBAA(GLFW_KEY_Q, camera->move(CamDir::up));
-      KBAA(GLFW_KEY_E, camera->move(CamDir::down));
-      KBAA(GLFW_KEY_S, camera->move(CamDir::back));
-      KBAA(GLFW_KEY_W, camera->move(CamDir::front));
-      KBAA(GLFW_KEY_A, camera->move(CamDir::left));
-      KBAA(GLFW_KEY_D, camera->move(CamDir::right));
+      // KBAA(GLFW_KEY_Q, defaultState, camera->move(CamDir::up));
+      // KBAA(GLFW_KEY_E, defaultState, camera->move(CamDir::down));
+      KBAA(
+          GLFW_KEY_W,
+          defaultState,
+          camera->transform.pos += camera->transform.front() * camera->speed());
+      KBAA(
+          GLFW_KEY_S,
+          defaultState,
+          camera->transform.pos -= camera->transform.front() * camera->speed());
+      // KBAA(GLFW_KEY_W, defaultState, camera->move(CamDir::front));
+      // KBAA(GLFW_KEY_A, defaultState, camera->move(CamDir::left));
+      // KBAA(GLFW_KEY_D, defaultState, camera->move(CamDir::right));
 
-      KBAA(GLFW_KEY_F, static bool __brave_camSpeedFlag;
+      KBAA(GLFW_KEY_F, defaultState, static bool __brave_camSpeedFlag;
            (!__brave_camSpeedFlag) ? camera->multSpeed(10.f)
                                    : camera->multSpeed(1.0f);
            __brave_camSpeedFlag = !__brave_camSpeedFlag;);
@@ -133,6 +142,7 @@ void Core::onUpdate(const _IO_FUNC& fn) {
     light->intensity(Settings::mainLightIntensity);
 
     camera->speed(Settings::mainCameraSpeed);
+    // camera->transform.pos = Settings::mainCameraPos;
   };
 
   IO::windowLoop(fn, updateFn);

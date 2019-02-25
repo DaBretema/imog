@@ -8,6 +8,8 @@
 
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include "Transform.hpp"
+
 
 
 namespace brave {
@@ -42,19 +44,17 @@ private:
   bool m_culling;
 
   glm::vec3 m_color;
-  glm::mat4 m_model;
+  // glm::mat4 m_model;
 
   unsigned int m_vao;
   unsigned int m_loc;
   unsigned int m_eboSize;
 
-  glm::vec3 m_pos;
-  glm::vec3 m_rot;
-  glm::vec3 m_scl;
-
-  void updateModel();
+  // void updateModel();
 
 public:
+  Transform transform;
+
   // Param constructor w/o OBJ file
   Renderable(bool                           allowGlobalDraw = true,
              const std::string&             name            = "",
@@ -112,29 +112,29 @@ public:
   void      color(const glm::vec3& newColor);
 
   // G/Setter for model
-  glm::mat4 model() const;
-  void      model(const glm::mat4& newModel);
+  // glm::mat4 model() const;
+  // void      model(const glm::mat4& newModel);
 
-  // G/Setter for pos
-  glm::vec3 pos() const;
-  void      pos(const glm::vec3& newPos);
-  void      pos(float x, float y, float z);
-  void      accumPos(const glm::vec3& addPos);
-  void      accumPos(float x, float y, float z);
+  // // G/Setter for pos
+  // glm::vec3 pos() const;
+  // void      pos(const glm::vec3& newPos);
+  // void      pos(float x, float y, float z);
+  // void      accumPos(const glm::vec3& addPos);
+  // void      accumPos(float x, float y, float z);
 
-  // G/Setter for rot
-  glm::vec3 rot() const;
-  void      rot(const glm::vec3& newRot);
-  void      rot(float x, float y, float z);
-  void      accumRot(const glm::vec3& addRot);
-  void      accumRot(float x, float y, float z);
+  // // G/Setter for rot
+  // glm::vec3 rot() const;
+  // void      rot(const glm::vec3& newRot);
+  // void      rot(float x, float y, float z);
+  // void      accumRot(const glm::vec3& addRot);
+  // void      accumRot(float x, float y, float z);
 
-  // G/Setter for scl
-  glm::vec3 scl() const;
-  void      scl(const glm::vec3& newScl);
-  void      scl(float x, float y, float z);
-  void      accumScl(const glm::vec3& addScl);
-  void      accumScl(float x, float y, float z);
+  // // G/Setter for scl
+  // glm::vec3 scl() const;
+  // void      scl(const glm::vec3& newScl);
+  // void      scl(float x, float y, float z);
+  // void      accumScl(const glm::vec3& addScl);
+  // void      accumScl(float x, float y, float z);
 
 
   // Add a vertex attribute to this Renderable

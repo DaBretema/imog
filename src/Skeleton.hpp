@@ -12,8 +12,6 @@
 
 
 namespace brave {
-
-
 class Skeleton {
 
 public:
@@ -42,14 +40,20 @@ private:
   bool           m_animThread;
   std::once_flag animationOnceFlag;
 
-  bool m_rotateLeft;
-  bool m_rotateRight;
-  bool m_moveForward;
-  bool m_moveBackward;
+  int m_moving = 0;
+  int m_move   = -1;
 
-  bool  m_play;
-  float m_scale;
-  unsigned int   m_currFrame;
+  // bool m_rotateLeft;
+  // bool m_rotateRight;
+  // bool m_moveForward;
+  // bool m_moveBackward;
+
+  // bool m_leftRelease;
+  // bool m_leftPress;
+
+  bool         m_play;
+  float        m_scale;
+  unsigned int m_currFrame;
 
   // For intermediate steps between two motions, we create two new motions
   // one from animation 1 to animation 2 and viceversa, storing them
@@ -57,7 +61,8 @@ private:
   // to easy swith from one to other
   std::unordered_map<std::string, std::shared_ptr<Skeleton::Motion>> m_motions;
   std::string m_currMotion;
-  // Easy wrappers
+
+  // Easy motion wrappers
   auto moTimeStep() const { return m_motions.at(m_currMotion)->timeStep; };
   auto moName() const { return m_motions.at(m_currMotion)->name; };
   auto moFrames() const { return m_motions.at(m_currMotion)->frames; };
@@ -65,14 +70,33 @@ private:
   auto moNextFrame() const { return moFrames().at(m_currFrame + 1); }
   auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
 
+
+  // For camera following
+  std::shared_ptr<glm::vec3> ptrPos;
+
 public:
   Skeleton(float scale = 1.f);
 
   // tmp
+  auto front() const { return m_model[2].xyz(); }
   void setAnimFromBVH(const std::string& name, const std::string& file);
 
   // Run a detached thread for animation process
-  /*
+  void animation();
+
+  // Compute joints models and draw its renderable bone
+  void draw();
+};
+
+} // namespace brave
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+/*
   * SETUP User input for movement
     ! [KEYBOARD] Add flag for RELEASE or PRESS. (The 2nd parameter)
     IO::keyboardAddAction(GLFW_KEY_I, true, [&]() { m_moveForward = true });
@@ -87,19 +111,10 @@ public:
     Right and Left keys, should not rotate, should generate a motion
     like those that we can see in "unity blend tree" and rotate the
     model in that direction and then move forward.
-  */
-  void animation();
-
-  // Compute joints models and draw its renderable bone
-  void draw();
-};
-
-} // namespace brave
+ */
 
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+
 /*
 // ? Maybe user input mechanism to switch between animation is too complex.
 // ? By now, let it for next iteration.

@@ -25,13 +25,13 @@ bool   IO::m_mouseClicR{false};
 double IO::m_mouseLastX{.0};
 double IO::m_mouseLastY{.0};
 
-std::unordered_map<int, _IO_FUNC> IO::m_keyboardActions{};
+std::unordered_map<std::string, _IO_FUNC> IO::m_keyboardActions{};
 
 
 
 // * --- WINDOW --- * //
 
-GLFWwindow* IO::window(){ return m_windowPtr; }
+GLFWwindow* IO::window() { return m_windowPtr; }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -67,7 +67,7 @@ void IO::windowInit() {
   glfwMakeContextCurrent(o_WINDOW);
 
   // Callbacks
-  glfwSetKeyCallback(o_WINDOW, keyboardOnPress); // -- Keyboard
+  glfwSetKeyCallback(o_WINDOW, keyboardOnPress);   // -- Keyboard
   glfwSetCursorPosCallback(o_WINDOW, mouseOnMove); // -- Mouse
   glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
   glfwSetMouseButtonCallback(o_WINDOW, mouseOnClick);
@@ -154,7 +154,7 @@ void IO::windowOnScaleChange(GLFWwindow* w, int width, int height) {
 // ====================================================================== //
 
 void IO::windowOnClose(GLFWwindow* w) {
-  if(!Settings::quiet) dInfo("Closing GLFW window.");
+  if (!Settings::quiet) dInfo("Closing GLFW window.");
   glfwSetWindowShouldClose(w, GL_TRUE);
 }
 
@@ -178,10 +178,11 @@ void IO::mouseOnScroll(GLFWwindow* w, double xOffset, double yOffset) {
 
 void IO::mouseOnMove(GLFWwindow* w, double mouseCurrX, double mouseCurrY) {
   if (m_mouseClicL) {
-    Core::camera->rotateY(static_cast<float>((mouseCurrX - m_mouseLastX) *
-                                             Settings::mouseSensitivity));
-    Core::camera->rotateX(static_cast<float>((mouseCurrY - m_mouseLastY) *
-                                             Settings::mouseSensitivity));
+    float yRot = (mouseCurrX - m_mouseLastX) * Settings::mouseSensitivity;
+    float xRot = (mouseCurrY - m_mouseLastY) * Settings::mouseSensitivity;
+
+    auto pivot = Renderable::getByName("cube_pivot");
+    pivot->transform.rot += glm::vec3(0, yRot, 0);
   }
   m_mouseLastX = mouseCurrX;
   m_mouseLastY = mouseCurrY;
@@ -228,10 +229,19 @@ void IO::keyboardOnPress(GLFWwindow* w,
                          int         scancode,
                          int         action,
                          int         mods) {
-  bool keyIsOnMap  = (m_keyboardActions.count(key) > 0);
-  bool keyIsActive = (action == GLFW_PRESS || action == GLFW_REPEAT);
 
-  if (keyIsActive && keyIsOnMap) { m_keyboardActions.at(key)(); }
+  auto keyState = [&]() {
+    if (action == GLFW_RELEASE) return 0;
+    if (action == GLFW_PRESS) return 1;
+    if (action == GLFW_REPEAT) return 2;
+    return -1;
+  };
+
+  auto mapKey     = std::to_string(key) + "_" + std::to_string(keyState());
+  bool keyIsOnMap = (m_keyboardActions.count(mapKey) > 0);
+
+  // dInfo("key/exist = {} / {}", mapKey, keyIsOnMap);
+  if (keyIsOnMap) { m_keyboardActions.at(mapKey)(); }
 }
 
 // ====================================================================== //
@@ -239,11 +249,20 @@ void IO::keyboardOnPress(GLFWwindow* w,
 // KEYBOARD reply when an "action" is added
 // ====================================================================== //
 
-void IO::keyboardAddAction(int key, const _IO_FUNC& action) {
-  if (m_keyboardActions.count(key) < 1) {
-    m_keyboardActions.insert({key, action});
-  } else {
-    dInfo("The key is already defined");
+
+void IO::keyboardAddAction(int key, kbState state, const _IO_FUNC& action) {
+  auto mapKey = std::to_string(key) + "_";
+
+  if (state == kbState::press_and_repeat) {
+    auto keyPress = mapKey + std::to_string((unsigned int)kbState::press);
+    m_keyboardActions.insert({keyPress, action});
+    auto keyRepeat = mapKey + std::to_string((unsigned int)kbState::repeat);
+    m_keyboardActions.insert({keyRepeat, action});
+  }
+
+  else {
+    auto keyBase = mapKey + std::to_string((unsigned int)state);
+    m_keyboardActions.insert({keyBase, action});
   }
 }
 

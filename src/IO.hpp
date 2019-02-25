@@ -60,15 +60,18 @@ public:
   // ====================================================================== //
 
 private:
-  static std::unordered_map<int, _IO_FUNC> m_keyboardActions;
+  static std::unordered_map<std::string, _IO_FUNC> m_keyboardActions;
 
 public:
+  enum struct kbState { release, press, repeat, press_and_repeat };
+
   static void keyboardOnPress(GLFWwindow* w,
                               int         key,
                               int         scancode,
                               int         action,
                               int         mods);
-  static void keyboardAddAction(int key, const _IO_FUNC& action);
+
+  static void keyboardAddAction(int key, kbState state, const _IO_FUNC& action);
 };
 
 } // namespace brave

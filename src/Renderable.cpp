@@ -52,13 +52,10 @@ Renderable::Renderable(bool                           allowGlobalDraw,
       m_texture(Texture::create(texturePath)),
       m_culling(culling),
       m_color(color),
-      m_model(glm::mat4(1.f)),
+      // m_model(glm::mat4(1.f)),
       m_vao(0),
       m_loc(0),
-      m_eboSize(0),
-      m_pos(glm::vec3(0)),
-      m_rot(glm::vec3(0)),
-      m_scl(glm::vec3(1)) {
+      m_eboSize(0) {
 
   GL_ASSERT(glGenVertexArrays(1, &m_vao));
   if (!m_shader) { m_shader = Shader::getByName(Shaders::base); }
@@ -197,62 +194,62 @@ void      Renderable::color(const glm::vec3& newColor) { m_color = newColor; }
 // G/Setter for model
 // ====================================================================== //
 
-glm::mat4 Renderable::model() const { return m_model; }
-void      Renderable::model(const glm::mat4& newModel) { m_model = newModel; }
-void      Renderable::updateModel() {
-  m_model = glm::mat4(1.f);
-  Math::translate(m_model, m_pos);
-  Math::rotateXYZ(m_model, m_rot);
-  Math::scale(m_model, m_scl);
-}
+// glm::mat4 Renderable::model() const { return m_model; }
+// void      Renderable::model(const glm::mat4& newModel) { m_model = newModel; }
+// void      Renderable::updateModel() {
+//   m_model = glm::mat4(1.f);
+//   Math::translate(m_model, m_pos);
+//   Math::rotateXYZ(m_model, m_rot);
+//   Math::scale(m_model, m_scl);
+// }
 
-// ====================================================================== //
-// ====================================================================== //
-// G/Setter for pos
-// ====================================================================== //
+// // ====================================================================== //
+// // ====================================================================== //
+// // G/Setter for pos
+// // ====================================================================== //
 
-glm::vec3 Renderable::pos() const { return m_pos; }
-void      Renderable::pos(const glm::vec3& newPos) {
-  m_pos = newPos;
-  updateModel();
-}
-void Renderable::pos(float x, float y, float z) { pos(glm::vec3{x, y, z}); }
-void Renderable::accumPos(const glm::vec3& addPos) { pos(m_pos + addPos); }
-void Renderable::accumPos(float x, float y, float z) {
-  accumPos(glm::vec3{x, y, z});
-}
+// glm::vec3 Renderable::pos() const { return m_pos; }
+// void      Renderable::pos(const glm::vec3& newPos) {
+//   m_pos = newPos;
+//   updateModel();
+// }
+// void Renderable::pos(float x, float y, float z) { pos(glm::vec3{x, y, z}); }
+// void Renderable::accumPos(const glm::vec3& addPos) { pos(m_pos + addPos); }
+// void Renderable::accumPos(float x, float y, float z) {
+//   accumPos(glm::vec3{x, y, z});
+// }
 
-// ====================================================================== //
-// ====================================================================== //
-// G/Setter for rot
-// ====================================================================== //
+// // ====================================================================== //
+// // ====================================================================== //
+// // G/Setter for rot
+// // ====================================================================== //
 
-glm::vec3 Renderable::rot() const { return m_rot; }
-void      Renderable::rot(const glm::vec3& newRot) {
-  m_rot = newRot;
-  updateModel();
-}
-void Renderable::rot(float x, float y, float z) { rot(glm::vec3{x, y, z}); }
-void Renderable::accumRot(const glm::vec3& addRot) { rot(m_rot + addRot); }
-void Renderable::accumRot(float x, float y, float z) {
-  accumRot(glm::vec3{x, y, z});
-}
+// glm::vec3 Renderable::rot() const { return m_rot; }
+// void      Renderable::rot(const glm::vec3& newRot) {
+//   m_rot = newRot;
+//   updateModel();
+// }
+// void Renderable::rot(float x, float y, float z) { rot(glm::vec3{x, y, z}); }
+// void Renderable::accumRot(const glm::vec3& addRot) { rot(m_rot + addRot); }
+// void Renderable::accumRot(float x, float y, float z) {
+//   accumRot(glm::vec3{x, y, z});
+// }
 
-// ====================================================================== //
-// ====================================================================== //
-// G/Setter for scl
-// ====================================================================== //
+// // ====================================================================== //
+// // ====================================================================== //
+// // G/Setter for scl
+// // ====================================================================== //
 
-glm::vec3 Renderable::scl() const { return m_scl; }
-void      Renderable::scl(const glm::vec3& newScl) {
-  m_scl = newScl;
-  updateModel();
-}
-void Renderable::scl(float x, float y, float z) { scl(glm::vec3{x, y, z}); }
-void Renderable::accumScl(const glm::vec3& addScl) { scl(m_scl + addScl); }
-void Renderable::accumScl(float x, float y, float z) {
-  accumScl(glm::vec3{x, y, z});
-}
+// glm::vec3 Renderable::scl() const { return m_scl; }
+// void      Renderable::scl(const glm::vec3& newScl) {
+//   m_scl = newScl;
+//   updateModel();
+// }
+// void Renderable::scl(float x, float y, float z) { scl(glm::vec3{x, y, z}); }
+// void Renderable::accumScl(const glm::vec3& addScl) { scl(m_scl + addScl); }
+// void Renderable::accumScl(float x, float y, float z) {
+//   accumScl(glm::vec3{x, y, z});
+// }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -314,12 +311,14 @@ void Renderable::draw() {
 
   m_shader->uFloat3("u_color", m_color);
 
-  glm::mat4 matMV = Core::camera->view() * m_model;
+  auto currModel = this->transform.model();
+
+  glm::mat4 matMV = Core::camera->view() * currModel;
   m_shader->uMat4("u_matMV", matMV);
   m_shader->uMat4("u_matN", glm::transpose(glm::inverse(matMV)));
 
-  m_shader->uMat4("u_matM", m_model);
-  m_shader->uMat4("u_matMVP", Core::camera->viewproj() * m_model);
+  m_shader->uMat4("u_matM", currModel);
+  m_shader->uMat4("u_matMVP", Core::camera->viewproj() * currModel);
 
   if (!m_culling) { glDisable(GL_CULL_FACE); }
   GL_ASSERT(glDrawElements(GL_TRIANGLES, m_eboSize, GL_UNSIGNED_INT, 0));

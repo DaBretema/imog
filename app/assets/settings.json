@@ -4,7 +4,7 @@
   "openglMajorV": 4,
   "openglMinorV": 5,
 
-  "pollEvents": false,
+  "pollEvents": true,
   "clearColor": [0.2, 0.2, 0.3],
 
   "windowWidth": 800,
