@@ -110,6 +110,7 @@ void IO::windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn) {
     }
   };
 
+
   while (!glfwWindowShouldClose(m_windowPtr)) {
 
     // Events
@@ -117,10 +118,13 @@ void IO::windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn) {
     (Settings::pollEvents) ? glfwPollEvents() : glfwWaitEvents();
     if (Settings::corrupted()) { Core::pause = true; }
     if (Core::pause) { continue; }
+
+    // Update
     updateFn();
 
     // Render
     renderFn();
+
     glfwSwapBuffers(m_windowPtr);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
@@ -179,9 +183,10 @@ void IO::mouseOnScroll(GLFWwindow* w, double xOffset, double yOffset) {
 void IO::mouseOnMove(GLFWwindow* w, double mouseCurrX, double mouseCurrY) {
   if (m_mouseClicL) {
     float yRot = (mouseCurrX - m_mouseLastX) * Settings::mouseSensitivity;
-    float xRot = (mouseCurrY - m_mouseLastY) * Settings::mouseSensitivity;
+    // float xRot = (mouseCurrY - m_mouseLastY) * Settings::mouseSensitivity;
 
-    Core::camera->pivot.rot += glm::vec3(0, yRot, 0);
+    //TODO: Change "Core::camera" to a param of IO class, doing this improve the API isolation, which is so good for future upgrades.
+    Core::camera->pivot.rot += glm::vec3(0.f, yRot, 0.f);
   }
   m_mouseLastX = mouseCurrX;
   m_mouseLastY = mouseCurrY;

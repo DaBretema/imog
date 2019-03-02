@@ -1,6 +1,8 @@
 #include "Light.hpp"
 #include "helpers/Consts.hpp"
 
+#include "Renderable.hpp"
+
 namespace brave {
 
 unsigned int Light::g_lastLightID{0u};
@@ -14,14 +16,16 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
     : m_pos(pos),
       m_color(color),
       m_intensity(intensity),
-      m_renderable(Renderable::create(
-          true,
-          std::string("Light_" + std::to_string(g_lastLightID++)),
-          Figures::mark,
-          "",
-          m_color,
-          Shader::getByName(Shaders::light),
-          false)) {}
+      m_renderableID("Light_" + std::to_string(g_lastLightID++)) {
+
+  Renderable::create(true,
+                     m_renderableID,
+                     Figures::mark,
+                     "",
+                     m_color,
+                     Shader::getByName(Shaders::light),
+                     false);
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -30,8 +34,8 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
 
 glm::vec3 Light::pos() const { return m_pos; }
 void      Light::pos(const glm::vec3& newPos) {
-  m_pos                       = newPos;
-  m_renderable->transform.pos = m_pos;
+  m_pos                                                = newPos;
+  Renderable::getByName(m_renderableID)->transform.pos = m_pos;
 }
 
 // ====================================================================== //
@@ -42,7 +46,7 @@ void      Light::pos(const glm::vec3& newPos) {
 glm::vec3 Light::color() const { return m_color; }
 void      Light::color(const glm::vec3& newColor) {
   m_color = newColor;
-  m_renderable->color(m_color);
+  Renderable::getByName(m_renderableID)->color(m_color);
 }
 
 // ====================================================================== //

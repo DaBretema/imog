@@ -51,7 +51,7 @@ public:
 
   // Get a shared ptr to Skeleton obj from global pool
   // by bvh file of Skeleton
-  static std::shared_ptr<Skeleton> get(const std::string& bvhFilePath);
+  static std::shared_ptr<Skeleton> getByPath(const std::string& bvhFilePath);
 
   // Create a new Renderable if it isn't on the gloabl pool
   static std::shared_ptr<Skeleton> create(const std::string& bvhFilePath,

@@ -67,7 +67,7 @@ Skeleton::~Skeleton() {
 // by bvh file of Skeleton
 // ====================================================================== //
 
-std::shared_ptr<Skeleton> Skeleton::get(const std::string& path) {
+std::shared_ptr<Skeleton> Skeleton::getByPath(const std::string& path) {
   if (poolIndices.count(path) > 0) { return pool[poolIndices[path]]; }
   return nullptr;
 }
@@ -79,7 +79,7 @@ std::shared_ptr<Skeleton> Skeleton::get(const std::string& path) {
 
 std::shared_ptr<Skeleton> Skeleton::create(const std::string& bvhFilePath,
                                            float              scale) {
-  if (auto Sk = get(bvhFilePath)) { return Sk; }
+  if (auto Sk = getByPath(bvhFilePath)) { return Sk; }
 
   pool.push_back(std::make_shared<Skeleton>(bvhFilePath, scale));
 

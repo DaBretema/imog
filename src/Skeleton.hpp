@@ -9,6 +9,7 @@
 #include <dac/Logger.hpp>
 
 #include "Math.hpp"
+#include "Camera.hpp"
 #include "Transform.hpp"
 
 
@@ -52,6 +53,8 @@ private:
   float        m_scale;
   unsigned int m_currFrame;
 
+  std::shared_ptr<Camera> m_camera;
+
   // For intermediate steps between two motions, we create two new motions
   // one from animation 1 to animation 2 and viceversa, storing them
   // in that map, setting the key as "idxFrom_idxTo" (for both cases)
@@ -69,7 +72,9 @@ private:
 
 public:
   Transform transform;
-  Skeleton(float scale = 1.f);
+  int       move;
+
+  Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
   ~Skeleton();
 
   // tmp

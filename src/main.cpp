@@ -23,7 +23,7 @@ void DBG_VEC(glm::vec3 vec, glm::vec3 color = glm::vec3(1, 0, 0)) {
   DBG->color(color);
   for (auto i = -25; i < 25; i++) {
     DBG->transform.pos = vec * (0.1f * i);
-    DBG->draw();
+    DBG->draw(Core::camera);
   }
 };
 
@@ -50,20 +50,22 @@ void DBG_BVH(const std::string& path) {
 int main(int argc, char const* argv[]) {
   Core::init(Paths::settings);
 
-  auto sk1 = Skeleton(0.33f);
-  sk1.setAnimFromBVH("run", Motions::run);
+  // Avoid this, computing the Skeleton height and moving up the skeleton
+  // a half of its height.
+  Renderable::getByName("Floor")->transform.pos -= glm::vec3(0, 6.0f, 0);
+  Renderable::getByName("Floor")->transform.scl = glm::vec3(10.f, 1.f, 10.f);
+
+  dInfo("1");
+  auto sk1 = Skeleton(Core::camera, 0.33f);
+  sk1.setAnimFromBVH("Idle", Motions::idle);
+  sk1.setAnimFromBVH("Run", Motions::run);
+  dInfo("2");
   sk1.animation();
-  // auto re              = Renderable::getByName("cube_pivot");
-  // Core::camera->target = std::shared_ptr<Transform>(&re->transform);
+  dInfo("3");
 
   Core::onUpdate([&]() {
     Core::frame();
     sk1.draw();
-
-    // DBG_VEC(Core::camera->frontY(), Colors::green);
-    // DBG_VEC(sk1.front());
-    // Core::light->pos(sk1->rootPos() + glm::vec3(0.f, 12.5f, 0.f));
-    // cube->draw();
   });
 
 

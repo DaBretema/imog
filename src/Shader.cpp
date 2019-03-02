@@ -121,7 +121,7 @@ Shader::Shader(const std::string& name,
 // by the concatenation of shaders paths
 // ====================================================================== //
 
-std::shared_ptr<Shader> Shader::get(const std::string& paths) {
+std::shared_ptr<Shader> Shader::getFromCache(const std::string& paths) {
   if (poolIndices.count(paths) > 0) { return pool[poolIndices[paths]]; }
   return nullptr;
 }
@@ -133,6 +133,8 @@ std::shared_ptr<Shader> Shader::get(const std::string& paths) {
 
 std::shared_ptr<Shader> Shader::getByName(const std::string& name) {
   if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
+
+  dErr("Zero entries @ shaders pool with name {}.", name);
   return nullptr;
 }
 
@@ -151,7 +153,7 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
   }
 
   auto paths = vertexPath + geomPath + fragPath;
-  if (auto S = get(paths)) { return S; }
+  if (auto S = getFromCache(paths)) { return S; }
 
   pool.push_back(
       std::make_shared<Shader>(name, vertexPath, geomPath, fragPath));
@@ -200,16 +202,17 @@ void Shader::unbind() { glUseProgram(0); }
 // Update upload to the shader camera and light data
 // ====================================================================== //
 
-void Shader::update() {
+void Shader::update(const std::shared_ptr<Camera>& camera,
+                    const std::shared_ptr<Light>&  light) {
   uFloat3("u_clearColor", Settings::clearColor);
 
-  uFloat3("u_lightPos", Core::light->pos());
-  uFloat3("u_lightColor", Core::light->color());
-  uFloat1("u_lightIntensity", Core::light->intensity());
+  uFloat3("u_lightPos", light->pos());
+  uFloat3("u_lightColor", light->color());
+  uFloat1("u_lightIntensity", light->intensity());
 
-  uMat4("u_matV", Core::camera->view());
-  uMat4("u_matP", Core::camera->proj());
-  uMat4("u_matVP", Core::camera->viewproj());
+  uMat4("u_matV", camera->view());
+  uMat4("u_matP", camera->proj());
+  uMat4("u_matVP", camera->viewproj());
 }
 
 // ====================================================================== //

@@ -85,22 +85,13 @@ Renderable::~Renderable() {
 // ====================================================================== //
 // ====================================================================== //
 // Get a shared ptr to Renderable obj from global pool
-// by mixed data of Renderable, like id or objFilepath
-// ====================================================================== //
-
-std::shared_ptr<Renderable> Renderable::get(const std::string& dataMix) {
-  if (poolIndices.count(dataMix) > 0) { return pool[poolIndices[dataMix]]; }
-  return nullptr;
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Get a shared ptr to Renderable obj from global pool
 // by name
 // ====================================================================== //
 
 std::shared_ptr<Renderable> Renderable::getByName(const std::string& name) {
   if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
+
+  dErr("Zero entries @ renderables pool with name {}.", name);
   return nullptr;
 }
 
@@ -117,17 +108,12 @@ std::shared_ptr<Renderable>
                        const glm::vec3&               color,
                        const std::shared_ptr<Shader>& shader,
                        bool                           culling) {
-  std::string key = name + objFilePath + texturePath + glm::to_string(color);
-  if (shader) { key += shader->name(); }
-  if (auto R = get(key)) { return R; }
 
   pool.push_back(std::make_shared<Renderable>(
       allowGlobalDraw, name, objFilePath, texturePath, color, shader, culling));
 
-  auto idx          = pool.size() - 1;
-  poolIndices[name] = idx;
-  poolIndices[key]  = idx;
-  return pool.at(idx);
+  poolIndices[name] = pool.size() - 1;
+  return pool.at(poolIndices[name]);
 }
 
 
@@ -303,22 +289,23 @@ void Renderable::fillEBO(const std::vector<unsigned int>& indices) {
 // Draw execute the Renderable in the viewport using its shader and vbos
 // ====================================================================== //
 
-void Renderable::draw() {
+void Renderable::draw(const std::shared_ptr<Camera>& camera) {
   this->bind();
   m_shader->bind();
-  (m_texture) ? m_texture->bind(m_shader)
+
+  (m_texture) ? m_shader->uInt1("u_texture", m_texture->bind())
               : m_shader->uInt1("u_texture", 99); // "Disable" texture
 
   m_shader->uFloat3("u_color", m_color);
 
   auto currModel = this->transform.model();
 
-  glm::mat4 matMV = Core::camera->view() * currModel;
+  glm::mat4 matMV = camera->view() * currModel;
   m_shader->uMat4("u_matMV", matMV);
   m_shader->uMat4("u_matN", glm::transpose(glm::inverse(matMV)));
 
   m_shader->uMat4("u_matM", currModel);
-  m_shader->uMat4("u_matMVP", Core::camera->viewproj() * currModel);
+  m_shader->uMat4("u_matMVP", camera->viewproj() * currModel);
 
   if (!m_culling) { glDisable(GL_CULL_FACE); }
   GL_ASSERT(glDrawElements(GL_TRIANGLES, m_eboSize, GL_UNSIGNED_INT, 0));

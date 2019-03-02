@@ -63,7 +63,7 @@ Texture::Texture(const std::string& path)
 // Get a shared ptr to the texture from the global pool
 // ====================================================================== //
 
-std::shared_ptr<Texture> Texture::get(const std::string& path) {
+std::shared_ptr<Texture> Texture::getByPath(const std::string& path) {
   if (pool.count(path) > 0) { return pool[path]; }
   return nullptr;
 }
@@ -75,7 +75,7 @@ std::shared_ptr<Texture> Texture::get(const std::string& path) {
 
 std::shared_ptr<Texture> Texture::create(const std::string& path) {
   if (path.empty() || !dac::Files::ok(path, true)) { return nullptr; }
-  if (auto T = get(path)) { return T; }
+  if (auto T = getByPath(path)) { return T; }
   pool[path] = std::make_shared<Texture>(path);
   return pool[path];
 }
@@ -95,14 +95,10 @@ Texture::~Texture() {
 // Active this texture binding it to its OpenGL slot
 // ====================================================================== //
 
-void Texture::bind() const {
+unsigned int Texture::bind() const {
   GL_ASSERT(glActiveTexture(GL_TEXTURE0 + m_glID));
   GL_ASSERT(glBindTexture(GL_TEXTURE_2D, m_glID));
-}
-
-void Texture::bind(const std::shared_ptr<Shader>& s) const {
-  bind();
-  s->uInt1("u_texture", m_glID);
+  return m_glID;
 }
 
 // ====================================================================== //

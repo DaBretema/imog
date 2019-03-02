@@ -7,7 +7,6 @@
 #include "Camera.hpp"
 
 
-
 namespace brave {
 
 class Core {

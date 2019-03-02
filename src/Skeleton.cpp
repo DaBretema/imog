@@ -8,7 +8,7 @@
 
 namespace brave {
 
-Skeleton::Skeleton(float scale)
+Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
     : m_animThread(true),
       m_rotateLeft(false),
       m_rotateRight(false),
@@ -17,11 +17,11 @@ Skeleton::Skeleton(float scale)
       m_play(true),
       m_scale(scale),
       m_currFrame(0u),
+      m_camera(camera),
       m_currMotion("Idle") {
   // Load idle animation //!(define its path on Consts.hpp)
   // and set mechanisms to load it easyly
-  // Core::camera->attach(ptrPos);
-  Core::camera->target = std::shared_ptr<Transform>(&this->transform);
+  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&this->transform);
 
   // Move
   IO::keyboardAddAction(
@@ -31,6 +31,7 @@ Skeleton::Skeleton(float scale)
 }
 Skeleton::~Skeleton() {
   if (!Settings::quiet) dInfo("Skeleton destroyed!");
+  m_play = false;
   // stop();
   m_animThread = false;
 }
@@ -50,6 +51,8 @@ void Skeleton::animation() {
 
   std::call_once(animationOnceFlag, [&]() {
     dac::Async::periodic(moTimeStep() * m_scale, &m_animThread, [&]() {
+      if (!m_play) return;
+
       // Hierarchy data update
       auto hierarchy = [&]() {
         int rotIdx = 0;
@@ -79,10 +82,12 @@ void Skeleton::animation() {
 
       // Camera sync
 
-      if (m_move == 1 || m_move == 2) {
-        auto camFront       = Core::camera->pivot.front();
+      if (m_move == 0) { m_currMotion = "Idle"; }
+      if (m_camera && (m_move == 1 || m_move == 2)) {
+        m_currMotion        = "Run";
+        auto camFront       = m_camera->pivot.front();
         camFront.y          = 0.f;
-        this->transform.rot = Core::camera->pivot.rot;
+        this->transform.rot = m_camera->pivot.rot;
         this->transform.pos += camFront * step;
       }
 
@@ -119,9 +124,10 @@ void Skeleton::draw() {
     auto boneSize = glm::vec3{1.f, glm::distance(JPos, JParentPos) * 0.5f, 1.f};
     BONE->transform.scl = boneSize;
     // Draw
-    BONE->draw();
+    BONE->draw(m_camera);
   };
 
+  dInfo("7");
 
   for (const auto& J : moJoints()) {
     if (!J->parent) continue;

@@ -3,6 +3,9 @@
 #include "Settings.hpp"
 #include "helpers/Consts.hpp"
 
+#include "Shader.hpp"
+#include "Renderable.hpp"
+
 
 namespace brave {
 
@@ -58,10 +61,10 @@ void Core::init(const std::string settingsPath) {
       // 4. Setup core variables
       threadsLive = true;
       pause       = false;
-      camera = std::make_shared<Camera>(Settings::mainCameraSpeed,
+      camera      = std::make_shared<Camera>(Settings::mainCameraSpeed,
                                         Settings::mainCameraRot.x,
                                         Settings::mainCameraRot.y);
-      light = std::make_shared<Light>(Settings::mainLightPos,
+      light       = std::make_shared<Light>(Settings::mainLightPos,
                                       Settings::mainLightColor,
                                       Settings::mainLightIntensity);
 
@@ -120,11 +123,14 @@ void Core::frame() {
     return;
   }
 
+  dInfo("4");
   camera->frame();
-  for (const auto& s : Shader::pool) { s->update(); }
+  dInfo("5");
+  for (const auto& s : Shader::pool) { s->update(camera, light); }
   for (const auto& r : Renderable::pool) {
-    if (r->allowGlobalDraw()) r->draw();
+    if (r->allowGlobalDraw()) r->draw(camera);
   }
+  dInfo("6");
 }
 
 // ====================================================================== //

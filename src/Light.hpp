@@ -1,9 +1,7 @@
 #pragma once
 
 #include <memory>
-
 #include "Math.hpp"
-#include "Renderable.hpp"
 
 namespace brave {
 
@@ -12,11 +10,10 @@ class Light {
   static unsigned int g_lastLightID;
 
 private:
-  glm::vec3 m_pos{0.1f};
-  glm::vec3 m_color{0.5f};
-  float     m_intensity;
-
-  std::shared_ptr<Renderable> m_renderable;
+  glm::vec3   m_pos{0.1f};
+  glm::vec3   m_color{0.5f};
+  float       m_intensity;
+  std::string m_renderableID;
 
 public:
   // Param constructor

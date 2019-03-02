@@ -1,10 +1,9 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
-#include "Shader.hpp"
 
 namespace brave {
 
@@ -27,7 +26,7 @@ public:
   Texture(const std::string& path);
 
   // Get a shared ptr to the texture from the global pool
-  static std::shared_ptr<Texture> get(const std::string& path);
+  static std::shared_ptr<Texture> getByPath(const std::string& path);
 
   // Create a new texture if it isn't on the gloabl pool
   static std::shared_ptr<Texture> create(const std::string& path);
@@ -36,8 +35,7 @@ public:
   ~Texture();
 
   // Active this texture binding it to its OpenGL slot
-  void bind() const;
-  void bind(const std::shared_ptr<Shader>& s) const;
+  unsigned int bind() const;
 
   // Disable this texture unbinding from its OpenGL slot
   void unbind() const;

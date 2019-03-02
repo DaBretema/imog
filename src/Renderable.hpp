@@ -6,10 +6,11 @@
 #include "Math.hpp"
 #include "helpers/Colors.hpp"
 
-#include "Shader.hpp"
-#include "Texture.hpp"
 #include "Transform.hpp"
+#include "Texture.hpp"
 
+#include "Camera.hpp"
+#include "Shader.hpp"
 
 
 namespace brave {
@@ -55,7 +56,7 @@ private:
 public:
   Transform transform;
 
-  // Param constructor w/o OBJ file
+  // Param constructor w/o OBJ file. //! DO NOT CALL THIS DIRECTLY, use Create.
   Renderable(bool                           allowGlobalDraw = true,
              const std::string&             name            = "",
              const std::string&             objFilePath     = "",
@@ -68,12 +69,7 @@ public:
   ~Renderable();
 
 
-  // Get a shared ptr to Renderable obj from global pool
-  // by mixed data of Renderable, like id or objFilepath
-  static std::shared_ptr<Renderable> get(const std::string& dataMix);
-
-  // Get a shared ptr to Renderable obj from global pool
-  // by name
+  // Get a shared ptr to Renderable obj from global pool by name
   static std::shared_ptr<Renderable> getByName(const std::string& name);
 
   // Create a new Renderable if it isn't on the gloabl pool
@@ -111,32 +107,6 @@ public:
   glm::vec3 color() const;
   void      color(const glm::vec3& newColor);
 
-  // G/Setter for model
-  // glm::mat4 model() const;
-  // void      model(const glm::mat4& newModel);
-
-  // // G/Setter for pos
-  // glm::vec3 pos() const;
-  // void      pos(const glm::vec3& newPos);
-  // void      pos(float x, float y, float z);
-  // void      accumPos(const glm::vec3& addPos);
-  // void      accumPos(float x, float y, float z);
-
-  // // G/Setter for rot
-  // glm::vec3 rot() const;
-  // void      rot(const glm::vec3& newRot);
-  // void      rot(float x, float y, float z);
-  // void      accumRot(const glm::vec3& addRot);
-  // void      accumRot(float x, float y, float z);
-
-  // // G/Setter for scl
-  // glm::vec3 scl() const;
-  // void      scl(const glm::vec3& newScl);
-  // void      scl(float x, float y, float z);
-  // void      accumScl(const glm::vec3& addScl);
-  // void      accumScl(float x, float y, float z);
-
-
   // Add a vertex attribute to this Renderable
   template <typename T>
   void addVBO(const std::vector<T>& data);
@@ -145,7 +115,7 @@ public:
   void fillEBO(const std::vector<unsigned int>& indices);
 
   // Draw execute the Renderable in the viewport using its shader and vbos
-  void draw();
+  void draw(const std::shared_ptr<Camera>& camera);
 };
 
 } // namespace brave

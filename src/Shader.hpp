@@ -5,6 +5,8 @@
 #include <unordered_map>
 
 #include "Math.hpp"
+#include "Light.hpp"
+#include "Camera.hpp"
 
 
 namespace brave {
@@ -45,7 +47,7 @@ public:
 
   // Get a shared ptr to the shader from the global pool
   // by the concatenation of shaders paths
-  static std::shared_ptr<Shader> get(const std::string& paths);
+  static std::shared_ptr<Shader> getFromCache(const std::string& paths);
 
   // Get a shared ptr to the shader from the global pool by name
   static std::shared_ptr<Shader> getByName(const std::string& name);
@@ -69,7 +71,8 @@ public:
   void unbind();
 
   // Update upload to the shader camera and light data
-  void update();
+  void update(const std::shared_ptr<Camera>& camera,
+              const std::shared_ptr<Light>&  light);
 
 
   // Returns the ID of the uniform associated to that string,

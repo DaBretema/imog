@@ -4,11 +4,9 @@
 
 #include <dac/Logger.hpp>
 
+#include "IO.hpp"
 #include "Math.hpp"
 #include "Transform.hpp"
-
-#include "IO.hpp"
-#include "Renderable.hpp"
 
 
 namespace brave {
