@@ -123,14 +123,11 @@ void Core::frame() {
     return;
   }
 
-  dInfo("4");
   camera->frame();
-  dInfo("5");
   for (const auto& s : Shader::pool) { s->update(camera, light); }
   for (const auto& r : Renderable::pool) {
     if (r->allowGlobalDraw()) r->draw(camera);
   }
-  dInfo("6");
 }
 
 // ====================================================================== //

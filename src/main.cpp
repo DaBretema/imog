@@ -55,13 +55,10 @@ int main(int argc, char const* argv[]) {
   Renderable::getByName("Floor")->transform.pos -= glm::vec3(0, 6.0f, 0);
   Renderable::getByName("Floor")->transform.scl = glm::vec3(10.f, 1.f, 10.f);
 
-  dInfo("1");
   auto sk1 = Skeleton(Core::camera, 0.33f);
-  sk1.setAnimFromBVH("Idle", Motions::idle);
-  sk1.setAnimFromBVH("Run", Motions::run);
-  dInfo("2");
+  sk1.addMotion("Idle", Motions::idle);
+  sk1.addMotion("Run", Motions::run);
   sk1.animation();
-  dInfo("3");
 
   Core::onUpdate([&]() {
     Core::frame();

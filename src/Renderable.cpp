@@ -177,68 +177,6 @@ void      Renderable::color(const glm::vec3& newColor) { m_color = newColor; }
 
 // ====================================================================== //
 // ====================================================================== //
-// G/Setter for model
-// ====================================================================== //
-
-// glm::mat4 Renderable::model() const { return m_model; }
-// void      Renderable::model(const glm::mat4& newModel) { m_model = newModel; }
-// void      Renderable::updateModel() {
-//   m_model = glm::mat4(1.f);
-//   Math::translate(m_model, m_pos);
-//   Math::rotateXYZ(m_model, m_rot);
-//   Math::scale(m_model, m_scl);
-// }
-
-// // ====================================================================== //
-// // ====================================================================== //
-// // G/Setter for pos
-// // ====================================================================== //
-
-// glm::vec3 Renderable::pos() const { return m_pos; }
-// void      Renderable::pos(const glm::vec3& newPos) {
-//   m_pos = newPos;
-//   updateModel();
-// }
-// void Renderable::pos(float x, float y, float z) { pos(glm::vec3{x, y, z}); }
-// void Renderable::accumPos(const glm::vec3& addPos) { pos(m_pos + addPos); }
-// void Renderable::accumPos(float x, float y, float z) {
-//   accumPos(glm::vec3{x, y, z});
-// }
-
-// // ====================================================================== //
-// // ====================================================================== //
-// // G/Setter for rot
-// // ====================================================================== //
-
-// glm::vec3 Renderable::rot() const { return m_rot; }
-// void      Renderable::rot(const glm::vec3& newRot) {
-//   m_rot = newRot;
-//   updateModel();
-// }
-// void Renderable::rot(float x, float y, float z) { rot(glm::vec3{x, y, z}); }
-// void Renderable::accumRot(const glm::vec3& addRot) { rot(m_rot + addRot); }
-// void Renderable::accumRot(float x, float y, float z) {
-//   accumRot(glm::vec3{x, y, z});
-// }
-
-// // ====================================================================== //
-// // ====================================================================== //
-// // G/Setter for scl
-// // ====================================================================== //
-
-// glm::vec3 Renderable::scl() const { return m_scl; }
-// void      Renderable::scl(const glm::vec3& newScl) {
-//   m_scl = newScl;
-//   updateModel();
-// }
-// void Renderable::scl(float x, float y, float z) { scl(glm::vec3{x, y, z}); }
-// void Renderable::accumScl(const glm::vec3& addScl) { scl(m_scl + addScl); }
-// void Renderable::accumScl(float x, float y, float z) {
-//   accumScl(glm::vec3{x, y, z});
-// }
-
-// ====================================================================== //
-// ====================================================================== //
 // Add a vertex attribute to this Renderable
 // ====================================================================== //
 
@@ -298,7 +236,7 @@ void Renderable::draw(const std::shared_ptr<Camera>& camera) {
 
   m_shader->uFloat3("u_color", m_color);
 
-  auto currModel = this->transform.model();
+  auto currModel = this->transform.asMatrix();
 
   glm::mat4 matMV = camera->view() * currModel;
   m_shader->uMat4("u_matMV", matMV);

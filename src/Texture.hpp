@@ -40,10 +40,13 @@ public:
   // Disable this texture unbinding from its OpenGL slot
   void unbind() const;
 
+
   // Getter for path
   std::string path() const;
+
   // Getter for width
   int width() const;
+
   // Getter for height
   int height() const;
 };

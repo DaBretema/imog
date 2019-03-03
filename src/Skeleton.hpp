@@ -19,8 +19,8 @@ class Skeleton {
 public:
   struct Joint {
     std::string            name{""};
-    glm::mat4              model{1.f};
     glm::vec3              offset{0.f};
+    glm::mat4              transformAsMatrix{1.f};
     std::shared_ptr<Joint> parent;
     std::shared_ptr<Joint> endsite;
     Joint(const std::string& name, std::shared_ptr<Joint> parent)
@@ -70,6 +70,13 @@ private:
   auto moNextFrame() const { return moFrames().at(m_currFrame + 1); }
   auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
 
+  // Animation steps
+
+  float step();
+  void  input();
+  void  hierarchy();
+  void  drawBone(const std::shared_ptr<Joint>& J);
+
 public:
   Transform transform;
   int       move;
@@ -77,8 +84,8 @@ public:
   Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
   ~Skeleton();
 
-  // tmp
-  void setAnimFromBVH(const std::string& name, const std::string& file);
+  // Add motions to skeleton motion map
+  void addMotion(const std::string& name, const std::string& file);
 
   // Run a detached thread for animation process
   void animation();

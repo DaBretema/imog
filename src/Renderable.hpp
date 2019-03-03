@@ -45,13 +45,11 @@ private:
   bool m_culling;
 
   glm::vec3 m_color;
-  // glm::mat4 m_model;
 
   unsigned int m_vao;
   unsigned int m_loc;
   unsigned int m_eboSize;
 
-  // void updateModel();
 
 public:
   Transform transform;
