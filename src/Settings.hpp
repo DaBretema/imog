@@ -18,6 +18,8 @@ private:
   static dac::FileWatcher m_filewatcher;
 
 public:
+  static bool initialized;
+
   static bool        quiet;
   static int         openglMajorV;
   static int         openglMinorV;

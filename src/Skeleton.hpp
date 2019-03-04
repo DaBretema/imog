@@ -41,14 +41,6 @@ private:
   bool           m_animThread;
   std::once_flag animationOnceFlag;
 
-  int m_moving = 0;
-  int m_move   = -1;
-
-  bool m_rotateLeft;
-  bool m_rotateRight;
-  bool m_moveForward;
-  bool m_moveBackward;
-
   bool         m_play;
   float        m_scale;
   unsigned int m_currFrame;
@@ -71,9 +63,7 @@ private:
   auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
 
   // Animation steps
-
   float step();
-  void  input();
   void  hierarchy();
   void  drawBone(const std::shared_ptr<Joint>& J);
 
@@ -86,6 +76,18 @@ public:
 
   // Add motions to skeleton motion map
   void addMotion(const std::string& name, const std::string& file);
+
+  // Modify current motion
+  void currMotion(const std::string& motionName);
+
+  // Move forward
+  void moveFront();
+  // Move to the right
+  void moveRight();
+  // Move to the left
+  void moveLeft();
+  // Move backward
+  void moveBack();
 
   // Run a detached thread for animation process
   void animation();

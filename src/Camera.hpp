@@ -4,7 +4,6 @@
 
 #include <dac/Logger.hpp>
 
-#include "IO.hpp"
 #include "Math.hpp"
 #include "Transform.hpp"
 
@@ -35,10 +34,7 @@ public:
   std::shared_ptr<Transform> target;
   Transform                  transform;
 
-  Camera(float speed = 1.f,
-         float pitch = 0.f,
-         float yaw   = 0.f,
-         float fov   = 0.5f);
+  Camera(float speed = 1.f, float fov = 0.5f);
 
   // Getter for view
   glm::mat4 view() const;

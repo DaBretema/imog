@@ -18,7 +18,7 @@ namespace brave {
 
 #define tex2DImg(w, h, img) \
   GL_ASSERT(glTexImage2D(   \
-      GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img));
+      GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img));
 
 
 // ====================================================================== //
@@ -43,18 +43,29 @@ Texture::Texture(const std::string& path)
   GL_ASSERT(glGenTextures(1, &m_glID));
   GL_ASSERT(glBindTexture(GL_TEXTURE_2D, m_glID));
 
-  tex2DParam(GL_TEXTURE_WRAP_S, GL_REPEAT);
-  tex2DParam(GL_TEXTURE_WRAP_T, GL_REPEAT);
-  tex2DParam(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  tex2DParam(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
   if (auto img = stbi_load(m_path.c_str(), &m_width, &m_height, &m_bytes, 4)) {
-    tex2DImg(m_width, m_height, img);           // This before mipmap gen
+    GL_ASSERT(glTexStorage2D(GL_TEXTURE_2D, 10, GL_RGBA8, m_width, m_height);)
+    GL_ASSERT(glTexSubImage2D(GL_TEXTURE_2D,
+                              0,
+                              0,
+                              0,
+                              m_width,
+                              m_height,
+                              GL_RGBA,
+                              GL_UNSIGNED_BYTE,
+                              img);)
     GL_ASSERT(glGenerateMipmap(GL_TEXTURE_2D)); // This after glTexImg2D
     stbi_image_free(img);
   } else {
     if (!Settings::quiet) dErr("Failed loading texture \"{}\"", path);
   }
+
+  GL_ASSERT(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);)
+  GL_ASSERT(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);)
+  GL_ASSERT(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);)
+  GL_ASSERT(glTexParameteri(
+                GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);)
 }
 
 
@@ -86,7 +97,7 @@ std::shared_ptr<Texture> Texture::create(const std::string& path) {
 // ====================================================================== //
 
 Texture::~Texture() {
-  if (!Settings::quiet) dInfo("Destroyed @ {}", m_path);
+  if (!Settings::quiet) dInfo("Destroying texture: {}", m_path);
   GL_ASSERT(glDeleteTextures(1, &m_glID));
 }
 

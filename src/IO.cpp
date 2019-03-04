@@ -2,7 +2,6 @@
 
 #include <dac/Logger.hpp>
 
-#include "Core.hpp"
 #include "Settings.hpp"
 
 
@@ -12,6 +11,9 @@ namespace brave {
 // ====================================================================== //
 // Private variables definition
 // ====================================================================== //
+
+bool                    IO::m_pause{false};
+std::shared_ptr<Camera> IO::m_camera{nullptr};
 
 GLFWwindow* IO::m_windowPtr{nullptr};
 
@@ -38,7 +40,21 @@ GLFWwindow* IO::window() { return m_windowPtr; }
 // WINDOW reply when is "initialized"
 // ====================================================================== //
 
-void IO::windowInit() {
+void IO::windowInit(std::shared_ptr<Camera> camera) {
+
+  // ---------------------------------------------------------
+  // --- Validations -----------------------------------------
+  if (!Settings::initialized) {
+    dInfo("Undefined settings, default values will be used.");
+  }
+  if (!camera) {
+    dInfo("Camera should be defined. ABORT.");
+    std::exit(2);
+  }
+  // --------------------------------------- / Validations ---
+  // ---------------------------------------------------------
+
+  m_camera = camera;
 
   auto lam_WinERR = [&](auto cond, const std::string& err) {
     if (!cond) {
@@ -116,8 +132,8 @@ void IO::windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn) {
     // Events
     lam_FPS();
     (Settings::pollEvents) ? glfwPollEvents() : glfwWaitEvents();
-    if (Settings::corrupted()) { Core::pause = true; }
-    if (Core::pause) { continue; }
+    if (Settings::corrupted()) { m_pause = true; }
+    if (m_pause) { continue; }
 
     // Update
     updateFn();
@@ -172,7 +188,7 @@ void IO::windowOnClose(GLFWwindow* w) {
 // ====================================================================== //
 
 void IO::mouseOnScroll(GLFWwindow* w, double xOffset, double yOffset) {
-  Core::camera->zoom(static_cast<float>(yOffset));
+  m_camera->zoom(static_cast<float>(yOffset));
 }
 
 // ====================================================================== //
@@ -183,10 +199,9 @@ void IO::mouseOnScroll(GLFWwindow* w, double xOffset, double yOffset) {
 void IO::mouseOnMove(GLFWwindow* w, double mouseCurrX, double mouseCurrY) {
   if (m_mouseClicL) {
     float yRot = (mouseCurrX - m_mouseLastX) * Settings::mouseSensitivity;
-    // float xRot = (mouseCurrY - m_mouseLastY) * Settings::mouseSensitivity;
+    float xRot = (mouseCurrY - m_mouseLastY) * Settings::mouseSensitivity;
 
-    //TODO: Change "Core::camera" to a param of IO class, doing this improve the API isolation, which is so good for future upgrades.
-    Core::camera->pivot.rot += glm::vec3(0.f, yRot, 0.f);
+    m_camera->pivot.rot += glm::vec3(xRot, yRot, 0.f);
   }
   m_mouseLastX = mouseCurrX;
   m_mouseLastY = mouseCurrY;
@@ -234,25 +249,44 @@ void IO::keyboardOnPress(GLFWwindow* w,
                          int         action,
                          int         mods) {
 
-  auto keyState = [&]() {
-    if (action == GLFW_RELEASE) return 0;
-    if (action == GLFW_PRESS) return 1;
-    if (action == GLFW_REPEAT) return 2;
-    return -1;
-  };
+  // ----------------------------------
+  // --- User defined actions ---------
+  // ----------------------------------
 
-  auto mapKey     = std::to_string(key) + "_" + std::to_string(keyState());
+  auto mapKey     = std::to_string(key) + "_" + std::to_string(action);
   bool keyIsOnMap = (m_keyboardActions.count(mapKey) > 0);
-
-  // dInfo("key/exist = {} / {}", mapKey, keyIsOnMap);
   if (keyIsOnMap) { m_keyboardActions.at(mapKey)(); }
+
+  // ----------------------------------
+  // --- Default actions --------------
+  // ----------------------------------
+
+  if (action == GLFW_PRESS) {
+    switch (mods) {
+
+      // Key pressed holding SHIFT
+      case GLFW_MOD_SHIFT:
+        switch (key) {
+          case GLFW_KEY_ESCAPE: windowOnClose(m_windowPtr); break;
+          default: break;
+        }
+        break;
+
+      // Key pressed without mod
+      default:
+        switch (key) {
+          case GLFW_KEY_ESCAPE: m_pause = !m_pause; break;
+          default: break;
+        }
+        break;
+    }
+  }
 }
 
 // ====================================================================== //
 // ====================================================================== //
 // KEYBOARD reply when an "action" is added
 // ====================================================================== //
-
 
 void IO::keyboardAddAction(int key, kbState state, const _IO_FUNC& action) {
   auto mapKey = std::to_string(key) + "_";

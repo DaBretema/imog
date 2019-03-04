@@ -5,7 +5,6 @@
 
 #include <dac/Logger.hpp>
 
-#include "Core.hpp"
 #include "Loader.hpp"
 #include "Settings.hpp"
 
@@ -44,7 +43,7 @@ Renderable::Renderable(bool                           allowGlobalDraw,
                        const glm::vec3&               color,
                        const std::shared_ptr<Shader>& shader,
                        bool                           culling)
-    : m_allowGlobalDraw(allowGlobalDraw),
+    : globalDraw(allowGlobalDraw),
       m_ID(g_RenderablesLastID++),
       m_name(name),
       m_meshPath(objFilePath),
@@ -52,7 +51,6 @@ Renderable::Renderable(bool                           allowGlobalDraw,
       m_texture(Texture::create(texturePath)),
       m_culling(culling),
       m_color(color),
-      // m_model(glm::mat4(1.f)),
       m_vao(0),
       m_loc(0),
       m_eboSize(0) {
@@ -135,13 +133,6 @@ void Renderable::unbind() {
   GL_ASSERT(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
-
-// ====================================================================== //
-// ====================================================================== //
-// Getter for global draw privileges
-// ====================================================================== //
-
-bool Renderable::allowGlobalDraw() const { return m_allowGlobalDraw; }
 
 // ====================================================================== //
 // ====================================================================== //

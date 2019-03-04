@@ -58,6 +58,11 @@ public:
                                         const std::string& geomPath,
                                         const std::string& fragPath);
 
+  // Create a new shader by a gived name, searching it in default forlder
+  static std::shared_ptr<Shader> createByName(const std::string& name,
+                                              bool hasGeometry    = false,
+                                              bool hasTesselation = false);
+
   // Destructor
   ~Shader();
 

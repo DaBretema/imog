@@ -33,8 +33,6 @@ public:
 
 
 private:
-  bool m_allowGlobalDraw;
-
   unsigned int m_ID;
   std::string  m_name;
   std::string  m_meshPath;
@@ -53,6 +51,7 @@ private:
 
 public:
   Transform transform;
+  bool      globalDraw;
 
   // Param constructor w/o OBJ file. //! DO NOT CALL THIS DIRECTLY, use Create.
   Renderable(bool                           allowGlobalDraw = true,
@@ -87,9 +86,6 @@ public:
   // Unbind this Renderable VAO(m_vao) as active to avoid modify VBO, EBO, ...
   void unbind();
 
-
-  // Getter for global draw privileges
-  bool allowGlobalDraw() const;
 
   // Getter for ID
   unsigned int ID() const;

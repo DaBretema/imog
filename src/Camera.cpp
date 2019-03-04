@@ -1,5 +1,6 @@
 #include "Camera.hpp"
 
+#include "IO.hpp"
 #include "Settings.hpp"
 
 namespace brave {
@@ -9,15 +10,18 @@ namespace brave {
 // Param constructor
 // ====================================================================== //
 
-Camera::Camera(float speed, float pitch, float yaw, float fov)
+Camera::Camera(float speed, float fov)
     : m_fov(fov),
       m_speed(speed),
-      m_yaw(-90.f + yaw),
-      m_pitch(pitch),
-      m_multSpeed(1.f),
+      m_yaw(-90.0f),
+      m_pitch(0.0f),
+      m_multSpeed(1.0f),
       m_following(false),
       m_centeredOnTarget(false),
-      target(nullptr) {}
+      target(nullptr) {
+
+  pivot.rot = glm::vec3(Settings::mainCameraRot, 0.0f);
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -53,8 +57,8 @@ void Camera::frame() {
   if (target) { pivot.pos = target->pos; }
 
   auto modZ = pivot.front() * Settings::mainCameraPos.z;
-  auto modY = Math::unitVecY * Settings::mainCameraPos.y;
-  auto eye  = pivot.pos - modZ + modY;
+  // auto modY = Math::unitVecY * Settings::mainCameraPos.y;
+  auto eye = pivot.pos - modZ; //+modY;
 
   m_proj     = glm::perspective(m_fov, IO::windowAspectRatio(), m_near, m_far);
   m_view     = glm::lookAt(eye, pivot.pos, Math::unitVecY);

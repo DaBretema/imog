@@ -9,9 +9,14 @@
 #include <unordered_map>
 using _IO_FUNC = std::function<void()>;
 
+#include "Camera.hpp"
 
 namespace brave {
+
 class IO {
+
+  static bool                    m_pause;
+  static std::shared_ptr<Camera> m_camera;
 
   // ====================================================================== //
   // ====================================================================== //
@@ -27,7 +32,7 @@ private:
 public:
   static GLFWwindow* window();
 
-  static void  windowInit();
+  static void  windowInit(std::shared_ptr<Camera> camera);
   static void  windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn);
   static float windowAspectRatio();
   static void  windowOnScaleChange(GLFWwindow* w, int width, int height);
@@ -63,6 +68,11 @@ private:
   static std::unordered_map<std::string, _IO_FUNC> m_keyboardActions;
 
 public:
+#define IO_DefineKeyStates(key, onRelease, onPress, onRepeat)             \
+  IO::keyboardAddAction(key, IO::kbState::release, [&]() { onRelease; }); \
+  IO::keyboardAddAction(key, IO::kbState::press, [&]() { onPress; });     \
+  IO::keyboardAddAction(key, IO::kbState::repeat, [&]() { onRepeat; });
+
   enum struct kbState { release, press, repeat, press_and_repeat };
 
   static void keyboardOnPress(GLFWwindow* w,

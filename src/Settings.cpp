@@ -31,15 +31,16 @@ namespace brave {
   } catch (json::exception&) { var = defVal; }
 
 
+
 // ========================================================================= //
 // ========================================================================= //
 // Private variables definition
 // ========================================================================= //
 
-bool             Settings::m_corrupted;
-std::string      Settings::m_path;
 nlohmann::json   Settings::m_json;
 dac::FileWatcher Settings::m_filewatcher;
+std::string      Settings::m_path{""};
+bool             Settings::m_corrupted{false};
 
 
 // ====================================================================== //
@@ -47,21 +48,22 @@ dac::FileWatcher Settings::m_filewatcher;
 // Public variables definition
 // ====================================================================== //
 
-bool        Settings::quiet;
-int         Settings::openglMajorV;
-int         Settings::openglMinorV;
-int         Settings::windowWidth;
-int         Settings::windowHeight;
-std::string Settings::windowTitle;
-glm::vec3   Settings::clearColor;
-float       Settings::mouseSensitivity;
-bool        Settings::pollEvents;
-glm::vec3   Settings::mainCameraPos;
-glm::vec2   Settings::mainCameraRot;
-float       Settings::mainCameraSpeed;
-glm::vec3   Settings::mainLightPos;
-glm::vec3   Settings::mainLightColor;
-float       Settings::mainLightIntensity;
+bool        Settings::initialized{false};
+bool        Settings::quiet{true};
+int         Settings::openglMajorV{4};
+int         Settings::openglMinorV{5};
+int         Settings::windowWidth{800};
+int         Settings::windowHeight{600};
+std::string Settings::windowTitle{"Brave Engine"};
+glm::vec3   Settings::clearColor{0.0f};
+float       Settings::mouseSensitivity{1.0f};
+bool        Settings::pollEvents{false};
+glm::vec3   Settings::mainCameraPos{0.0f, 25.0f, 27.5f};
+glm::vec2   Settings::mainCameraRot{-45.0f, 0.0f};
+float       Settings::mainCameraSpeed{0.1f};
+glm::vec3   Settings::mainLightPos{0.0f, 5.0f, 0.0f};
+glm::vec3   Settings::mainLightColor{1.0f};
+float       Settings::mainLightIntensity{500.0f};
 
 
 // ====================================================================== //
@@ -78,15 +80,15 @@ void Settings::init(const std::string& filePath) {
   auto callback = [&](std::fstream& f) {
     retry_pase:
       try {
-        m_json = (!m_path.empty()) ? json::parse(f) : "{}"_json;
-        // -----------------------//
+        m_json      = (!m_path.empty()) ? json::parse(f) : "{}"_json;
+        initialized = true;
 
         stdParse(quiet, true);
         stdParse(openglMajorV, 4);
         stdParse(openglMinorV, 5);
         stdParse(windowWidth, 800);
         stdParse(windowHeight, 600);
-        stdParse(windowTitle, "Brave engine");
+        stdParse(windowTitle, "Brave Engine");
         glmParse(clearColor, glm::vec3(0.2, 0.3, 0.3));
         stdParse(mouseSensitivity, 1.0);
         stdParse(pollEvents, false);
@@ -97,12 +99,12 @@ void Settings::init(const std::string& filePath) {
         glmParse(mainLightColor, glm::vec3(1.0, 0, 1.0));
         stdParse(mainLightIntensity, 1.f);
 
-        // -----------------------//
         m_corrupted = false;
-      } catch (json::exception& e) {
+      }
+
+      catch (json::exception& e) {
         m_corrupted = true;
         dErr("'{}' Bad parsing:\n{}", m_path, e.what());
-
         goto retry_pase;
       }
   };

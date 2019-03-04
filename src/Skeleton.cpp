@@ -1,10 +1,11 @@
 #include "Skeleton.hpp"
 
-#include "Renderable.hpp"
-#include "Loader.hpp"
 #include "IO.hpp"
-#include "Core.hpp"
+#include "Loader.hpp"
 #include "Settings.hpp"
+#include "Renderable.hpp"
+
+#include "helpers/Consts.hpp"
 
 namespace brave {
 
@@ -15,24 +16,13 @@ namespace brave {
 
 Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
     : m_animThread(true),
-      m_rotateLeft(false),
-      m_rotateRight(false),
-      m_moveForward(false),
-      m_moveBackward(false),
       m_play(true),
       m_scale(scale),
       m_currFrame(0u),
       m_camera(camera),
-      m_currMotion("Idle") {
-  // Load idle animation //!(define its path on Consts.hpp)
-  // and set mechanisms to load it easyly
-  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&this->transform);
+      m_currMotion("") {
 
-  // Move
-  IO::keyboardAddAction(
-      GLFW_KEY_I, IO::kbState::release, [&]() { m_move = 0; });
-  IO::keyboardAddAction(GLFW_KEY_I, IO::kbState::press, [&]() { m_move = 1; });
-  IO::keyboardAddAction(GLFW_KEY_I, IO::kbState::repeat, [&]() { m_move = 2; });
+  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&this->transform);
 }
 
 // ====================================================================== //
@@ -42,8 +32,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
 
 Skeleton::~Skeleton() {
   if (!Settings::quiet) dInfo("Skeleton destroyed!");
-  m_play = false;
-  // stop();
+  m_play       = false;
   m_animThread = false;
 }
 
@@ -57,24 +46,6 @@ float Skeleton::step() {
   return glm::distance2(nextFramePos, currFramePos);
 }
 
-// ====================================================================== //
-// ====================================================================== //
-// Observe and act to user input
-// ====================================================================== //
-
-void Skeleton::input() {
-  if (m_move == 0) { m_currMotion = "Idle"; }
-
-  if (m_camera && (m_move == 1 || m_move == 2)) {
-    m_currMotion = "Run";
-
-    auto camFront = m_camera->pivot.front();
-    camFront.y    = 0.f;
-
-    this->transform.rot = m_camera->pivot.rot;
-    this->transform.pos += camFront * step();
-  }
-}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -112,9 +83,19 @@ void Skeleton::hierarchy() {
 // ====================================================================== //
 
 void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
+
+  // ----------------------------------------------------------
+  // --- Bone creation on first call --------------------------
+  static std::once_flag __braveBoneCreation;
+  std::call_once(__braveBoneCreation, []() {
+    Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
+  });
+  // ------------------------ / Bone creation on first call ---
+  // ----------------------------------------------------------
+
   auto bone = Renderable::getByName("Bone");
 
-  // Pos
+  // Joints positions
   auto JPos       = J->transformAsMatrix[3].xyz();
   auto JParentPos = J->parent->transformAsMatrix[3].xyz();
 
@@ -147,9 +128,55 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
 // ====================================================================== //
 
 void Skeleton::addMotion(const std::string& name, const std::string& file) {
+  //todo: before to emplace, CLEAN the motion
   m_motions.try_emplace(name, loader::BVH(file));
   m_motions[name]->name = m_currMotion = name;
 }
+
+// ====================================================================== //
+// ====================================================================== //
+// Modify current motion
+// ====================================================================== //
+
+void Skeleton::currMotion(const std::string& motionName) {
+  if (m_motions.count(motionName) < 1) return;
+
+  m_currFrame  = 0;
+  m_currMotion = motionName;
+}
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Move forward
+// ====================================================================== //
+
+void Skeleton::moveFront() {
+  this->transform.rot.y = m_camera->pivot.rot.y;
+  this->transform.pos += m_camera->pivot.frontXZ() * step();
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Move to the right
+// ====================================================================== //
+
+void Skeleton::moveRight() {}
+
+// ====================================================================== //
+// ====================================================================== //
+// Move to the left
+// ====================================================================== //
+
+void Skeleton::moveLeft() {}
+
+// ====================================================================== //
+// ====================================================================== //
+// Move backward
+// ====================================================================== //
+
+void Skeleton::moveBack() {}
+
 
 // ====================================================================== //
 // ====================================================================== //
@@ -159,17 +186,13 @@ void Skeleton::addMotion(const std::string& name, const std::string& file) {
 void Skeleton::animation() {
   std::call_once(animationOnceFlag, [&]() {
     dac::Async::periodic(moTimeStep() * m_scale, &m_animThread, [&]() {
-      // -------------------------------------------------------
       if (!m_play) return;
-      // -------------------------------------------------------
-      input();
       hierarchy();
-      // -------------------------------------------------------
       if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
-      // -------------------------------------------------------
     });
   });
 }
+
 
 // ====================================================================== //
 // ====================================================================== //
@@ -178,12 +201,23 @@ void Skeleton::animation() {
 
 void Skeleton::draw() {
 
+  // ----------------------------------------------------------------
+  // --- MonkeyHead creation on first call --------------------------
+  static std::once_flag __braveMonkeyHeadCreation;
+  std::call_once(__braveMonkeyHeadCreation, []() {
+    Renderable::create(
+        false, "MonkeyHead", Figures::monkey, "", Colors::orange);
+  });
+  // ------------------------ / MonkeyHead creation on first call ---
+  // ----------------------------------------------------------------
+
+
   for (auto idx = 0u; idx < moJoints().size() - 2; ++idx) {
     auto J = moJoints().at(idx);
     if (!J->parent) continue;
 
     if (J->name == "Head" && J->endsite) {
-      auto head                      = Renderable::getByName("Monkey");
+      auto head                      = Renderable::getByName("MonkeyHead");
       head->transform.overrideMatrix = J->endsite->transformAsMatrix;
       head->draw(m_camera);
     }

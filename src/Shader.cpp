@@ -8,8 +8,8 @@
 #include <dac/Strings.hpp>
 #include <dac/Files.hpp>
 
-#include "Core.hpp"
 #include "Settings.hpp"
+#include "helpers/Consts.hpp"
 
 
 namespace brave {
@@ -162,6 +162,19 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
   poolIndices[name]  = idx;
   poolIndices[paths] = idx;
   return pool.at(idx);
+}
+
+std::shared_ptr<Shader> Shader::createByName(const std::string& name,
+                                             bool               hasGeometry,
+                                             bool hasTesselation) {
+  std::string sPath = Paths::shaders + name + "/" + name;
+  std::string sV    = sPath + ".vert";
+  std::string sG    = (hasGeometry) ? sPath + ".geom" : "";
+  // std::string sTC   = (hasTesselation) ? sPath + ".tesc" : "";
+  // std::string sTE   = (hasTesselation) ? sPath + ".tese" : "";
+  std::string sF = sPath + ".frag";
+  // return Shader::create(name, sV, sG, sTC, sTE, sF);
+  return Shader::create(name, sV, sG, sF);
 }
 
 
