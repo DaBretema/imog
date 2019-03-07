@@ -75,10 +75,6 @@ int main(int argc, char const* argv[]) {
   auto camera = std::make_shared<Camera>(Settings::mainCameraSpeed);
   IO::windowInit(camera);
 
-  // TODO: Base and Light shaders should be internal, not external, maybe be static variables of Shader class
-  Shader::createByName(Shaders::light);
-  Shader::createByName(Shaders::base, true);
-
   // TODO: If not defined should use camera as light
   auto light = std::make_shared<Light>(Settings::mainLightPos,
                                        Settings::mainLightColor,

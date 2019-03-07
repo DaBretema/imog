@@ -43,8 +43,7 @@ Renderable::Renderable(bool                           allowGlobalDraw,
                        const glm::vec3&               color,
                        const std::shared_ptr<Shader>& shader,
                        bool                           culling)
-    : globalDraw(allowGlobalDraw),
-      m_ID(g_RenderablesLastID++),
+    : m_ID(g_RenderablesLastID++),
       m_name(name),
       m_meshPath(objFilePath),
       m_shader(shader),
@@ -53,10 +52,11 @@ Renderable::Renderable(bool                           allowGlobalDraw,
       m_color(color),
       m_vao(0),
       m_loc(0),
-      m_eboSize(0) {
+      m_eboSize(0),
+      globalDraw(allowGlobalDraw) {
 
   GL_ASSERT(glGenVertexArrays(1, &m_vao));
-  if (!m_shader) { m_shader = Shader::getByName(Shaders::base); }
+  if (!m_shader) { m_shader = Shader::getByName("base"); }
   if (m_name.empty()) { m_name = std::string("R_" + std::to_string(m_ID)); }
 
   if (!objFilePath.empty()) {

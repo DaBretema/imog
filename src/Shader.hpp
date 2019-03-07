@@ -14,12 +14,13 @@ namespace brave {
 class Shader {
 
 public:
-  // Global pool for shaders
-  static std::vector<std::shared_ptr<Shader>>          pool;
-  static std::unordered_map<std::string, unsigned int> poolIndices;
+      // Global pool for shaders
+      static std::vector<std::shared_ptr<Shader>>          pool;
+      static std::unordered_map<std::string, unsigned int> poolIndices;
 
 private:
-  std::string  m_name;
+      std::string  m_name;
+
   unsigned int m_program;
 
   std::unordered_map<std::string, int>  m_uCache;

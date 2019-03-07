@@ -22,7 +22,6 @@ namespace brave {
 std::vector<std::shared_ptr<Shader>>          Shader::pool{};
 std::unordered_map<std::string, unsigned int> Shader::poolIndices{};
 
-
 // ====================================================================== //
 // ====================================================================== //
 // Return the OpenGL state machine ID for a filePath
@@ -147,6 +146,7 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
                                        const std::string& vertexPath,
                                        const std::string& geomPath,
                                        const std::string& fragPath) {
+
   if (vertexPath.empty() || fragPath.empty()) {
     if (!Settings::quiet) dErr("Undefined non-optional shaders");
     return nullptr;

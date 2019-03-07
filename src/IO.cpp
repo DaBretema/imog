@@ -4,6 +4,11 @@
 
 #include "Settings.hpp"
 
+#include "Shader.hpp"
+#include "Renderable.hpp"
+
+#include "helpers/Consts.hpp"
+
 
 namespace brave {
 
@@ -44,31 +49,39 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
 
   // ---------------------------------------------------------
   // --- Validations -----------------------------------------
-  if (!Settings::initialized) {
-    dInfo("Undefined settings, default values will be used.");
-  }
+
+  if (!Settings::initialized) { dInfo("Engine gonna use default values."); }
+
   if (!camera) {
     dInfo("Camera should be defined. ABORT.");
     std::exit(2);
   }
+
   // --------------------------------------- / Validations ---
   // ---------------------------------------------------------
 
-  m_camera = camera;
 
-  auto lam_WinERR = [&](auto cond, const std::string& err) {
-    if (!cond) {
-      dErr(err);
-      glfwTerminate();
-    }
-  };
+  // ---------------------------------------------------------
+  // --- Init vars -------------------------------------------
+
+  m_camera = camera;
 
   m_windowTitle  = Settings::windowTitle;
   m_windowHeight = Settings::windowHeight;
   m_windowWidth  = Settings::windowWidth;
 
-  // Creation
-  lam_WinERR(glfwInit(), "Couldn't initialize GLFW");
+  // ----------------------------------------- / Init vars ---
+  // ---------------------------------------------------------
+
+
+  // ---------------------------------------------------------
+  // --- Window creation -------------------------------------
+
+  if (!glfwInit()) {
+    dErr("Couldn't initialize GLFW");
+    glfwTerminate();
+  }
+
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Settings::openglMajorV);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Settings::openglMinorV);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -77,33 +90,76 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
 
   GLFWwindow* o_WINDOW = glfwCreateWindow(
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
-  lam_WinERR(o_WINDOW, "Couldn't create GLFW window");
 
-  // Set as main
-  glfwMakeContextCurrent(o_WINDOW);
+  if (!o_WINDOW) {
+    dErr("Couldn't create GLFW window");
+    glfwTerminate();
+  }
 
-  // Callbacks
-  glfwSetKeyCallback(o_WINDOW, keyboardOnPress);   // -- Keyboard
-  glfwSetCursorPosCallback(o_WINDOW, mouseOnMove); // -- Mouse
+  glfwMakeContextCurrent(o_WINDOW); // Set as active window
+
+  // ----------------------------------- / Window creation ---
+  // ---------------------------------------------------------
+
+
+  // ---------------------------------------------------------
+  // --- Callbacks -------------------------------------------
+
+  // - Keyboard
+
+  glfwSetKeyCallback(o_WINDOW, keyboardOnPress);
+
+  // - Mouse
+
   glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
+  glfwSetCursorPosCallback(o_WINDOW, mouseOnMove);
   glfwSetMouseButtonCallback(o_WINDOW, mouseOnClick);
-  glfwSetWindowCloseCallback(o_WINDOW, windowOnClose); // -- Window
+
+  // - Window
+
+  glfwSetWindowCloseCallback(o_WINDOW, windowOnClose);
   glfwSetWindowSizeCallback(o_WINDOW, windowOnScaleChange);
 
-  // Gl-Extensions
-  GLADloadproc glwfProc = (GLADloadproc)glfwGetProcAddress;
-  lam_WinERR(gladLoadGLLoader(glwfProc), "Couldn't initialize GLAD");
+  // ----------------------------------------- / Callbacks ---
+  // ---------------------------------------------------------
 
-  // Gl-Settings
+
+  // ---------------------------------------------------------
+  // --- GLAD ------------------------------------------------
+
+  GLADloadproc glwfProc = (GLADloadproc)glfwGetProcAddress;
+
+  if (!gladLoadGLLoader(glwfProc)) {
+    dErr("Couldn't initialize GLAD");
+    glfwTerminate();
+  }
+
+  // ---------------------------------------------- / GLAD ---
+  // ---------------------------------------------------------
+
+
+  // ---------------------------------------------------------
+  // --- Defaults --------------------------------------------
+
+  // GL Settings
   glFrontFace(GL_CCW);
   glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
-
   glm::vec3 cc = Settings::clearColor;
   glClearColor(cc.r, cc.g, cc.b, 1.0f);
 
-  // Store window ptr
-  m_windowPtr = o_WINDOW;
+  // Create default Shaders
+  Shader::createByName("base", true);
+  Shader::createByName("light");
+
+  // Create default Renderables
+  Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
+  Renderable::create(false, "MonkeyHead", Figures::monkey, "", Colors::orange);
+
+  // ------------------------------------------ / Defaults ---
+  // ---------------------------------------------------------
+
+  m_windowPtr = o_WINDOW; // Store window ptr
 }
 
 // ====================================================================== //

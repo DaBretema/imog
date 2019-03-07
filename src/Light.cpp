@@ -23,7 +23,7 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
                      Figures::mark,
                      "",
                      m_color,
-                     Shader::getByName(Shaders::light),
+                     Shader::getByName("light"),
                      false);
 }
 

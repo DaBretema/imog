@@ -43,12 +43,6 @@ namespace Motions {
 } // namespace Motions
 
 
-namespace Shaders {
-  const std::string base  = "base";
-  const std::string light = "light";
-} // namespace Shaders
-
-
 namespace Textures {
   const std::string chess      = Paths::textures + "chess.jpg";
   const std::string metal      = Paths::textures + "metal.jpg";

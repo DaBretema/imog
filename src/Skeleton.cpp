@@ -83,16 +83,6 @@ void Skeleton::hierarchy() {
 // ====================================================================== //
 
 void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
-
-  // ----------------------------------------------------------
-  // --- Bone creation on first call --------------------------
-  static std::once_flag __braveBoneCreation;
-  std::call_once(__braveBoneCreation, []() {
-    Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
-  });
-  // ------------------------ / Bone creation on first call ---
-  // ----------------------------------------------------------
-
   auto bone = Renderable::getByName("Bone");
 
   // Joints positions
@@ -200,17 +190,6 @@ void Skeleton::animation() {
 // ====================================================================== //
 
 void Skeleton::draw() {
-
-  // ----------------------------------------------------------------
-  // --- MonkeyHead creation on first call --------------------------
-  static std::once_flag __braveMonkeyHeadCreation;
-  std::call_once(__braveMonkeyHeadCreation, []() {
-    Renderable::create(
-        false, "MonkeyHead", Figures::monkey, "", Colors::orange);
-  });
-  // ------------------------ / MonkeyHead creation on first call ---
-  // ----------------------------------------------------------------
-
 
   for (auto idx = 0u; idx < moJoints().size() - 2; ++idx) {
     auto J = moJoints().at(idx);
