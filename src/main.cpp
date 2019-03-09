@@ -71,21 +71,27 @@ void DBG_BVH(const std::string& path) {
 
 int main(int argc, char const* argv[]) {
 
+  // ---------------------------------------------------------
+  // --- Initialization --------------------------------------
+
   Settings::init(Paths::settings);
+
   auto camera = std::make_shared<Camera>(Settings::mainCameraSpeed);
+
   IO::windowInit(camera);
 
-  // TODO: If not defined should use camera as light
   auto light = std::make_shared<Light>(Settings::mainLightPos,
                                        Settings::mainLightColor,
                                        Settings::mainLightIntensity);
 
-  Renderable::create(true, "Floor", Figures::plane, Textures::chess);
-  Renderable::getByName("Floor")->transform.pos -= glm::vec3(0, 6.0f, 0);
-  Renderable::getByName("Floor")->transform.scl = glm::vec3(500.f, 1.f, 500.f);
+
+  // ------------------------------------ / Initialization ---
+  // ---------------------------------------------------------
 
 
-  // TODO: Free camera move if is not defined
+  // ---------------------------------------------------------
+  // --- Skeleton --------------------------------------------
+
   auto skeleton = Skeleton(camera, 0.33f);
   skeleton.addMotion("Idle", Motions::idle);
   skeleton.addMotion("Run", Motions::run);
@@ -96,6 +102,13 @@ int main(int argc, char const* argv[]) {
                      skeleton.currMotion("Run"),
                      skeleton.moveFront());
 
+  // ------------------------------------------ / Skeleton ---
+  // ---------------------------------------------------------
+
+
+  // ---------------------------------------------------------
+  // --- Loop ------------------------------------------------
+
   auto updateFn = [&]() {
     camera->speed(Settings::mainCameraSpeed);
     light->pos(Settings::mainLightPos);
@@ -103,21 +116,18 @@ int main(int argc, char const* argv[]) {
     light->intensity(Settings::mainLightIntensity);
   };
 
-
   auto renderFn = [&]() {
-    // Compute scene frame
     camera->frame();
-    // Update global data to shaders
-    for (const auto& s : Shader::pool) { s->update(camera, light); }
-    // Update specific renderable data to renderable shader and draw
-    for (const auto& r : Renderable::pool) {
-      if (r->globalDraw) r->draw(camera);
-    }
-    // Draw, desired !globalDraw renderables
+    Shader::poolUpdate(camera, light);
+    Renderable::poolDraw(camera);
     skeleton.draw();
   };
 
   IO::windowLoop(renderFn, updateFn);
+
+  // ---------------------------------------------- / Loop ---
+  // ---------------------------------------------------------
+
   return 0;
 }
 
@@ -134,8 +144,6 @@ int main(int argc, char const* argv[]) {
 // * ===================================================================== * //
 /*
 
- Probablemente rompa de manera aleatoria al mover, pq no se resetean los
- contadores de la jerarquía al cambiar de Motion :D
 
 */
 // * ===================================================================== * //

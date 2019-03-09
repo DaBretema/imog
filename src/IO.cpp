@@ -156,6 +156,12 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
   Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
   Renderable::create(false, "MonkeyHead", Figures::monkey, "", Colors::orange);
 
+  // Create floor
+  auto floor =
+      Renderable::create(true, "Floor", Figures::plane, Textures::chess);
+  floor->transform.pos -= glm::vec3(0, 6.0f, 0);
+  floor->transform.scl = glm::vec3(500.f, 1.f, 500.f);
+
   // ------------------------------------------ / Defaults ---
   // ---------------------------------------------------------
 

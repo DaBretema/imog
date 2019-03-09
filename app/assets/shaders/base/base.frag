@@ -74,7 +74,8 @@ void main() {
   vec3 lightDir = lightPos - g_pos;
   float lightDist = length(lightDir);
   lightDir = normalize(lightDir);
-  vec3 light = u_lightColor ;//* (u_lightIntensity / (lightDist*lightDist));
+  vec3 light = (u_lightColor == vec3(0)) ? vec3(1) : u_lightColor;
+  // light *= (u_lightIntensity / (lightDist*lightDist));
 
   // View
   vec3 viewDir = normalize(-g_pos);

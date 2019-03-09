@@ -13,42 +13,15 @@ namespace brave {
 
 class Shader {
 
-public:
-      // Global pool for shaders
-      static std::vector<std::shared_ptr<Shader>>          pool;
-      static std::unordered_map<std::string, unsigned int> poolIndices;
-
 private:
-      std::string  m_name;
-
-  unsigned int m_program;
-
-  std::unordered_map<std::string, int>  m_uCache;
-  std::unordered_map<std::string, bool> m_alertCache; // Alert only once :D
-
-  // Return the OpenGL state machine ID for a filePath
-  // shader, if source compilation fails returns 0
-  unsigned int loadShader(const std::string& filePath, unsigned int type);
-
-
-public:
-  // Param constructor
-  //
-  // 1. Create new program
-  // 2. Compile shaders:
-  //    - required = vertex, fragment.
-  //    - optional = geometry.
-  // 3. Apped it to a created program
-  // 4. Link program
-  // 5. Verify that its linked (if not, delete it and prompt an alert)
-  Shader(const std::string& name,
-         const std::string& vertexPath,
-         const std::string& geomPath,
-         const std::string& fragPath);
-
   // Get a shared ptr to the shader from the global pool
   // by the concatenation of shaders paths
   static std::shared_ptr<Shader> getFromCache(const std::string& paths);
+
+public:
+  // Global pool for shaders
+  static std::vector<std::shared_ptr<Shader>>          pool;
+  static std::unordered_map<std::string, unsigned int> poolIndices;
 
   // Get a shared ptr to the shader from the global pool by name
   static std::shared_ptr<Shader> getByName(const std::string& name);
@@ -64,11 +37,42 @@ public:
                                               bool hasGeometry    = false,
                                               bool hasTesselation = false);
 
+  // Update all shaders of the pool
+  static void poolUpdate(const std::shared_ptr<Camera>& camera,
+                         const std::shared_ptr<Light>&  light = nullptr);
+
+
+private:
+  std::string m_name;
+
+  unsigned int m_program;
+
+  std::unordered_map<std::string, int>  m_uCache;
+  std::unordered_map<std::string, bool> m_alertCache; // Alert only once :D
+
+  // Return the OpenGL state machine ID for a filePath
+  // shader, if source compilation fails returns 0
+  unsigned int loadShader(const std::string& filePath, unsigned int type);
+
+
+public:
+  // Param constructor //! DO NOT CALL THIS DIRECTLY, use Create.
+  //
+  // 1. Create new program
+  // 2. Compile shaders:
+  //    - required = vertex, fragment.
+  //    - optional = geometry.
+  // 3. Apped it to a created program
+  // 4. Link program
+  // 5. Verify that its linked (if not, delete it and prompt an alert)
+  Shader(const std::string& name,
+         const std::string& vertexPath,
+         const std::string& geomPath,
+         const std::string& fragPath);
+
   // Destructor
   ~Shader();
 
-  // Getter name
-  std::string name();
 
   // Bind set this program as active and use it to draw
   void bind();
@@ -76,9 +80,10 @@ public:
   // Unbind unset this program as active so won't be used to draw
   void unbind();
 
+
   // Update upload to the shader camera and light data
   void update(const std::shared_ptr<Camera>& camera,
-              const std::shared_ptr<Light>&  light);
+              const std::shared_ptr<Light>&  light = nullptr);
 
 
   // Returns the ID of the uniform associated to that string,

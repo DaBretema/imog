@@ -17,9 +17,12 @@ namespace brave {
 
 
 class Renderable {
+
+private:
   static unsigned int g_RenderablesLastID;
 
 public:
+  // Default data struct to compose a Renderable
   struct data {
     std::vector<glm::vec3>    vertices;
     std::vector<glm::vec3>    normals;
@@ -31,6 +34,21 @@ public:
   static std::vector<std::shared_ptr<Renderable>>      pool;
   static std::unordered_map<std::string, unsigned int> poolIndices;
 
+  // Get a shared ptr to Renderable obj from global pool by name
+  static std::shared_ptr<Renderable> getByName(const std::string& name);
+
+  // Create a new Renderable if it isn't on the gloabl pool
+  static std::shared_ptr<Renderable>
+      create(bool                           allowGlobalDraw = true,
+             const std::string&             name            = "",
+             const std::string&             objFilePath     = "",
+             const std::string&             texturePath     = "",
+             const glm::vec3&               color           = Colors::magenta,
+             const std::shared_ptr<Shader>& shader          = nullptr,
+             bool                           culling         = true);
+
+  // Draw all renderables of the pool
+  static void poolDraw(const std::shared_ptr<Camera>& camera);
 
 private:
   unsigned int m_ID;
@@ -64,20 +82,6 @@ public:
 
   // Destructor
   ~Renderable();
-
-
-  // Get a shared ptr to Renderable obj from global pool by name
-  static std::shared_ptr<Renderable> getByName(const std::string& name);
-
-  // Create a new Renderable if it isn't on the gloabl pool
-  static std::shared_ptr<Renderable>
-      create(bool                           allowGlobalDraw = true,
-             const std::string&             name            = "",
-             const std::string&             objFilePath     = "",
-             const std::string&             texturePath     = "",
-             const glm::vec3&               color           = Colors::magenta,
-             const std::shared_ptr<Shader>& shader          = nullptr,
-             bool                           culling         = true);
 
 
   // Bind this Renderable VAO(m_vao) as active to auto attach VBO, EBO, ...

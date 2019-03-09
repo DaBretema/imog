@@ -39,9 +39,9 @@ public:
 
 private:
   bool           m_animThread;
+  bool           m_readyToDraw;
   std::once_flag animationOnceFlag;
 
-  bool         m_play;
   float        m_scale;
   unsigned int m_currFrame;
 
@@ -70,6 +70,8 @@ private:
 public:
   Transform transform;
   int       move;
+  bool      play;
+
 
   Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
   ~Skeleton();

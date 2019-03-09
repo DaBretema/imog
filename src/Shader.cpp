@@ -14,6 +14,8 @@
 
 namespace brave {
 
+// * static
+
 // ====================================================================== //
 // ====================================================================== //
 // Global pool for shaders
@@ -21,6 +23,87 @@ namespace brave {
 
 std::vector<std::shared_ptr<Shader>>          Shader::pool{};
 std::unordered_map<std::string, unsigned int> Shader::poolIndices{};
+
+// ====================================================================== //
+// ====================================================================== //
+// Get a shared ptr to the shader from the global pool
+// by the concatenation of shaders paths
+// ====================================================================== //
+
+std::shared_ptr<Shader> Shader::getFromCache(const std::string& paths) {
+  if (poolIndices.count(paths) > 0) { return pool[poolIndices[paths]]; }
+  return nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Get a shared ptr to the shader from the global pool by name
+// ====================================================================== //
+
+std::shared_ptr<Shader> Shader::getByName(const std::string& name) {
+  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
+
+  if (!Settings::quiet) dErr("Zero entries @ shaders pool with name {}.", name);
+  return nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Create a new shader if it isn't on the gloabl pool
+// ====================================================================== //
+
+std::shared_ptr<Shader> Shader::create(const std::string& name,
+                                       const std::string& vertexPath,
+                                       const std::string& geomPath,
+                                       const std::string& fragPath) {
+
+  if (vertexPath.empty() || fragPath.empty()) {
+    if (!Settings::quiet) dErr("Undefined non-optional shaders");
+    return nullptr;
+  }
+
+  auto paths = vertexPath + geomPath + fragPath;
+  if (auto S = getFromCache(paths)) { return S; }
+
+  pool.push_back(
+      std::make_shared<Shader>(name, vertexPath, geomPath, fragPath));
+
+  auto idx           = pool.size() - 1;
+  poolIndices[name]  = idx;
+  poolIndices[paths] = idx;
+  return pool.at(idx);
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Create a new shader by a gived name, searching it in default forlder
+// ====================================================================== //
+
+std::shared_ptr<Shader> Shader::createByName(const std::string& name,
+                                             bool               hasGeometry,
+                                             bool hasTesselation) {
+  std::string sPath = Paths::shaders + name + "/" + name;
+  std::string sV    = sPath + ".vert";
+  std::string sG    = (hasGeometry) ? sPath + ".geom" : "";
+  // std::string sTC   = (hasTesselation) ? sPath + ".tesc" : "";
+  // std::string sTE   = (hasTesselation) ? sPath + ".tese" : "";
+  std::string sF = sPath + ".frag";
+  // return Shader::create(name, sV, sG, sTC, sTE, sF);
+  return Shader::create(name, sV, sG, sF);
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Update all shaders of the pool
+// ====================================================================== //
+
+void Shader::poolUpdate(const std::shared_ptr<Camera>& camera,
+                        const std::shared_ptr<Light>&  light) {
+  for (const auto& s : pool) { s->update(camera, light); }
+}
+
+// * private
+
 
 // ====================================================================== //
 // ====================================================================== //
@@ -56,6 +139,9 @@ unsigned int Shader::loadShader(const std::string& filePath,
   // Return the ID gived by OpenGL
   return shader;
 }
+
+
+// * public
 
 
 // ====================================================================== //
@@ -113,71 +199,6 @@ Shader::Shader(const std::string& name,
   pool.push_back(std::shared_ptr<Shader>(this));
 }
 
-
-// ====================================================================== //
-// ====================================================================== //
-// Get a shared ptr to the shader from the global pool
-// by the concatenation of shaders paths
-// ====================================================================== //
-
-std::shared_ptr<Shader> Shader::getFromCache(const std::string& paths) {
-  if (poolIndices.count(paths) > 0) { return pool[poolIndices[paths]]; }
-  return nullptr;
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Get a shared ptr to the shader from the global pool by name
-// ====================================================================== //
-
-std::shared_ptr<Shader> Shader::getByName(const std::string& name) {
-  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
-
-  dErr("Zero entries @ shaders pool with name {}.", name);
-  return nullptr;
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Create a new shader if it isn't on the gloabl pool
-// ====================================================================== //
-
-std::shared_ptr<Shader> Shader::create(const std::string& name,
-                                       const std::string& vertexPath,
-                                       const std::string& geomPath,
-                                       const std::string& fragPath) {
-
-  if (vertexPath.empty() || fragPath.empty()) {
-    if (!Settings::quiet) dErr("Undefined non-optional shaders");
-    return nullptr;
-  }
-
-  auto paths = vertexPath + geomPath + fragPath;
-  if (auto S = getFromCache(paths)) { return S; }
-
-  pool.push_back(
-      std::make_shared<Shader>(name, vertexPath, geomPath, fragPath));
-
-  auto idx           = pool.size() - 1;
-  poolIndices[name]  = idx;
-  poolIndices[paths] = idx;
-  return pool.at(idx);
-}
-
-std::shared_ptr<Shader> Shader::createByName(const std::string& name,
-                                             bool               hasGeometry,
-                                             bool hasTesselation) {
-  std::string sPath = Paths::shaders + name + "/" + name;
-  std::string sV    = sPath + ".vert";
-  std::string sG    = (hasGeometry) ? sPath + ".geom" : "";
-  // std::string sTC   = (hasTesselation) ? sPath + ".tesc" : "";
-  // std::string sTE   = (hasTesselation) ? sPath + ".tese" : "";
-  std::string sF = sPath + ".frag";
-  // return Shader::create(name, sV, sG, sTC, sTE, sF);
-  return Shader::create(name, sV, sG, sF);
-}
-
-
 // ====================================================================== //
 // ====================================================================== //
 // Destructor
@@ -186,14 +207,6 @@ std::shared_ptr<Shader> Shader::createByName(const std::string& name,
 Shader::~Shader() {
   if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_program, m_name);
 }
-
-
-// ====================================================================== //
-// ====================================================================== //
-// Getter name
-// ====================================================================== //
-
-std::string Shader::name() { return m_name; }
 
 
 // ====================================================================== //
@@ -217,11 +230,14 @@ void Shader::unbind() { glUseProgram(0); }
 
 void Shader::update(const std::shared_ptr<Camera>& camera,
                     const std::shared_ptr<Light>&  light) {
+
   uFloat3("u_clearColor", Settings::clearColor);
 
-  uFloat3("u_lightPos", light->pos());
-  uFloat3("u_lightColor", light->color());
-  uFloat1("u_lightIntensity", light->intensity());
+  if (light) {
+    uFloat3("u_lightPos", light->pos());
+    uFloat3("u_lightColor", light->color());
+    uFloat1("u_lightIntensity", light->intensity());
+  }
 
   uMat4("u_matV", camera->view());
   uMat4("u_matP", camera->proj());
@@ -240,9 +256,9 @@ int Shader::uniform(const std::string& uName) {
   if (m_uCache.count(uName) > 0) { return m_uCache.at(uName); }
   int uLoc = glGetUniformLocation(m_program, uName.c_str());
 
-  if (uLoc > -1)
+  if (uLoc > -1) {
     m_uCache.insert({uName, uLoc});
-  else if (!Settings::quiet && !m_alertCache[uName]) {
+  } else if (!Settings::quiet && !m_alertCache[uName]) {
     dErr("@{}: not found/used \"{}\"", m_name, uName);
     m_alertCache[uName] = true;
   }
@@ -260,7 +276,6 @@ void Shader::uMat4(const std::string& uName, const glm::mat4& mat) {
   glProgramUniformMatrix4fv(
       m_program, uniform(uName), 1, GL_FALSE, glm::value_ptr(mat));
 }
-
 
 // ====================================================================== //
 // ====================================================================== //

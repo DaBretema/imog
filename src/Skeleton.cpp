@@ -16,11 +16,12 @@ namespace brave {
 
 Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
     : m_animThread(true),
-      m_play(true),
+      m_readyToDraw(false),
       m_scale(scale),
       m_currFrame(0u),
       m_camera(camera),
-      m_currMotion("") {
+      m_currMotion(""),
+      play(true) {
 
   if (m_camera) m_camera->target = std::shared_ptr<Transform>(&this->transform);
 }
@@ -32,7 +33,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
 
 Skeleton::~Skeleton() {
   if (!Settings::quiet) dInfo("Skeleton destroyed!");
-  m_play       = false;
+  this->play   = false;
   m_animThread = false;
 }
 
@@ -43,7 +44,8 @@ Skeleton::~Skeleton() {
 float Skeleton::step() {
   auto currFramePos = moCurrFrame().translation;
   auto nextFramePos = moNextFrame().translation;
-  return glm::distance2(nextFramePos, currFramePos);
+  auto dist         = glm::distance(nextFramePos, currFramePos);
+  return dist * dist * dist;
 }
 
 
@@ -53,28 +55,29 @@ float Skeleton::step() {
 // ====================================================================== //
 
 void Skeleton::hierarchy() {
-  int rotIdx = 0;
+  m_readyToDraw = false;
+  {
 
-  for (const auto& joint : moJoints()) {
-    auto jtm = &joint->transformAsMatrix;
-
-    // On root joint
-    if (joint->name == "Root") { *jtm = this->transform.asMatrix(); }
-
-    // On all joints
-    if (joint->parent) { *jtm = joint->parent->transformAsMatrix; }
-    Math::translate(*jtm, joint->offset * m_scale);
-    Math::rotateXYZ(*jtm, moCurrFrame().rotations.at(rotIdx++));
-
-    // On end-sites
-    if (auto je = joint->endsite) {
-      je->transformAsMatrix = *jtm;
-      Math::translate(je->transformAsMatrix, je->offset * m_scale);
+    int rotIdx = 0;
+    for (const auto& joint : moJoints()) {
+      auto jtm = &joint->transformAsMatrix;
+      // On root joint
+      if (joint->name == "Root") { *jtm = this->transform.asMatrix(); }
+      // On all joints
+      if (joint->parent) { *jtm = joint->parent->transformAsMatrix; }
+      Math::translate(*jtm, joint->offset * m_scale);
+      Math::rotateXYZ(*jtm, moCurrFrame().rotations.at(rotIdx++));
+      // On end-sites
+      if (auto je = joint->endsite) {
+        je->transformAsMatrix = *jtm;
+        Math::translate(je->transformAsMatrix, je->offset * m_scale);
+      }
     }
-  }
 
-  // Frame counter
-  (m_currFrame >= moFrames().size() - 2) ? m_currFrame = 0 : ++m_currFrame;
+    // Frame counter
+    (m_currFrame >= moFrames().size() - 2) ? m_currFrame = 0 : ++m_currFrame;
+  }
+  m_readyToDraw = true;
 }
 
 // ====================================================================== //
@@ -88,6 +91,9 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
   // Joints positions
   auto JPos       = J->transformAsMatrix[3].xyz();
   auto JParentPos = J->parent->transformAsMatrix[3].xyz();
+
+  //! Is not the solution :(
+  // if (glm::distance(JParentPos, JPos) > 1.f) return;
 
   // Position
   bone->transform.pos = (JPos + JParentPos) * 0.5f;
@@ -129,9 +135,18 @@ void Skeleton::addMotion(const std::string& name, const std::string& file) {
 // ====================================================================== //
 
 void Skeleton::currMotion(const std::string& motionName) {
-  if (m_motions.count(motionName) < 1) return;
 
-  m_currFrame  = 0;
+  // Don't make any operation if motion name doesn't exist
+  if (m_motions.count(motionName) < 1) {
+    if (!Settings::quiet) dErr("Zero motions with name {}.", motionName);
+    return;
+  }
+
+  // Reset curr frame, because not every motion have the same length
+  // and may incur a forbidden memory access
+  m_currFrame = 0;
+
+  // Modify current motion
   m_currMotion = motionName;
 }
 
@@ -175,8 +190,9 @@ void Skeleton::moveBack() {}
 
 void Skeleton::animation() {
   std::call_once(animationOnceFlag, [&]() {
-    dac::Async::periodic(moTimeStep() * m_scale, &m_animThread, [&]() {
-      if (!m_play) return;
+    //      ToDo: change periodic to allow change moTimeStep() on motion change
+    dac::Async::periodic(moTimeStep(), &m_animThread, [&]() {
+      if (!this->play) return;
       hierarchy();
       if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
     });
@@ -190,6 +206,9 @@ void Skeleton::animation() {
 // ====================================================================== //
 
 void Skeleton::draw() {
+
+  //! Also, not the solution :(
+  // if (!m_readyToDraw) return;
 
   for (auto idx = 0u; idx < moJoints().size() - 2; ++idx) {
     auto J = moJoints().at(idx);

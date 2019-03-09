@@ -59,7 +59,7 @@ glm::vec3   Settings::clearColor{0.0f};
 float       Settings::mouseSensitivity{1.0f};
 bool        Settings::pollEvents{false};
 glm::vec3   Settings::mainCameraPos{0.0f, 25.0f, 27.5f};
-glm::vec2   Settings::mainCameraRot{-45.0f, 0.0f};
+glm::vec2   Settings::mainCameraRot{45.0f, 0.0f};
 float       Settings::mainCameraSpeed{0.1f};
 glm::vec3   Settings::mainLightPos{0.0f, 5.0f, 0.0f};
 glm::vec3   Settings::mainLightColor{1.0f};

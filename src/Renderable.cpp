@@ -15,6 +15,10 @@
 
 namespace brave {
 
+
+// * static
+
+
 // ====================================================================== //
 // ====================================================================== //
 // Global Renderable objects counter
@@ -29,6 +33,54 @@ unsigned int Renderable::g_RenderablesLastID{0u};
 
 std::vector<std::shared_ptr<Renderable>>      Renderable::pool{};
 std::unordered_map<std::string, unsigned int> Renderable::poolIndices{};
+
+// ====================================================================== //
+// ====================================================================== //
+// Get a shared ptr to Renderable obj from global pool
+// by name
+// ====================================================================== //
+
+std::shared_ptr<Renderable> Renderable::getByName(const std::string& name) {
+  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
+
+  dErr("Zero entries @ renderables pool with name {}.", name);
+  return nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Create a new Renderable if it isn't on the gloabl pool
+// ====================================================================== //
+
+std::shared_ptr<Renderable>
+    Renderable::create(bool                           allowGlobalDraw,
+                       const std::string&             name,
+                       const std::string&             objFilePath,
+                       const std::string&             texturePath,
+                       const glm::vec3&               color,
+                       const std::shared_ptr<Shader>& shader,
+                       bool                           culling) {
+
+  pool.push_back(std::make_shared<Renderable>(
+      allowGlobalDraw, name, objFilePath, texturePath, color, shader, culling));
+
+  poolIndices[name] = pool.size() - 1;
+  return pool.at(poolIndices[name]);
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Draw all renderables of the pool
+// ====================================================================== //
+
+void Renderable::poolDraw(const std::shared_ptr<Camera>& camera) {
+  for (const auto& r : Renderable::pool) {
+    if (r->globalDraw) r->draw(camera);
+  }
+}
+
+
+// * public
 
 
 // ====================================================================== //
@@ -77,41 +129,6 @@ Renderable::Renderable(bool                           allowGlobalDraw,
 
 Renderable::~Renderable() {
   if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_ID, m_name);
-}
-
-
-// ====================================================================== //
-// ====================================================================== //
-// Get a shared ptr to Renderable obj from global pool
-// by name
-// ====================================================================== //
-
-std::shared_ptr<Renderable> Renderable::getByName(const std::string& name) {
-  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
-
-  dErr("Zero entries @ renderables pool with name {}.", name);
-  return nullptr;
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Create a new Renderable if it isn't on the gloabl pool
-// ====================================================================== //
-
-std::shared_ptr<Renderable>
-    Renderable::create(bool                           allowGlobalDraw,
-                       const std::string&             name,
-                       const std::string&             objFilePath,
-                       const std::string&             texturePath,
-                       const glm::vec3&               color,
-                       const std::shared_ptr<Shader>& shader,
-                       bool                           culling) {
-
-  pool.push_back(std::make_shared<Renderable>(
-      allowGlobalDraw, name, objFilePath, texturePath, color, shader, culling));
-
-  poolIndices[name] = pool.size() - 1;
-  return pool.at(poolIndices[name]);
 }
 
 
