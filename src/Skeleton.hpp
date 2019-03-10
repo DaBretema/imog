@@ -38,6 +38,8 @@ public:
   };
 
 private:
+  enum struct directions { front = 8, back = 4, left = 2, right = 1 };
+
   bool           m_animThread;
   bool           m_readyToDraw;
   std::once_flag animationOnceFlag;
@@ -82,14 +84,32 @@ public:
   // Modify current motion
   void currMotion(const std::string& motionName);
 
+
+  /* Movement will be defined by the following truth table.
+      F B L R / Val
+                                                          - Stillness cases
+      0 0 0 0 / 0  : No input             : Ø
+      0 0 1 1 / 3  : Right and Left       : Ø
+      1 1 0 0 / 12 : Forward and Backward : Ø
+                                                          - Basic moves
+      0 0 0 1 / 1  : Right    : ➡
+      0 0 1 0 / 2  : Left     : ⬅
+      0 1 0 0 / 4  : Backward : ↓
+      1 0 0 0 / 8  : Forward  : ↑
+                                                          - Combo moves
+      1 0 0 1 / 9  : Right + Forward  : ↗
+      1 0 1 0 / 10 : Left + Forward   : ↖
+      0 1 0 1 / 5  : Right + Backward : ↘
+      0 1 1 0 / 6  : Left + Backward  : ↙
+  */
   // Move forward
-  void moveFront();
+  void moveFront(bool active);
   // Move to the right
-  void moveRight();
+  void moveRight(bool active);
   // Move to the left
-  void moveLeft();
+  void moveLeft(bool active);
   // Move backward
-  void moveBack();
+  void moveBack(bool active);
 
   // Run a detached thread for animation process
   void animation();

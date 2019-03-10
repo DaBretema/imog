@@ -68,10 +68,10 @@ private:
   static std::unordered_map<std::string, _IO_FUNC> m_keyboardActions;
 
 public:
-#define IO_DefineKeyStates(key, onRelease, onPress, onRepeat)             \
-  IO::keyboardAddAction(key, IO::kbState::release, [&]() { onRelease; }); \
-  IO::keyboardAddAction(key, IO::kbState::press, [&]() { onPress; });     \
-  IO::keyboardAddAction(key, IO::kbState::repeat, [&]() { onRepeat; });
+#define IO_DefineKeyStates(key, onRelease, onPress, onRepeat)  \
+  IO::keyboardAddAction(key, IO::kbState::release, onRelease); \
+  IO::keyboardAddAction(key, IO::kbState::press, onPress);     \
+  IO::keyboardAddAction(key, IO::kbState::repeat, onRepeat);
 
   enum struct kbState { release, press, repeat, press_and_repeat };
 

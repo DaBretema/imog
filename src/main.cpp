@@ -93,14 +93,20 @@ int main(int argc, char const* argv[]) {
   // --- Skeleton --------------------------------------------
 
   auto skeleton = Skeleton(camera, 0.33f);
-  skeleton.addMotion("Idle", Motions::idle);
   skeleton.addMotion("Run", Motions::run);
+  skeleton.addMotion("Idle", Motions::idle);
   skeleton.animation();
 
-  IO_DefineKeyStates(GLFW_KEY_W,
-                     skeleton.currMotion("Idle"),
-                     skeleton.currMotion("Run"),
-                     skeleton.moveFront());
+  IO::keyboardAddAction(GLFW_KEY_W, IO::kbState::release, [&]() {
+    skeleton.currMotion("Idle");
+    skeleton.moveFront(false);
+  });
+
+  IO::keyboardAddAction(GLFW_KEY_W, IO::kbState::press, [&]() {
+    skeleton.currMotion("Run");
+    skeleton.moveFront(true);
+  });
+
 
   // ------------------------------------------ / Skeleton ---
   // ---------------------------------------------------------
@@ -144,6 +150,9 @@ int main(int argc, char const* argv[]) {
 // * ===================================================================== * //
 /*
 
+TODO 1: Cambiar las llamadas de movimiento a "eventos" con booleanos en Skeleton para que así se disparen dentro del hilo de animación.
+
+TODO 2: Igualmente el cambio de motion, debe ir dentro del hilo de animación y se debe setear (al menos) la posición del root antes de cambiar de motion, para evitar efecto espageti.
 
 */
 // * ===================================================================== * //
