@@ -97,6 +97,15 @@ int main(int argc, char const* argv[]) {
   skeleton.addMotion("Idle", Motions::idle);
   skeleton.animation();
 
+  /*
+
+skeleton.onKey(key, releaseAction, pressAction);
+
+skeleton.onKeyPress(key, [&](){});
+skeleton.onKeyRelease(key, [&](){});
+*/
+
+
   IO::keyboardAddAction(GLFW_KEY_W, IO::kbState::release, [&]() {
     skeleton.currMotion("Idle");
     skeleton.moveFront(false);
@@ -150,9 +159,9 @@ int main(int argc, char const* argv[]) {
 // * ===================================================================== * //
 /*
 
-TODO 1: Cambiar las llamadas de movimiento a "eventos" con booleanos en Skeleton para que así se disparen dentro del hilo de animación.
+Todo 1 : Allow multiple entries on same key state... (IO.cpp) unordered_multimap
 
-TODO 2: Igualmente el cambio de motion, debe ir dentro del hilo de animación y se debe setear (al menos) la posición del root antes de cambiar de motion, para evitar efecto espageti.
+Todo 2 : Make a motion pool access wrapper inside skeleton.
 
 */
 // * ===================================================================== * //

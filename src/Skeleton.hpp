@@ -40,8 +40,9 @@ public:
 private:
   enum struct directions { front = 8, back = 4, left = 2, right = 1 };
 
+  std::mutex m_mutex;
+
   bool           m_animThread;
-  bool           m_readyToDraw;
   std::once_flag animationOnceFlag;
 
   float        m_scale;
@@ -58,15 +59,16 @@ private:
 
   // Easy motion wrappers
   auto moTimeStep() const { return m_motions.at(m_currMotion)->timeStep; };
-  auto moName() const { return m_motions.at(m_currMotion)->name; };
-  auto moFrames() const { return m_motions.at(m_currMotion)->frames; };
-  auto moCurrFrame() const { return moFrames().at(m_currFrame); }
-  auto moNextFrame() const { return moFrames().at(m_currFrame + 1); }
-  auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
+  // auto moName() const { return m_motions.at(m_currMotion)->name; };
+  // auto moFrames() const { return m_motions.at(m_currMotion)->frames; };
+  // auto moCurrFrame() const { return moFrames().at(m_currFrame); }
+  // auto moNextFrame() const { return moFrames().at(m_currFrame + 1); }
+  // auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
 
   // Animation steps
   float step();
-  void  hierarchy();
+  // void  hierarchy();
+  void  hierarchy(const std::string& motionName, unsigned int frame);
   void  drawBone(const std::shared_ptr<Joint>& J);
 
 public:

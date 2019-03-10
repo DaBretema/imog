@@ -9,45 +9,9 @@
 
 namespace brave {
 
-// ====================================================================== //
-// ====================================================================== //
-// Param constructor
-// ====================================================================== //
 
-Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
-    : m_animThread(true),
-      m_readyToDraw(false),
-      m_scale(scale),
-      m_currFrame(0u),
-      m_camera(camera),
-      m_currMotion(""),
-      move(0),
-      play(true) {
+// * private
 
-  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&this->transform);
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Destructor
-// ====================================================================== //
-
-Skeleton::~Skeleton() {
-  if (!Settings::quiet) dInfo("Skeleton destroyed!");
-  this->play   = false;
-  m_animThread = false;
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Compute displacement to apply on next user input
-// ====================================================================== //
-float Skeleton::step() {
-  auto currFramePos = moCurrFrame().translation;
-  auto nextFramePos = moNextFrame().translation;
-  auto dist         = glm::distance(nextFramePos, currFramePos);
-  return dist * dist * dist;
-}
 
 
 // ====================================================================== //
@@ -55,26 +19,48 @@ float Skeleton::step() {
 // Compute hierarchy of the skeleton based on current frame and motion
 // ====================================================================== //
 
-void Skeleton::hierarchy() {
-  int rotIdx = 0;
-  for (const auto& joint : moJoints()) {
-    auto jtm = &joint->transformAsMatrix;
+void Skeleton::hierarchy(const std::string& motionName, unsigned int frame) {
+  std::lock_guard<std::mutex> lgm_hierarchy(m_mutex);
+
+  if (m_motions.count(motionName) < 1) {
+    if (!Settings::quiet) dErr("Zero motions with name {}.", motionName);
+    return;
+  }
+
+  auto joints      = m_motions.at(motionName)->joints;
+  auto targetFrame = m_motions.at(motionName)->frames.at(frame);
+
+  for (auto idx = 0u; idx < joints.size(); ++idx) {
+
+    auto joint = joints.at(idx);
+    auto jtm   = &joint->transformAsMatrix;
+
     // On root joint
     if (joint->name == "Root") { *jtm = this->transform.asMatrix(); }
+
     // On all joints
     if (joint->parent) { *jtm = joint->parent->transformAsMatrix; }
     Math::translate(*jtm, joint->offset * m_scale);
-    Math::rotateXYZ(*jtm, moCurrFrame().rotations.at(rotIdx++));
+    Math::rotateXYZ(*jtm, targetFrame.rotations.at(idx));
+
     // On end-sites
     if (auto je = joint->endsite) {
       je->transformAsMatrix = *jtm;
       Math::translate(je->transformAsMatrix, je->offset * m_scale);
     }
   }
+}
 
-  // Frame counter
-  (m_currFrame >= moFrames().size() - 2) ? m_currFrame = 0 : ++m_currFrame;
-  m_readyToDraw                                        = true;
+// ====================================================================== //
+// ====================================================================== //
+// Compute displacement to apply on next user input
+// ====================================================================== //
+
+float Skeleton::step() {
+  auto p1 = m_motions.at(m_currMotion)->frames.at(m_currFrame).translation;
+  auto p2 = m_motions.at(m_currMotion)->frames.at(m_currFrame + 1).translation;
+  auto dist = glm::distance2(p2, p1);
+  return dist * dist;
 }
 
 // ====================================================================== //
@@ -112,6 +98,40 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
 }
 
 
+
+// * public
+
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Param constructor
+// ====================================================================== //
+
+Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
+    : m_animThread(true),
+      m_scale(scale),
+      m_currFrame(0u),
+      m_camera(camera),
+      m_currMotion(""),
+      move(0),
+      play(true) {
+
+  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&this->transform);
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Destructor
+// ====================================================================== //
+
+Skeleton::~Skeleton() {
+  if (!Settings::quiet) dInfo("Skeleton destroyed!");
+  this->play   = false;
+  m_animThread = false;
+}
+
+
 // ====================================================================== //
 // ====================================================================== //
 // Add motions to skeleton motion map
@@ -136,9 +156,8 @@ void Skeleton::currMotion(const std::string& motionName) {
     return;
   }
 
-  // if (motionName == "Idle") { m_move = -1; }
-
-  m_readyToDraw = false;
+  // Compute first frame hierarchy before draw it to avoid spagghetti bug
+  hierarchy(motionName, 0);
 
   // Reset curr frame, because not every motion have the same length
   // and may incur a forbidden memory access
@@ -155,9 +174,6 @@ void Skeleton::currMotion(const std::string& motionName) {
 // ====================================================================== //
 
 void Skeleton::moveFront(bool active) {
-  // this->transform.rot.y = m_camera->pivot.rot.y;
-  // this->transform.pos += m_camera->pivot.frontXZ() * step();
-
   move += ((active) ? 1 : -1) * (int)directions::front;
 }
 
@@ -200,12 +216,20 @@ void Skeleton::animation() {
     dac::Async::periodic(moTimeStep(), &m_animThread, [&]() {
       if (!this->play) return;
 
-      hierarchy();
+      // Update hierarchy
+      hierarchy(m_currMotion, m_currFrame);
 
+      // Update frame counter
+      //ToDo: test better... some dies ocurr maybe because counter
+      auto frameLimit = m_motions.at(m_currMotion)->frames.size() - 2;
+      (m_currFrame >= frameLimit) ? m_currFrame = 0 : ++m_currFrame;
+
+      // Camera rotation sync when skeleton is moved
       if (!(move == 0 or move == 3 or move == 12)) {
         this->transform.rot.y = m_camera->pivot.rot.y;
       }
 
+      // Move actions
       switch ((directions)move) {
         case directions::front:
           this->transform.pos += m_camera->pivot.frontXZ() * step();
@@ -227,11 +251,10 @@ void Skeleton::animation() {
 
 void Skeleton::draw() {
 
-  //! Also, not the solution :(
-  if (!m_readyToDraw) return;
+  auto joints = m_motions.at(m_currMotion)->joints;
+  for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
 
-  for (auto idx = 0u; idx < moJoints().size() - 2; ++idx) {
-    auto J = moJoints().at(idx);
+    auto J = joints.at(idx);
     if (!J->parent) continue;
 
     if (J->name == "Head" and J->endsite) {
