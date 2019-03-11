@@ -93,8 +93,8 @@ int main(int argc, char const* argv[]) {
   // --- Skeleton --------------------------------------------
 
   auto skeleton = Skeleton(camera, 0.33f);
-  skeleton.addMotion("Run", Motions::run);
   skeleton.addMotion("Idle", Motions::idle);
+  skeleton.addMotion("Run", Motions::run);
   skeleton.animation();
 
   /*

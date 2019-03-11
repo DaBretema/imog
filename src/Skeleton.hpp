@@ -57,19 +57,11 @@ private:
   std::unordered_map<std::string, std::shared_ptr<Skeleton::Motion>> m_motions;
   std::string m_currMotion;
 
-  // Easy motion wrappers
-  auto moTimeStep() const { return m_motions.at(m_currMotion)->timeStep; };
-  // auto moName() const { return m_motions.at(m_currMotion)->name; };
-  // auto moFrames() const { return m_motions.at(m_currMotion)->frames; };
-  // auto moCurrFrame() const { return moFrames().at(m_currFrame); }
-  // auto moNextFrame() const { return moFrames().at(m_currFrame + 1); }
-  // auto moJoints() const { return m_motions.at(m_currMotion)->joints; };
-
   // Animation steps
   float step();
   // void  hierarchy();
-  void  hierarchy(const std::string& motionName, unsigned int frame);
-  void  drawBone(const std::shared_ptr<Joint>& J);
+  void hierarchy(const std::string& motionName, unsigned int frame);
+  void drawBone(const std::shared_ptr<Joint>& J);
 
 public:
   Transform transform;
