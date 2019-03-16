@@ -1,5 +1,6 @@
 #include "Loader.hpp"
 
+#include <stack>
 #include <regex>
 #include <unordered_map>
 
@@ -13,8 +14,6 @@
 // ========================================================================= //
 // ===================== BRAVE - Loader BVH *HELPERS* ====================== //
 // ========================================================================= //
-
-using joint_t = std::shared_ptr<brave::Skeleton::Joint>;
 
 // ====================================================================== //
 // ====================================================================== //
@@ -95,12 +94,12 @@ TOKEN Token(const std::string& tokenStr) {
 // Add new joint to the joint list with the gived name
 // ====================================================================== //
 
-void addNewJoint(const std::string&    name,
-                 std::stack<joint_t>&  parents,
-                 std::vector<joint_t>& joints,
-                 bool                  isEndSite = false) {
+void addNewJoint(const std::string&                          name,
+                 std::stack<std::shared_ptr<brave::Joint>>&  parents,
+                 std::vector<std::shared_ptr<brave::Joint>>& joints,
+                 bool isEndSite = false) {
 
-  auto j = std::make_shared<brave::Skeleton::Joint>(
+  auto j = std::make_shared<brave::Joint>(
       name, (!parents.empty()) ? parents.top() : nullptr);
 
   parents.push(j);
@@ -119,9 +118,8 @@ void addNewJoint(const std::string&    name,
 namespace brave {
 namespace loader {
 
-  std::shared_ptr<Skeleton::Motion> BVH(const std::string& bvhFilePath) {
-    std::shared_ptr<Skeleton::Motion> out =
-        std::make_shared<Skeleton::Motion>();
+  std::shared_ptr<Motion> BVH(const std::string& bvhFilePath) {
+    auto out = std::make_shared<Motion>();
     if (!dac::Files::ok(bvhFilePath, true)) { return out; }
 
     // --- AUX VARS ---------------------------------------------------- //
@@ -131,8 +129,8 @@ namespace loader {
 
     MODES mode{MODES::hierarchy};
 
-    std::stack<joint_t>       parents{};
-    std::vector<unsigned int> channels; // Read order for motion
+    std::stack<std::shared_ptr<brave::Joint>> parents{};
+    std::vector<unsigned int>                 channels; // Read order for motion
 
     std::string       linestream{""};
     std::stringstream filestream{dac::Strings::fromFile(bvhFilePath)};
@@ -191,8 +189,8 @@ namespace loader {
               break;
 
             default:
-              Skeleton::Frame currFrame;
-              glm::vec3       aux{0.f};
+              brave::Frame currFrame;
+              glm::vec3    aux{0.f};
 
               assert(LINE.size() == channels.size());
 
@@ -218,6 +216,7 @@ namespace loader {
       }
     }
 
+    out->clean();
     return out;
   }
 } // namespace loader

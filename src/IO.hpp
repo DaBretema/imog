@@ -65,7 +65,7 @@ public:
   // ====================================================================== //
 
 private:
-  static std::unordered_map<std::string, _IO_FUNC> m_keyboardActions;
+  static std::unordered_multimap<std::string, _IO_FUNC> m_keyboardActions;
 
 public:
 #define IO_DefineKeyStates(key, onRelease, onPress, onRepeat)  \

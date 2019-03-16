@@ -32,7 +32,7 @@ bool   IO::m_mouseClicR{false};
 double IO::m_mouseLastX{.0};
 double IO::m_mouseLastY{.0};
 
-std::unordered_map<std::string, _IO_FUNC> IO::m_keyboardActions{};
+std::unordered_multimap<std::string, _IO_FUNC> IO::m_keyboardActions{};
 
 
 
@@ -153,6 +153,7 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
   Shader::createByName("light");
 
   // Create default Renderables
+  Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
   Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
   Renderable::create(false, "MonkeyHead", Figures::monkey, "", Colors::orange);
 
@@ -317,7 +318,11 @@ void IO::keyboardOnPress(GLFWwindow* w,
 
   auto mapKey     = std::to_string(key) + "_" + std::to_string(action);
   bool keyIsOnMap = (m_keyboardActions.count(mapKey) > 0);
-  if (keyIsOnMap) { m_keyboardActions.at(mapKey)(); }
+
+  if (keyIsOnMap) {
+    auto itRange = m_keyboardActions.equal_range(mapKey);
+    for (auto it = itRange.first; it != itRange.second; ++it) { it->second(); }
+  }
 
   // ----------------------------------
   // --- Default actions --------------

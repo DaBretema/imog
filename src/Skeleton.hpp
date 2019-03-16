@@ -8,39 +8,18 @@
 #include <dac/Async.hpp>
 #include <dac/Logger.hpp>
 
+#include "IO.hpp"
 #include "Math.hpp"
 #include "Camera.hpp"
 #include "Transform.hpp"
+#include "Motion.hpp"
 
 
 namespace brave {
 class Skeleton {
 
-public:
-  struct Joint {
-    std::string            name{""};
-    glm::vec3              offset{0.f};
-    glm::mat4              transformAsMatrix{1.f};
-    std::shared_ptr<Joint> parent;
-    std::shared_ptr<Joint> endsite;
-    Joint(const std::string& name, std::shared_ptr<Joint> parent)
-        : name(name), parent(parent) {}
-  };
-  struct Frame {
-    std::vector<glm::vec3> rotations;
-    glm::vec3              translation;
-  };
-  struct Motion {
-    std::string                         name;
-    std::vector<std::shared_ptr<Joint>> joints;
-    std::vector<Frame>                  frames;
-    float                               timeStep;
-  };
-
 private:
-  enum struct directions { front = 8, back = 4, left = 2, right = 1 };
-
-  std::mutex m_mutex;
+  enum struct directions { F = 8, B = 4, L = 2, R = 1 };
 
   bool           m_animThread;
   std::once_flag animationOnceFlag;
@@ -54,30 +33,29 @@ private:
   // one from animation 1 to animation 2 and viceversa, storing them
   // in that map, setting the key as "idxFrom_idxTo" (for both cases)
   // to easy swith from one to other
-  std::unordered_map<std::string, std::shared_ptr<Skeleton::Motion>> m_motions;
+  std::unordered_map<std::string, std::shared_ptr<Motion>> m_motions;
   std::string m_currMotion;
 
-  // Animation steps
   float step();
-  // void  hierarchy();
-  void hierarchy(const std::string& motionName, unsigned int frame);
-  void drawBone(const std::shared_ptr<Joint>& J);
+  void  drawBone(const std::shared_ptr<Joint>& J);
+  void  hierarchy(const std::string& motionName, unsigned int frame);
 
 public:
   Transform transform;
   int       move;
   bool      play;
 
-
   Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
   ~Skeleton();
+
+  // Define actions on key state
+  void onKey(int key, _IO_FUNC release = []() {}, _IO_FUNC press = []() {});
 
   // Add motions to skeleton motion map
   void addMotion(const std::string& name, const std::string& file);
 
   // Modify current motion
   void currMotion(const std::string& motionName);
-
 
   /* Movement will be defined by the following truth table.
       F B L R / Val
@@ -96,14 +74,10 @@ public:
       0 1 0 1 / 5  : Right + Backward : ↘
       0 1 1 0 / 6  : Left + Backward  : ↙
   */
-  // Move forward
-  void moveFront(bool active);
-  // Move to the right
-  void moveRight(bool active);
-  // Move to the left
-  void moveLeft(bool active);
-  // Move backward
-  void moveBack(bool active);
+  void moveF(bool active);
+  void moveR(bool active);
+  void moveL(bool active);
+  void moveB(bool active);
 
   // Run a detached thread for animation process
   void animation();

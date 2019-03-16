@@ -1,8 +1,8 @@
 {
   "quiet": true,
 
-  "openglMajorV": 4,
-  "openglMinorV": 5,
+  "openglMajorV": 3,
+  "openglMinorV": 3,
 
   "pollEvents": true,
   "clearColor": [0.0, 0.0, 0.0],

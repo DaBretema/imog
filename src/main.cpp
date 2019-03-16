@@ -12,6 +12,11 @@
 #include "helpers/Colors.hpp"
 using namespace brave;
 
+// tmp
+
+// #include <execution>
+// #include <numeric>
+
 
 
 // * ===================================================================== * //
@@ -71,6 +76,12 @@ void DBG_BVH(const std::string& path) {
 
 int main(int argc, char const* argv[]) {
 
+  // std::vector<glm::vec3> A(1000, glm::vec3(1.f));
+  // auto                   reduced = std::reduce(std::begin(A), std::end(A));
+
+  // dInfo("vec sum => {}" glm::to_string(reduced));
+
+  // return 0;
   // ---------------------------------------------------------
   // --- Initialization --------------------------------------
 
@@ -97,24 +108,15 @@ int main(int argc, char const* argv[]) {
   skeleton.addMotion("Run", Motions::run);
   skeleton.animation();
 
-  /*
-
-skeleton.onKey(key, releaseAction, pressAction);
-
-skeleton.onKeyPress(key, [&](){});
-skeleton.onKeyRelease(key, [&](){});
-*/
-
-
-  IO::keyboardAddAction(GLFW_KEY_W, IO::kbState::release, [&]() {
-    skeleton.currMotion("Idle");
-    skeleton.moveFront(false);
-  });
-
-  IO::keyboardAddAction(GLFW_KEY_W, IO::kbState::press, [&]() {
-    skeleton.currMotion("Run");
-    skeleton.moveFront(true);
-  });
+  skeleton.onKey(GLFW_KEY_W,
+                 [&]() {
+                   skeleton.currMotion("Idle");
+                   skeleton.moveF(false);
+                 },
+                 [&]() {
+                   skeleton.currMotion("Run");
+                   skeleton.moveF(true);
+                 });
 
 
   // ------------------------------------------ / Skeleton ---

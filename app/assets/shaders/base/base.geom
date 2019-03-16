@@ -1,4 +1,4 @@
-#version 450 core
+#version 330 core
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 
@@ -22,7 +22,7 @@ vec3 norm() {
 void main() {
 
     // Create a "triangle_strip" primitive
-    for (uint i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         g_pos = v_pos[i];
         g_norm = v_norm[i];
         g_texUV = v_texUV[i];

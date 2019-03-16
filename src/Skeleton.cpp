@@ -129,6 +129,15 @@ Skeleton::~Skeleton() {
   m_animThread = false;
 }
 
+// ====================================================================== //
+// ====================================================================== //
+// Define actions on key state
+// ====================================================================== //
+
+void Skeleton::onKey(int key, _IO_FUNC release, _IO_FUNC press) {
+  IO::keyboardAddAction(key, IO::kbState::release, release);
+  IO::keyboardAddAction(key, IO::kbState::press, press);
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -165,38 +174,23 @@ void Skeleton::currMotion(const std::string& motionName) {
 
 // ====================================================================== //
 // ====================================================================== //
-// Move forward
+// Moves
 // ====================================================================== //
 
-void Skeleton::moveFront(bool active) {
-  move += ((active) ? 1 : -1) * (int)directions::front;
+int __move(bool active, int direction) {
+  return ((active) ? 1 : -1) * direction;
 }
-
-// ====================================================================== //
-// ====================================================================== //
-// Move to the right
-// ====================================================================== //
-
-void Skeleton::moveRight(bool active) {
-  move += ((active) ? 1 : -1) * (int)directions::right;
+void Skeleton::moveF(bool active) {
+  move += __move(active, (int)directions::F);
 }
-
-// ====================================================================== //
-// ====================================================================== //
-// Move to the left
-// ====================================================================== //
-
-void Skeleton::moveLeft(bool active) {
-  move += ((active) ? 1 : -1) * (int)directions::left;
+void Skeleton::moveR(bool active) {
+  move += __move(active, (int)directions::R);
 }
-
-// ====================================================================== //
-// ====================================================================== //
-// Move backward
-// ====================================================================== //
-
-void Skeleton::moveBack(bool active) {
-  move += ((active) ? 1 : -1) * (int)directions::back;
+void Skeleton::moveL(bool active) {
+  move += __move(active, (int)directions::L);
+}
+void Skeleton::moveB(bool active) {
+  move += __move(active, (int)directions::B);
 }
 
 
@@ -217,7 +211,6 @@ void Skeleton::animation() {
           hierarchy(m_currMotion, m_currFrame);
 
           // Update frame counter
-          //ToDo: test better... some dies ocurr maybe because counter
           auto frameLimit = m_motions.at(m_currMotion)->frames.size() - 2;
           (m_currFrame >= frameLimit) ? m_currFrame = 0 : ++m_currFrame;
 
@@ -227,18 +220,18 @@ void Skeleton::animation() {
           }
 
           // Move actions
-          switch ((directions)move) {
-            case directions::front:
+          switch (move) {
+            case (int)directions::F:
               this->transform.pos += m_camera->pivot.frontXZ() * step();
               break;
-
             default: break;
           }
 
+          // Shoot an empty event if polling is not used
           if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
         });
   });
-}
+} // namespace brave
 
 
 // ====================================================================== //
@@ -248,18 +241,29 @@ void Skeleton::animation() {
 
 void Skeleton::draw() {
   auto joints = m_motions.at(m_currMotion)->joints;
-  for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
 
+  // Draw joints
+  for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
     auto J = joints.at(idx);
     if (!J->parent) continue;
 
     if (J->name == "Head" and J->endsite) {
-      auto head                      = Renderable::getByName("MonkeyHead");
-      head->transform.overrideMatrix = J->endsite->transformAsMatrix;
-      head->draw(m_camera);
+      auto headRE                      = Renderable::getByName("MonkeyHead");
+      headRE->transform.overrideMatrix = J->endsite->transformAsMatrix;
+      headRE->draw(m_camera);
+      continue;
     }
 
-    drawBone(J);
+    auto jointRE                      = Renderable::getByName("Joint");
+    jointRE->transform.overrideMatrix = J->transformAsMatrix;
+    jointRE->draw(m_camera);
+  }
+
+  // Draw bones
+  for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
+    auto J = joints.at(idx);
+    if (!J->parent) continue;
+    if (J->name != "Head") { drawBone(J); }
   }
 }
 
