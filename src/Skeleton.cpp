@@ -145,9 +145,26 @@ void Skeleton::onKey(int key, _IO_FUNC release, _IO_FUNC press) {
 // ====================================================================== //
 
 void Skeleton::addMotion(const std::string& name, const std::string& file) {
-  //todo: before to emplace, CLEAN the motion
+  if (name.find("_") != std::string::npos) {
+    dErr("Motion names can NOT contains '_'");
+    return;
+  }
+
   m_motions.try_emplace(name, loader::BVH(file));
   m_motions[name]->name = m_currMotion = name;
+
+  // Compute mix for current motions
+  //todo: ignore itself, change loop to i-type
+  for (const auto& m1 : m_motions) {
+    for (const auto& m2 : m_motions) {
+      std::string key1 = m1.first + "_" + m2.first;
+      std::string key2 = m2.first + "_" + m1.first;
+      //? create 2 motions, m1->m2 , m2->m1 (Is not so many dup info?)
+      if (m_motions.count(key1) < 1 and m_motions.count(key2) < 1) {
+        m_motions.try_emplace(key1, m1.second->mix(m2.second));
+      }
+    }
+  }
 }
 
 // ====================================================================== //
@@ -168,7 +185,13 @@ void Skeleton::currMotion(const std::string& motionName) {
   m_currFrame = 0;
 
   // Modify current motion
-  m_currMotion = motionName;
+  std::string key1 = m_currMotion + "_" + motionName;
+  std::string key2 = motionName + "_" + m_currMotion;
+
+  //todo: if reply to (?) on line 162 is false... when flip motion order and...
+  m_currMotion = (m_motions.count(key1) < 1)
+                     ? key1
+                     : (m_motions.count(key2) < 1) ? key2 : motionName;
 }
 
 

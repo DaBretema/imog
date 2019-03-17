@@ -21,6 +21,9 @@ struct Joint {
 struct Frame {
   std::vector<glm::vec3> rotations;
   glm::vec3              translation;
+
+  // Sum rotations of frame
+  glm::vec3 sumRots() const;
 };
 
 class Motion {
@@ -30,8 +33,12 @@ public:
   std::vector<Frame>                  frames;
   float                               timeStep;
 
+  // Clean any motion to get a smoother loop
   void clean();
-  void mix(const std::shared_ptr<Motion>& m);
+
+  // Mix any motion with other and get a new animation
+  // that conect both smoothly
+  std::shared_ptr<Motion> mix(const std::shared_ptr<Motion>& m);
 };
 
-}
+} // namespace brave

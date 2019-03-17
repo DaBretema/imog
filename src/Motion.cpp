@@ -6,93 +6,164 @@
 
 #include <dac/Logger.hpp>
 
+#include "Settings.hpp"
+
 
 namespace brave {
 
-std::tuple<unsigned int, unsigned int>
-    lowestErrFrames(const std::vector<Frame>& framesA,
-                    const std::vector<Frame>& framesB = std::vector<Frame>()) {
-  unsigned int f1, f2;
-
-  if (framesA.empty() && framesB.empty()) {
-    dInfo("At least one motion should be valid");
-    return std::make_tuple(f1, f2);
-  }
+using uint = unsigned int;
 
 
-  if (framesB.empty()) {
-    unsigned int numFramesA = framesA.size();
-    unsigned int limitA     = numFramesA / 2.f;
-    unsigned int limitB     = numFramesA - limitA;
-    float        auxError   = std::numeric_limits<float>::max();
+// * helpers
 
-    for (auto i = 0u; i < limitA; ++i) {
-      glm::vec3 iSum{0.f};
-      for (const auto& r : framesA.at(i).rotations) { iSum += r; }
-      for (auto ii = limitB; ii < numFramesA; ++ii) {
-        glm::vec3 iiSum{0.f};
-        for (const auto& r : framesA.at(ii).rotations) { iiSum += r; }
 
-        auto currError = glm::compAdd(glm::abs(iSum - iiSum));
-        if (auxError >= currError) {
-          std::tie(auxError, f1, f2) = {currError, i, ii};
-        }
-      }
+// ====================================================================== //
+// ====================================================================== //
+// Error processing function (to avoid copy-paste failures because
+// two cases) are so similar
+// ====================================================================== //
+
+void updateErr(float&          auxErr,
+               uint&           f1,
+               uint&           f2,
+               uint            a,
+               const glm::vec3 aSum,
+               uint            b,
+               glm::vec3       bSum) {
+  auto err = glm::compAdd(glm::abs(aSum - bSum));
+  if (auxErr >= err) { std::tie(auxErr, f1, f2) = {err, a, b}; }
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Get lowest err frames in ONE motion
+// ====================================================================== //
+
+std::tuple<uint, uint> lowestErrFrames_1(const std::vector<Frame>& frames) {
+  uint  f1, f2;
+  uint  nFrames = frames.size();
+  uint  limitA  = nFrames / 2.f;
+  uint  limitB  = nFrames - limitA;
+  float auxErr  = std::numeric_limits<float>::max();
+
+  for (auto a = 0u; a < limitA; ++a) {
+    glm::vec3 aSum = frames.at(a).sumRots();
+    for (auto b = limitB; b < nFrames; ++b) {
+      glm::vec3 bSum = frames.at(b).sumRots();
+      updateErr(auxErr, f1, f2, a, aSum, b, bSum);
     }
   }
 
   return std::make_tuple(f1, f2);
-
-  // ? mix
 }
+
+// ====================================================================== //
+// ====================================================================== //
+// Get lowest err frames of TWO motions
+// ====================================================================== //
+
+std::tuple<uint, uint> lowestErrFrames_2(const std::vector<Frame>& framesA,
+                                         const std::vector<Frame>& framesB) {
+  uint  f1, f2;
+  float auxErr = std::numeric_limits<float>::max();
+
+  for (auto a = 0u; a < framesA.size(); ++a) {
+    glm::vec3 aSum = framesA.at(a).sumRots();
+    for (auto b = 0u; b < framesB.size(); ++b) {
+      glm::vec3 bSum = framesB.at(b).sumRots();
+      updateErr(auxErr, f1, f2, a, aSum, b, bSum);
+    }
+  }
+
+  return std::make_tuple(f1, f2);
+}
+
+
+// * class methods
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Sum rotations of frame
+// ====================================================================== //
+
+glm::vec3 Frame::sumRots() const {
+  glm::vec3 sum{0.f};
+  for (const auto& r : this->rotations) { sum += r; }
+  return sum;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Clean any motion to get a smoother loop
+// ====================================================================== //
 
 void Motion::clean() {
   // Get low errror frames of animation to generate a loop
-  auto [I, E] = lowestErrFrames(this->frames);
+  auto [I, E] = lowestErrFrames_1(this->frames);
 
   // Clean
   std::vector<Frame> auxFrames;
   auxFrames.reserve(E);
   for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
 
-  //   for (auto i = 0u; i < auxFrames.size(); ++i) {
-  //     auto Curr = auxFrames.at(i);
-  //     auto Next = auxFrames.at((i + 1u < auxFrames.size()) ? i + 1u : 0u);
-  //     for (auto alpha = 0.1f; alpha <= 0.9f; alpha += lerpFactor) {
-  //       J->addRot(glm::mix(Curr, Next, alpha));
-  //     }
-  //   }
-
   // Smoother loop
-  dInfo("tick:1");
-  auto auxFramesLast = auxFrames.at(auxFrames.size() - 1);
-
   for (auto alpha = 0.1f; alpha <= 0.9f; alpha += 0.4f) {
-
-    auto firstFrameRots = auxFrames.at(0).rotations;
-    auto lastFrameRots  = auxFramesLast.rotations;
-    assert(firstFrameRots.size() == lastFrameRots.size());
+    auto firstRot = auxFrames.front().rotations;
+    auto lastRot  = auxFrames.back().rotations;
+    assert(firstRot.size() == lastRot.size());
 
     Frame frame;
-    frame.translation = auxFramesLast.translation; //* (1.2f * alpha);
-    for (auto i = 0u; i < firstFrameRots.size(); ++i) {
-      frame.rotations.push_back(
-          glm::mix(firstFrameRots[i], lastFrameRots[i], alpha));
+    frame.translation = auxFrames.back().translation; //* (1.2f * alpha);
+    for (auto i = 0u; i < firstRot.size(); ++i) {
+      frame.rotations.push_back(glm::mix(lastRot[i], firstRot[i], alpha));
     }
     auxFrames.push_back(frame);
   }
-  dInfo("tick:2");
 
   // Log
   auto d1 = this->frames.size();
   auto d2 = auxFrames.size();
-  dInfo("Saved frames: {} - {} = {}", d1, d2, d1 - d2);
+  if (!Settings::quiet) dInfo("Saved frames: {} - {} = {}", d1, d2, d1 - d2);
 
   // Store
   this->frames = auxFrames;
 }
 
+// ====================================================================== //
+// ====================================================================== //
+// Mix any motion with other and get a new animation
+// that conect both smoothly
+// ====================================================================== //
 
-void Motion::mix(const std::shared_ptr<Motion>& m) {}
+std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
+
+  auto [lefM1, lefM2] = lowestErrFrames_2(this->frames, m2->frames);
+
+  auto M    = std::make_shared<Motion>();
+  M->joints = this->joints;
+
+  // ? On that way of 'frame by frame'
+  M->timeStep = (this->timeStep + m2->timeStep) * 0.5f;
+
+  M->frames.push_back(this->frames.at(lefM1));
+
+  for (auto alpha = 0.1f; alpha <= 0.9f; alpha += 0.05f) {
+    auto M1Rots = this->frames.at(lefM1).rotations;
+    auto M2Rots = m2->frames.at(lefM2).rotations;
+    assert(M1Rots.size() == M2Rots.size());
+
+    Frame frame;
+    frame.translation = this->frames.at(lefM1).translation;
+    for (auto i = 0u; i < M1Rots.size(); ++i) {
+      frame.rotations.push_back(glm::mix(M1Rots[i], M2Rots[i], alpha));
+    }
+    M->frames.push_back(frame);
+  }
+
+  M->frames.push_back(m2->frames.at(lefM2));
+
+  return M;
+}
 
 } // namespace brave
