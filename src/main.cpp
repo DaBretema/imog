@@ -2,6 +2,8 @@
 #define GLFW_INCLUDE_NONE
 #include <glfw/glfw3.h>
 
+#include "Logger.hpp"
+
 #include "IO.hpp"
 #include "Math.hpp"
 #include "Loader.hpp"
@@ -52,10 +54,9 @@ void DBG_BVH(const std::string& path) {
   int  i       = 0;
   int  r       = 0;
   for (auto frame : testbvh->frames) {
-    dPrint("----------\nFrame{}", i++);
-    dPrint("T : {}", glm::to_string(frame.translation));
-    for (auto rot : frame.rotations)
-      dPrint("R{} : {}", r++, glm::to_string(rot));
+    LOG("----------\nFrame{}", i++);
+    LOG("T : {}", glm::to_string(frame.translation));
+    for (auto rot : frame.rotations) LOG("R{} : {}", r++, glm::to_string(rot));
     r = 0;
   }
 };
@@ -79,7 +80,7 @@ int main(int argc, char const* argv[]) {
   // std::vector<glm::vec3> A(1000, glm::vec3(1.f));
   // auto                   reduced = std::reduce(std::begin(A), std::end(A));
 
-  // dInfo("vec sum => {}" glm::to_string(reduced));
+  // LOGD("vec sum => {}" glm::to_string(reduced));
 
   // return 0;
   // ---------------------------------------------------------
@@ -134,10 +135,10 @@ int main(int argc, char const* argv[]) {
   };
 
   auto renderFn = [&]() {
-    camera->frame();
     Shader::poolUpdate(camera, light);
     Renderable::poolDraw(camera);
     skeleton.draw();
+    camera->frame();
   };
 
   IO::windowLoop(renderFn, updateFn);

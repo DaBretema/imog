@@ -1,7 +1,6 @@
 #include "IO.hpp"
 
-#include <dac/Logger.hpp>
-
+#include "Logger.hpp"
 #include "Settings.hpp"
 
 #include "Shader.hpp"
@@ -50,10 +49,10 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
   // ---------------------------------------------------------
   // --- Validations -----------------------------------------
 
-  if (!Settings::initialized) { dInfo("Engine gonna use default values."); }
+  if (!Settings::initialized) { LOGD("Engine gonna use default values."); }
 
   if (!camera) {
-    dInfo("Camera should be defined. ABORT.");
+    LOGD("Camera should be defined. ABORT.");
     std::exit(2);
   }
 
@@ -67,8 +66,8 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
   m_camera = camera;
 
   m_windowTitle  = Settings::windowTitle;
-  m_windowHeight = Settings::windowHeight;
   m_windowWidth  = Settings::windowWidth;
+  m_windowHeight = Settings::windowHeight;
 
   // ----------------------------------------- / Init vars ---
   // ---------------------------------------------------------
@@ -78,7 +77,7 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
   // --- Window creation -------------------------------------
 
   if (!glfwInit()) {
-    dErr("Couldn't initialize GLFW");
+    LOGE("Couldn't initialize GLFW");
     glfwTerminate();
   }
 
@@ -92,7 +91,7 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
 
   if (!o_WINDOW) {
-    dErr("Couldn't create GLFW window");
+    LOGE("Couldn't create GLFW window");
     glfwTerminate();
   }
 
@@ -130,7 +129,7 @@ void IO::windowInit(std::shared_ptr<Camera> camera) {
   GLADloadproc glwfProc = (GLADloadproc)glfwGetProcAddress;
 
   if (!gladLoadGLLoader(glwfProc)) {
-    dErr("Couldn't initialize GLAD");
+    LOGE("Couldn't initialize GLAD");
     glfwTerminate();
   }
 
@@ -237,7 +236,7 @@ void IO::windowOnScaleChange(GLFWwindow* w, int width, int height) {
 // ====================================================================== //
 
 void IO::windowOnClose(GLFWwindow* w) {
-  if (!Settings::quiet) dInfo("Closing GLFW window.");
+  if (!Settings::quiet) LOGD("Closing GLFW window.");
   glfwSetWindowShouldClose(w, GL_TRUE);
 }
 

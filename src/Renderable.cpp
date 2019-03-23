@@ -3,9 +3,8 @@
 #include <mutex>
 #include <sstream>
 
-#include <dac/Logger.hpp>
-
 #include "Loader.hpp"
+#include "Logger.hpp"
 #include "Settings.hpp"
 
 #include "helpers/Consts.hpp"
@@ -43,7 +42,7 @@ std::unordered_map<std::string, unsigned int> Renderable::poolIndices{};
 std::shared_ptr<Renderable> Renderable::getByName(const std::string& name) {
   if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
 
-  dErr("Zero entries @ renderables pool with name {}.", name);
+  LOGE("Zero entries @ renderables pool with name {}.", name);
   return nullptr;
 }
 
@@ -128,7 +127,7 @@ Renderable::Renderable(bool                           allowGlobalDraw,
 // ====================================================================== //
 
 Renderable::~Renderable() {
-  if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_ID, m_name);
+  if (!Settings::quiet) LOGD("Destroyed @ {}.{}", m_ID, m_name);
 }
 
 

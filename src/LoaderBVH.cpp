@@ -4,11 +4,11 @@
 #include <regex>
 #include <unordered_map>
 
-#include <dac/Timer.hpp>
-#include <dac/Strings.hpp>
-#include <dac/Files.hpp>
-
 #include "Math.hpp"
+#include "Files.hpp"
+#include "Timer.hpp"
+#include "Logger.hpp"
+#include "Strings.hpp"
 #include "Settings.hpp"
 
 // ========================================================================= //
@@ -105,7 +105,7 @@ void addNewJoint(const std::string&                          name,
   parents.push(j);
   if (!isEndSite) { joints.push_back(j); }
   if (isEndSite && j->parent) { j->parent->endsite = j; }
-  if (isEndSite && !j->parent) { dErr("An EndSite, should have parent!") }
+  if (isEndSite && !j->parent) { LOGE("An EndSite, should have parent!") }
 };
 
 
@@ -120,12 +120,12 @@ namespace loader {
 
   std::shared_ptr<Motion> BVH(const std::string& bvhFilePath) {
     auto out = std::make_shared<Motion>();
-    if (!dac::Files::ok(bvhFilePath, true)) { return out; }
+    if (!Files::ok(bvhFilePath, true)) { return out; }
 
     // --- AUX VARS ---------------------------------------------------- //
     // ----------------------------------------------------------------- //
 
-    if (!Settings::quiet) dac::Timer timer("Parsing \"" + bvhFilePath + "\"");
+    if (!Settings::quiet) Timer timer("Parsing \"" + bvhFilePath + "\"");
 
     MODES mode{MODES::hierarchy};
 
@@ -133,15 +133,15 @@ namespace loader {
     std::vector<unsigned int>                 channels; // Read order for motion
 
     std::string       linestream{""};
-    std::stringstream filestream{dac::Strings::fromFile(bvhFilePath)};
+    std::stringstream filestream{Strings::fromFile(bvhFilePath)};
 
     // ----------------------------------------------------------------- //
     // -------------------------------------------------- / AUX VARS --- //
 
 
     while (std::getline(filestream, linestream)) {
-      auto LINE   = dac::Strings::split(linestream, " "); // ! First
-      auto lToken = Token(LINE.at(0));                    // ! Second
+      auto LINE   = Strings::split(linestream, " "); // ! First
+      auto lToken = Token(LINE.at(0));               // ! Second
 
       switch (mode) {
 

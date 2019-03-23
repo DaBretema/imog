@@ -3,7 +3,7 @@
 #include <string>
 
 
-namespace dac {
+namespace brave {
 
 // Eye candy types
 using StdClock  = std::chrono::steady_clock;
@@ -30,4 +30,4 @@ public:
   ~Timer();
 };
 
-} // namespace dac
+} // namespace brave

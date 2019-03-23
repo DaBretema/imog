@@ -66,7 +66,6 @@ LIB_DIR       = $(SOURCE_DIR)/submodules
 
 INCLUDES      = $(patsubst %,-I%,$(INCL_DIR))
 LIBS          = $(patsubst %,-L%,$(LIB_DIR))
-LIBS += -ldac
 LIBS += -lglad
 LIBS += -lglfw3
 LIBS += -lopengl32 -lgdi32

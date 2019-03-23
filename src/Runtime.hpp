@@ -32,11 +32,11 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length);
 
 #include <string>
 
-namespace dac {
+namespace brave {
 
 class Runtime {
 public:
   static std::string exePath();
 };
 
-} // namespace dac
+} // namespace brave

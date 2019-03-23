@@ -3,15 +3,14 @@
 #include <string>
 #include <algorithm>
 
-#include <dac/Logger.hpp>
-#include <dac/Runtime.hpp>
+#include "../Runtime.hpp"
 
 namespace brave {
 
 
 namespace Paths {
   const std::string exePath = []() {
-    auto s = dac::Runtime::exePath();
+    auto s = Runtime::exePath();
     std::replace(s.begin(), s.end(), '\\', '/');
     return s + "/";
   }();

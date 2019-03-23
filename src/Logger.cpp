@@ -1,51 +1,49 @@
-#include "Transform.hpp"
+#include "Logger.hpp"
 
-
+#include <mutex>
 
 namespace brave {
 
 // ====================================================================== //
 // ====================================================================== //
-// Constructor
+// Define loggers
 // ====================================================================== //
 
-Transform::Transform()
-    : pos(0.f), scl(1.f), rot(0.f), rotAngle(0.f), rotAxis(0.f) {}
-
-
-// ====================================================================== //
-// ====================================================================== //
-// Get the front of the transform, computed from transform as matrix
-// ====================================================================== //
-
-glm::vec3 Transform::front() const { return this->asMatrix()[2]; }
+_LogType Logger::m_info  = spdlog::stdout_color_mt("INFO");
+_LogType Logger::m_error = spdlog::stderr_color_mt("ERROR");
+_LogType Logger::m_print = spdlog::stdout_color_mt("PRINT");
 
 // ====================================================================== //
 // ====================================================================== //
-// Get the front of the transform with Y == 0.0f
+// Getter of info logger
 // ====================================================================== //
 
-glm::vec3 Transform::frontXZ() const {
-  auto front = this->front();
-  front.y    = 0.0f;
-  return front;
+_LogType& Logger::info() {
+  static std::once_flag infoOnceFlag;
+  std::call_once(infoOnceFlag, [&]() { m_info->set_pattern(PATTERN_ALERT); });
+  return m_info;
 }
 
 // ====================================================================== //
 // ====================================================================== //
-// Generate matrix with transform values or return override matrix
-// if is defined
+// Getter of error logger
 // ====================================================================== //
 
-glm::mat4 Transform::asMatrix() const {
-  if (overrideMatrix != glm::mat4(0.f)) { return overrideMatrix; }
+_LogType& Logger::error() {
+  static std::once_flag errorOnceFlag;
+  std::call_once(errorOnceFlag, [&]() { m_error->set_pattern(PATTERN_ALERT); });
+  return m_error;
+}
 
-  glm::mat4 aux(1.f);
-  Math::translate(aux, pos);
-  (rotAxis != glm::vec3(0.f)) ? Math::rotate(aux, rotAngle, rotAxis)
-                              : Math::rotateXYZ(aux, rot);
-  Math::scale(aux, scl);
-  return aux;
+// ====================================================================== //
+// ====================================================================== //
+// Getter of print logger
+// ====================================================================== //
+
+_LogType& Logger::print() {
+  static std::once_flag printOnceFlag;
+  std::call_once(printOnceFlag, [&]() { m_print->set_pattern(PATTERN_PRINT); });
+  return m_print;
 }
 
 } // namespace brave

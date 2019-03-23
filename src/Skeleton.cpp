@@ -1,10 +1,11 @@
 #include "Skeleton.hpp"
 
 #include "IO.hpp"
+#include "Async.hpp"
+#include "Logger.hpp"
 #include "Loader.hpp"
 #include "Settings.hpp"
 #include "Renderable.hpp"
-
 #include "helpers/Consts.hpp"
 
 namespace brave {
@@ -22,7 +23,7 @@ namespace brave {
 void Skeleton::hierarchy(const std::string& motionName, unsigned int frame) {
 
   if (m_motions.count(motionName) < 1) {
-    if (!Settings::quiet) dErr("Zero motions with name {}.", motionName);
+    if (!Settings::quiet) LOGE("Zero motions with name {}.", motionName);
     return;
   }
 
@@ -124,7 +125,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
 // ====================================================================== //
 
 Skeleton::~Skeleton() {
-  if (!Settings::quiet) dInfo("Skeleton destroyed!");
+  if (!Settings::quiet) LOGD("Skeleton destroyed!");
   this->play   = false;
   m_animThread = false;
 }
@@ -146,7 +147,7 @@ void Skeleton::onKey(int key, _IO_FUNC release, _IO_FUNC press) {
 
 void Skeleton::addMotion(const std::string& name, const std::string& file) {
   if (name.find("_") != std::string::npos) {
-    dErr("Motion names can NOT contains '_'");
+    LOGE("Motion names can NOT contains '_'");
     return;
   }
 
@@ -176,7 +177,7 @@ void Skeleton::currMotion(const std::string& motionName) {
 
   // Don't make any operation if motion name doesn't exist
   if (m_motions.count(motionName) < 1) {
-    if (!Settings::quiet) dErr("Zero motions with name {}.", motionName);
+    if (!Settings::quiet) LOGE("Zero motions with name {}.", motionName);
     return;
   }
 
@@ -224,7 +225,7 @@ void Skeleton::moveB(bool active) {
 
 void Skeleton::animation() {
   std::call_once(animationOnceFlag, [&]() {
-    dac::Async::periodic(
+    Async::periodic(
         [&]() { return m_motions.at(m_currMotion)->timeStep; },
         &m_animThread,
         [&]() {

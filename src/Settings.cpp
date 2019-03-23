@@ -3,9 +3,8 @@
 #include <fstream>
 #include <functional>
 
-#include <dac/Logger.hpp>
-
-
+#include "Logger.hpp"
+#include "FileWatcher.hpp"
 
 namespace brave {
 
@@ -37,10 +36,10 @@ namespace brave {
 // Private variables definition
 // ========================================================================= //
 
-nlohmann::json   Settings::m_json;
-dac::FileWatcher Settings::m_filewatcher;
-std::string      Settings::m_path{""};
-bool             Settings::m_corrupted{false};
+nlohmann::json Settings::m_json;
+FileWatcher    Settings::m_filewatcher;
+std::string    Settings::m_path{""};
+bool           Settings::m_corrupted{false};
 
 
 // ====================================================================== //
@@ -104,7 +103,7 @@ void Settings::init(const std::string& filePath) {
 
       catch (json::exception& e) {
         m_corrupted = true;
-        dErr("'{}' Bad parsing:\n{}", m_path, e.what());
+        LOGE("'{}' Bad parsing:\n{}", m_path, e.what());
         goto retry_pase;
       }
   };
@@ -121,13 +120,13 @@ void Settings::init(const std::string& filePath) {
 // ====================================================================== //
 // Print object values
 // ====================================================================== //
-#define stdPrint(var) dPrint("{} => {}", #var, var);
-#define glmPrint(var) dPrint("{}: {}", #var, glm::to_string(var));
+#define stdPrint(var) LOG("{} => {}", #var, var);
+#define glmPrint(var) LOG("{}: {}", #var, glm::to_string(var));
 
 void Settings::dump() {
 
   auto status = (m_corrupted) ? " / Corrupted" : "";
-  dPrint("\nSETTINGS. {}{}\n  ---", m_path, status);
+  LOG("\nSETTINGS. {}{}\n  ---", m_path, status);
   stdPrint(quiet);
   stdPrint(openglMajorV);
   stdPrint(openglMinorV);
@@ -143,7 +142,7 @@ void Settings::dump() {
   glmPrint(mainLightPos);
   glmPrint(mainLightColor);
   stdPrint(mainLightIntensity);
-  dPrint("");
+  LOG("");
 }
 
 

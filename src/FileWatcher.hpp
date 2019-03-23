@@ -4,7 +4,7 @@
 #include <sstream>
 #include <functional>
 
-namespace dac {
+namespace brave {
 
 class FileWatcher {
 
@@ -47,4 +47,4 @@ public:
   void verbose(bool newState);
 };
 
-} // namespace dac
+} // namespace brave

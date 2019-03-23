@@ -5,10 +5,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <dac/Files.hpp>
-
-#include "helpers/GLAssert.hpp"
+#include "Files.hpp"
 #include "Settings.hpp"
+#include "helpers/GLAssert.hpp"
 
 
 namespace brave {
@@ -58,7 +57,7 @@ Texture::Texture(const std::string& path)
     GL_ASSERT(glGenerateMipmap(GL_TEXTURE_2D)); // This after glTexImg2D
     stbi_image_free(img);
   } else {
-    if (!Settings::quiet) dErr("Failed loading texture \"{}\"", path);
+    if (!Settings::quiet) LOGE("Failed loading texture \"{}\"", path);
   }
 
   GL_ASSERT(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);)
@@ -85,7 +84,7 @@ std::shared_ptr<Texture> Texture::getByPath(const std::string& path) {
 // ====================================================================== //
 
 std::shared_ptr<Texture> Texture::create(const std::string& path) {
-  if (path.empty() || !dac::Files::ok(path, true)) { return nullptr; }
+  if (path.empty() || !Files::ok(path, true)) { return nullptr; }
   if (auto T = getByPath(path)) { return T; }
   pool[path] = std::make_shared<Texture>(path);
   return pool[path];
@@ -97,7 +96,7 @@ std::shared_ptr<Texture> Texture::create(const std::string& path) {
 // ====================================================================== //
 
 Texture::~Texture() {
-  if (!Settings::quiet) dInfo("Destroying texture: {}", m_path);
+  if (!Settings::quiet) LOGD("Destroying texture: {}", m_path);
   GL_ASSERT(glDeleteTextures(1, &m_glID));
 }
 

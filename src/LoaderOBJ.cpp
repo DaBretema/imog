@@ -4,10 +4,9 @@
 #include <sstream>
 #include <unordered_map>
 
-#include <dac/Logger.hpp>
-#include <dac/Strings.hpp>
-#include <dac/Files.hpp>
-
+#include "Files.hpp"
+#include "Logger.hpp"
+#include "Strings.hpp"
 
 namespace brave {
 namespace loader {
@@ -19,7 +18,7 @@ namespace loader {
 
   Renderable::data OBJ(const std::string& filePath) {
     Renderable::data out;
-    if (!dac::Files::ok(filePath, true)) { return out; }
+    if (!Files::ok(filePath, true)) { return out; }
 
     // --- AUX VARS ---------------------------------------------------- //
     // ----------------------------------------------------------------- //
@@ -45,15 +44,15 @@ namespace loader {
 
     // Str vars
     std::string       linestream;
-    std::stringstream filestream(dac::Strings::fromFile(filePath));
+    std::stringstream filestream(Strings::fromFile(filePath));
 
     // ----------------------------------------------------------------- //
     // -------------------------------------------------- / AUX VARS --- //
 
 
     while (std::getline(filestream, linestream)) {
-      auto LINE   = dac::Strings::split(linestream, " "); // ! First
-      auto lToken = LINE.at(0);                           // ! Second
+      auto LINE   = Strings::split(linestream, " "); // ! First
+      auto lToken = LINE.at(0);                      // ! Second
 
       if ((lToken == "#") || (lToken == "s")) { continue; }
       if (lToken == "v") { out.vertices.push_back(Math::glmVec3FromStr(LINE)); }
@@ -72,17 +71,17 @@ namespace loader {
         for (auto i = 1u; i < LINE.size(); ++i) {
 
           if (thereIsUVs && thereIsNorms) {
-            face  = dac::Strings::split(LINE.at(i), "/");
+            face  = Strings::split(LINE.at(i), "/");
             uvIdx = std::stoul(face.at(1)) - 1u;
             nIdx  = std::stoul(face.at(2)) - 1u;
           } else if (!thereIsUVs && thereIsNorms) {
-            face = dac::Strings::split(LINE.at(i), "//");
+            face = Strings::split(LINE.at(i), "//");
             nIdx = std::stoul(face.at(1)) - 1u;
           } else if (thereIsUVs && !thereIsNorms) {
-            face  = dac::Strings::split(LINE.at(i), "/");
+            face  = Strings::split(LINE.at(i), "/");
             uvIdx = std::stoul(face.at(1)) - 1u;
           } else {
-            dErr("[WARN] Undefined Normals and UVs @ {}", filePath);
+            LOGE("[WARN] Undefined Normals and UVs @ {}", filePath);
           }
           vIdx = std::stoul(face.at(0)) - 1u;
 

@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace dac {
+namespace brave {
 
 class Strings {
 public:
@@ -15,4 +15,4 @@ public:
                                         const std::string& delimeter);
 };
 
-} // namespace dac
+} // namespace brave

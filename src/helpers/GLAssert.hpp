@@ -1,6 +1,6 @@
 
 #include <glad/glad.h>
-#include <dac/Logger.hpp>
+#include "../Logger.hpp"
 
 #define GL_ASSERT(funcToCheck) \
   glErrClear();                \
@@ -24,6 +24,6 @@ static inline void glAssert(const char* file, int line) {
       case GL_INVALID_OPERATION: errStr = "Invalid operation"; break;
       default: errStr = "Unrecognised GLenum"; break;
     }
-    dErr("{} ({}): {} ({})", file, line, errStr, glError);
+    LOGE("{} ({}): {} ({})", file, line, errStr, glError);
   }
 }

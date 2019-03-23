@@ -4,10 +4,9 @@
 
 #include <glad/glad.h>
 
-#include <dac/Logger.hpp>
-#include <dac/Strings.hpp>
-#include <dac/Files.hpp>
-
+#include "Files.hpp"
+#include "Logger.hpp"
+#include "Strings.hpp"
 #include "Settings.hpp"
 #include "helpers/Consts.hpp"
 
@@ -43,7 +42,7 @@ std::shared_ptr<Shader> Shader::getFromCache(const std::string& paths) {
 std::shared_ptr<Shader> Shader::getByName(const std::string& name) {
   if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
 
-  if (!Settings::quiet) dErr("Zero entries @ shaders pool with name {}.", name);
+  if (!Settings::quiet) LOGE("Zero entries @ shaders pool with name {}.", name);
   return nullptr;
 }
 
@@ -58,8 +57,14 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
                                        const std::string& fragPath) {
 
   if (vertexPath.empty() || fragPath.empty()) {
-    if (!Settings::quiet) dErr("Undefined non-optional shaders");
+    if (!Settings::quiet) LOGE("Undefined non-optional shaders");
     return nullptr;
+  }
+
+  std::vector<std::string> shaderfiles = {vertexPath, fragPath};
+  if (!geomPath.empty()) { shaderfiles.push_back(geomPath); }
+  for (const auto& fp : shaderfiles) {
+    if (!Files::ok(fp, true)) { return nullptr; }
   }
 
   auto paths = vertexPath + geomPath + fragPath;
@@ -114,7 +119,7 @@ void Shader::poolUpdate(const std::shared_ptr<Camera>& camera,
 unsigned int Shader::loadShader(const std::string& filePath,
                                 unsigned int       type) {
   // Data
-  std::string sourceStr  = dac::Strings::fromFile(filePath);
+  std::string sourceStr  = Strings::fromFile(filePath);
   const char* sourceChar = sourceStr.c_str();
   int         sourceLen  = sourceStr.length();
 
@@ -131,7 +136,7 @@ unsigned int Shader::loadShader(const std::string& filePath,
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
     std::vector<char> msg(len);
     glGetShaderInfoLog(shader, len, &len, &msg[0]);
-    dErr("Shader {} \n{}", filePath, std::string(msg.data(), msg.size()));
+    LOGE("Shader {} \n{}", filePath, std::string(msg.data(), msg.size()));
     glDeleteShader(shader);
     return 0;
   }
@@ -164,7 +169,7 @@ Shader::Shader(const std::string& name,
     : m_name(name) {
 
   auto addShader = [&](unsigned int p, const std::string& s, unsigned int t) {
-    if (!s.empty() && dac::Files::ok(s, true)) {
+    if (!s.empty() && Files::ok(s, true)) {
       unsigned int sID = loadShader(s, t);
       glAttachShader(p, sID);
       glDeleteShader(sID);
@@ -192,7 +197,7 @@ Shader::Shader(const std::string& name,
     glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &len);
     std::vector<char> msg(len);
     glGetProgramInfoLog(m_program, len, &len, &msg[0]);
-    dErr("Program {} \n{}", m_name, std::string(msg.data(), msg.size()));
+    LOGE("Program {} \n{}", m_name, std::string(msg.data(), msg.size()));
     glDeleteProgram(m_program);
   }
 
@@ -205,7 +210,7 @@ Shader::Shader(const std::string& name,
 // ====================================================================== //
 
 Shader::~Shader() {
-  if (!Settings::quiet) dInfo("Destroyed @ {}.{}", m_program, m_name);
+  if (!Settings::quiet) LOGD("Destroyed @ {}.{}", m_program, m_name);
 }
 
 
@@ -259,7 +264,7 @@ int Shader::uniform(const std::string& uName) {
   if (uLoc > -1) {
     m_uCache.insert({uName, uLoc});
   } else if (!Settings::quiet && !m_alertCache[uName]) {
-    dErr("@{}: not found/used \"{}\"", m_name, uName);
+    LOGE("@{}: not found/used \"{}\"", m_name, uName);
     m_alertCache[uName] = true;
   }
 

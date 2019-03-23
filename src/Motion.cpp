@@ -4,13 +4,11 @@
 #include <numeric>
 #include <tuple>
 
-#include <dac/Logger.hpp>
-
+#include "Logger.hpp"
 #include "Settings.hpp"
 
 
 namespace brave {
-
 using uint = unsigned int;
 
 
@@ -124,7 +122,7 @@ void Motion::clean() {
   // Log
   auto d1 = this->frames.size();
   auto d2 = auxFrames.size();
-  if (!Settings::quiet) dInfo("Saved frames: {} - {} = {}", d1, d2, d1 - d2);
+  if (!Settings::quiet) LOGD("Saved frames: {} - {} = {}", d1, d2, d1 - d2);
 
   // Store
   this->frames = auxFrames;

@@ -3,19 +3,17 @@
 #include <json.hpp>
 using json = nlohmann::json;
 
-#include <dac/FileWatcher.hpp>
-
 #include "Math.hpp"
-
+#include "FileWatcher.hpp"
 
 namespace brave {
 
 class Settings {
 private:
-  static bool             m_corrupted;
-  static std::string      m_path;
-  static nlohmann::json   m_json;
-  static dac::FileWatcher m_filewatcher;
+  static bool           m_corrupted;
+  static std::string    m_path;
+  static nlohmann::json m_json;
+  static FileWatcher    m_filewatcher;
 
 public:
   static bool initialized;

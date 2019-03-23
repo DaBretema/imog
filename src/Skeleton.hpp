@@ -5,8 +5,8 @@
 #include <mutex>
 #include <unordered_map>
 
-#include <dac/Async.hpp>
-#include <dac/Logger.hpp>
+
+
 
 #include "IO.hpp"
 #include "Math.hpp"
@@ -124,13 +124,13 @@ public:
     // Check for trigger key repetition
     for (const auto& motion : m_motions) {
       if (motion.second.first == triggerKey) {
-        dInfo("TriggerKey {} is already defined.", triggerKey);
+        LOGD("TriggerKey {} is already defined.", triggerKey);
         return;
       }
     }
     // Check for motion name repetition
     if (m_motions.count(newMotion->name) > 0) {
-      dInfo("Motion {} is already defined.", newMotion->name);
+      LOGD("Motion {} is already defined.", newMotion->name);
       return;
     }
 
