@@ -104,19 +104,16 @@ release: $(PROJECT_NAME)
 
 #! EXECUTABLE
 $(PROJECT_NAME): $(OBJECTS) $(BUILD_DIR)/icon.o
-	@echo "out: $@.exe"
 	@mkdir -p $(DIST_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
 	@mv -f ./$@.exe ./$(DIST_DIR)/$@.exe
 
 #* ICON COMPILATION
 $(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc
-	@echo " [*] iconizig !"
 	windres $^ $@
 
 # SOURCES COMPILATION : Called on $(OBJECTS)
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
-	@echo "  *  $^"
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXX_FLAGS) -c $^ -o $@ $(INCLUDES) $(LIBS)
 

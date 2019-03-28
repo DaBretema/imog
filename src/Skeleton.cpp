@@ -145,25 +145,37 @@ void Skeleton::onKey(int key, _IO_FUNC release, _IO_FUNC press) {
 // Add motions to skeleton motion map
 // ====================================================================== //
 
-void Skeleton::addMotion(const std::string& name, const std::string& file) {
+void Skeleton::addMotion(const std::string& name,
+                         const std::string& file,
+                         loopMode           lm) {
   if (name.find("_") != std::string::npos) {
     LOGE("Motion names can NOT contains '_'");
     return;
   }
-
-  m_motions.try_emplace(name, loader::BVH(file));
+  auto isMix = [&](const auto& motionMapItem) {
+    return motionMapItem.first.find("_") != std::string::npos;
+  };
+  m_motions.try_emplace(name, loader::BVH(file, lm));
   m_motions[name]->name = m_currMotion = name;
 
   // Compute mix for current motions
-  //todo: ignore itself, change loop to i-type
   for (const auto& m1 : m_motions) {
+    if (isMix(m1)) continue;
+
     for (const auto& m2 : m_motions) {
+      // Ignore other mix and itself
+      if (m1.first == m2.first or isMix(m2)) continue;
+
       std::string key1 = m1.first + "_" + m2.first;
       std::string key2 = m2.first + "_" + m1.first;
-      //? create 2 motions, m1->m2 , m2->m1 (Is not so many dup info?)
-      if (m_motions.count(key1) < 1 and m_motions.count(key2) < 1) {
+
+      // Motion A-B
+      if (m_motions.count(key1) < 1)
         m_motions.try_emplace(key1, m1.second->mix(m2.second));
-      }
+
+      // Motion B-A
+      if (m_motions.count(key2) < 1)
+        m_motions.try_emplace(key2, m2.second->mix(m1.second));
     }
   }
 }
@@ -185,14 +197,20 @@ void Skeleton::currMotion(const std::string& motionName) {
   // and may incur a forbidden memory access
   m_currFrame = 0;
 
-  // Modify current motion
-  std::string key1 = m_currMotion + "_" + motionName;
-  std::string key2 = motionName + "_" + m_currMotion;
+  for (const auto& mo : m_motions) { LOG("mo_key {}", mo.first); }
 
-  //todo: if reply to (?) on line 162 is false... when flip motion order and...
-  m_currMotion = (m_motions.count(key1) < 1)
-                     ? key1
-                     : (m_motions.count(key2) < 1) ? key2 : motionName;
+  // Modify current motion
+  std::string key = m_currMotion + "_" + motionName;
+  LOG("KEY CURR MOTION: {}", key);
+  // std::string key2 = motionName + "_" + m_currMotion;
+
+  //? If reply to (?) on addmotion is false: When/How flip motion order?
+  auto cond1 = m_motions.count(key) - 1 == 0;
+  auto cond2 = m_currMotion != motionName;
+  LOG("curr motion conds count/same_name: {}/{}", cond1, cond2);
+  m_currMotion = (cond1 and cond2) ? key : motionName;
+
+  LOG("curr motion: {}", m_currMotion);
 }
 
 
@@ -238,8 +256,8 @@ void Skeleton::animation() {
           auto frameLimit = m_motions.at(m_currMotion)->frames.size() - 2;
           (m_currFrame >= frameLimit) ? m_currFrame = 0 : ++m_currFrame;
 
-          // Camera rotation sync when skeleton is moved
-          if (!(move == 0 or move == 3 or move == 12)) {
+          // Camera rotation sync when skeleton is executing a valid move
+          if (m_validMoves.find(move) != m_validMoves.end()) {
             this->transform.rot.y = m_camera->pivot.rot.y;
           }
 
@@ -264,31 +282,34 @@ void Skeleton::animation() {
 // ====================================================================== //
 
 void Skeleton::draw() {
-  auto joints = m_motions.at(m_currMotion)->joints;
+  try {
+    // LOG("CURR_MOTION: {}", m_currMotion);
+    auto joints = m_motions.at(m_currMotion)->joints;
 
-  // Draw joints
-  for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
-    auto J = joints.at(idx);
-    if (!J->parent) continue;
+    // Draw joints
+    for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
+      auto J = joints.at(idx);
+      if (!J->parent) continue;
 
-    if (J->name == "Head" and J->endsite) {
-      auto headRE                      = Renderable::getByName("MonkeyHead");
-      headRE->transform.overrideMatrix = J->endsite->transformAsMatrix;
-      headRE->draw(m_camera);
-      continue;
+      if (J->name == "Head" and J->endsite) {
+        auto headRE                      = Renderable::getByName("MonkeyHead");
+        headRE->transform.overrideMatrix = J->endsite->transformAsMatrix;
+        headRE->draw(m_camera);
+        continue;
+      }
+
+      auto jointRE                      = Renderable::getByName("Joint");
+      jointRE->transform.overrideMatrix = J->transformAsMatrix;
+      jointRE->draw(m_camera);
     }
 
-    auto jointRE                      = Renderable::getByName("Joint");
-    jointRE->transform.overrideMatrix = J->transformAsMatrix;
-    jointRE->draw(m_camera);
-  }
-
-  // Draw bones
-  for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
-    auto J = joints.at(idx);
-    if (!J->parent) continue;
-    if (J->name != "Head") { drawBone(J); }
-  }
+    // Draw bones
+    for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
+      auto J = joints.at(idx);
+      if (!J->parent) continue;
+      if (J->name != "Head") { drawBone(J); }
+    }
+  } catch (const std::out_of_range& e) { LOGE("OOR: {}", e.what()); }
 }
 
 } // namespace brave

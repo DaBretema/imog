@@ -181,9 +181,10 @@ void IO::windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn) {
     ++frame;
     double eTime = glfwGetTime();
     if (eTime - iTime >= 1.0) {
-      auto title = m_windowTitle + " :: " + std::to_string(frame) + "fps";
-      iTime      = eTime;
-      frame      = 0;
+      auto subTitle = (m_pause) ? "PAUSED" : std::to_string(frame) + "fps";
+      auto title    = m_windowTitle + " :: " + subTitle;
+      iTime         = eTime;
+      frame         = 0;
       glfwSetWindowTitle(m_windowPtr, title.c_str());
     }
   };

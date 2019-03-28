@@ -118,7 +118,7 @@ void addNewJoint(const std::string&                          name,
 namespace brave {
 namespace loader {
 
-  std::shared_ptr<Motion> BVH(const std::string& bvhFilePath) {
+  std::shared_ptr<Motion> BVH(const std::string& bvhFilePath, loopMode lm) {
     auto out = std::make_shared<Motion>();
     if (!Files::ok(bvhFilePath, true)) { return out; }
 
@@ -137,7 +137,6 @@ namespace loader {
 
     // ----------------------------------------------------------------- //
     // -------------------------------------------------- / AUX VARS --- //
-
 
     while (std::getline(filestream, linestream)) {
       auto LINE   = Strings::split(linestream, " "); // ! First
@@ -201,8 +200,9 @@ namespace loader {
 
               // Rotations
               for (auto i = 3u; i < LINE.size(); i += 3) {
-                for (auto j = i; j < i + 3; ++j)
+                for (auto j = i; j < i + 3; ++j) {
                   aux[channels.at(j)] = std::stof(LINE.at(j));
+                }
                 currFrame.rotations.push_back(aux);
               }
 
@@ -216,7 +216,7 @@ namespace loader {
       }
     }
 
-    out->clean();
+    out->clean(lm);
     return out;
   }
 } // namespace loader

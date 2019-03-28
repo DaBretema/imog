@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Math.hpp"
+#include "helpers/Consts.hpp"
 
 namespace brave {
 
@@ -34,7 +35,7 @@ public:
   float                               timeStep;
 
   // Clean any motion to get a smoother loop
-  void clean();
+  void clean(loopMode lm);
 
   // Mix any motion with other and get a new animation
   // that conect both smoothly

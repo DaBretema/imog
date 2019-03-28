@@ -1,8 +1,7 @@
 #include "Motion.hpp"
 
-// #include <execution>
-#include <numeric>
 #include <tuple>
+#include <numeric>
 
 #include "Logger.hpp"
 #include "Settings.hpp"
@@ -96,36 +95,54 @@ glm::vec3 Frame::sumRots() const {
 // Clean any motion to get a smoother loop
 // ====================================================================== //
 
-void Motion::clean() {
-  // Get low errror frames of animation to generate a loop
-  auto [I, E] = lowestErrFrames_1(this->frames);
+void Motion::clean(loopMode lm) {
 
-  // Clean
-  std::vector<Frame> auxFrames;
-  auxFrames.reserve(E);
-  for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
+  auto cleanFirstFrame = [&]() { this->frames.erase(this->frames.begin()); };
 
-  // Smoother loop
-  for (auto alpha = 0.1f; alpha <= 0.9f; alpha += 0.4f) {
-    auto firstRot = auxFrames.front().rotations;
-    auto lastRot  = auxFrames.back().rotations;
-    assert(firstRot.size() == lastRot.size());
+  switch (lm) {
+    default:
+    case loopMode::firstFrame: cleanFirstFrame(); break;
 
-    Frame frame;
-    frame.translation = auxFrames.back().translation; //* (1.2f * alpha);
-    for (auto i = 0u; i < firstRot.size(); ++i) {
-      frame.rotations.push_back(glm::mix(lastRot[i], firstRot[i], alpha));
-    }
-    auxFrames.push_back(frame);
+    case loopMode::cycle: {
+      // Get low errror frames of animation to generate a loop
+      auto [I, E] = lowestErrFrames_1(this->frames);
+      // Clean
+      std::vector<Frame> auxFrames;
+      auxFrames.reserve(E);
+      for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
+      // Smoother loop
+      // for (auto alpha = 0.1f; alpha <= 0.9f; alpha += 0.4f) {
+      //   auto firstRot = auxFrames.front().rotations;
+      //   auto lastRot  = auxFrames.back().rotations;
+      //   assert(firstRot.size() == lastRot.size());
+      //   Frame frame;
+      //   frame.translation = auxFrames.back().translation; //* (1.2f * alpha);
+      //   for (auto i = 0u; i < firstRot.size(); ++i) {
+      //     frame.rotations.push_back(glm::mix(lastRot[i], firstRot[i], alpha));
+      //   }
+      //   auxFrames.push_back(frame);
+      // }
+      // Store
+      this->frames = auxFrames;
+    } break;
+
+    case loopMode::mirror: {
+      cleanFirstFrame();
+      auto framesN = this->frames.size();
+      for (auto i = 0; i < framesN; ++i) {
+        auto idx   = framesN - 1 - i;
+        auto frame = this->frames.at(idx);
+        this->frames.push_back(frame);
+      }
+    } break;
   }
 
-  // Log
-  auto d1 = this->frames.size();
-  auto d2 = auxFrames.size();
-  if (!Settings::quiet) LOGD("Saved frames: {} - {} = {}", d1, d2, d1 - d2);
 
-  // Store
-  this->frames = auxFrames;
+
+  // // Log
+  // auto d1 = this->frames.size();
+  // auto d2 = auxFrames.size();
+  // if (!Settings::quiet) LOGD("Saved frames: {} - {} = {}", d1, d2, d1 - d2);
 }
 
 // ====================================================================== //
@@ -135,27 +152,42 @@ void Motion::clean() {
 // ====================================================================== //
 
 std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
-
   auto [lefM1, lefM2] = lowestErrFrames_2(this->frames, m2->frames);
 
   auto M    = std::make_shared<Motion>();
   M->joints = this->joints;
 
-  // ? On that way of 'frame by frame'
-  M->timeStep = (this->timeStep + m2->timeStep) * 0.5f;
+  // ? On that way, or 'frame by frame'
+  M->timeStep = (this->timeStep + m2->timeStep) * 2.f;
 
   M->frames.push_back(this->frames.at(lefM1));
 
-  for (auto alpha = 0.1f; alpha <= 0.9f; alpha += 0.05f) {
-    auto M1Rots = this->frames.at(lefM1).rotations;
-    auto M2Rots = m2->frames.at(lefM2).rotations;
-    assert(M1Rots.size() == M2Rots.size());
+  auto M1Rots = this->frames.at(lefM1).rotations;
+  auto M2Rots = m2->frames.at(lefM2).rotations;
+  assert(M1Rots.size() == M2Rots.size());
 
+  //DEBUG
+  // LOG("M1")
+  // for (auto i = 0u; i < M1Rots.size(); ++i) {
+  //   LOG("{}", glm::to_string(M1Rots[i]));
+  // }
+  // LOG("\nM2")
+  // for (auto i = 0u; i < M2Rots.size(); ++i) {
+  //   LOG("{}", glm::to_string(M2Rots[i]));
+  // }
+  ///DEBUG
+
+  for (auto alpha = 0.1f; alpha <= 0.9f; alpha += 0.05f) {
+    // for (auto alpha = 0.1f; alpha <= 0.2f; alpha += 0.1f) {
+    // LOG("Frame: {}", alpha);
     Frame frame;
-    frame.translation = this->frames.at(lefM1).translation;
+    frame.translation = glm::vec3(0.f); //this->frames.at(lefM1).translation;
     for (auto i = 0u; i < M1Rots.size(); ++i) {
-      frame.rotations.push_back(glm::mix(M1Rots[i], M2Rots[i], alpha));
+      auto newRot = glm::mix(M1Rots[i], M2Rots[i], alpha);
+      // LOG("{}", glm::to_string(newRot));
+      frame.rotations.push_back(newRot);
     }
+    // LOG("\n\n");
     M->frames.push_back(frame);
   }
 

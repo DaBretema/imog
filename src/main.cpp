@@ -6,7 +6,7 @@
 
 #include "IO.hpp"
 #include "Math.hpp"
-#include "Loader.hpp"
+// #include "Loader.hpp"
 #include "Settings.hpp"
 #include "Skeleton.hpp"
 #include "Renderable.hpp"
@@ -49,17 +49,17 @@ void DBG_VEC(std::shared_ptr<brave::Camera> camera,
 // Dump bvh content
 // ========================================================================= //
 
-void DBG_BVH(const std::string& path) {
-  auto testbvh = loader::BVH(path);
-  int  i       = 0;
-  int  r       = 0;
-  for (auto frame : testbvh->frames) {
-    LOG("----------\nFrame{}", i++);
-    LOG("T : {}", glm::to_string(frame.translation));
-    for (auto rot : frame.rotations) LOG("R{} : {}", r++, glm::to_string(rot));
-    r = 0;
-  }
-};
+// void DBG_BVH(const std::string& path) {
+//   auto testbvh = loader::BVH(path);
+//   int  i       = 0;
+//   int  r       = 0;
+//   for (auto frame : testbvh->frames) {
+//     LOG("----------\nFrame{}", i++);
+//     LOG("T : {}", glm::to_string(frame.translation));
+//     for (auto rot : frame.rotations) LOG("R{} : {}", r++, glm::to_string(rot));
+//     r = 0;
+//   }
+// };
 
 
 // * ===================================================================== * //
@@ -105,8 +105,8 @@ int main(int argc, char const* argv[]) {
   // --- Skeleton --------------------------------------------
 
   auto skeleton = Skeleton(camera, 0.33f);
-  skeleton.addMotion("Idle", Motions::idle);
-  skeleton.addMotion("Run", Motions::run);
+  skeleton.addMotion("Idle", Motions::idle, loopMode::mirror);
+  skeleton.addMotion("Run", Motions::run, loopMode::cycle);
   skeleton.animation();
 
   skeleton.onKey(GLFW_KEY_W,

@@ -1,18 +1,16 @@
 #pragma once
 
-#include <vector>
+#include <set>
+// #include <vector>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
 
-
-
-
 #include "IO.hpp"
 #include "Math.hpp"
 #include "Camera.hpp"
-#include "Transform.hpp"
 #include "Motion.hpp"
+#include "Transform.hpp"
 
 
 namespace brave {
@@ -20,6 +18,7 @@ class Skeleton {
 
 private:
   enum struct directions { F = 8, B = 4, L = 2, R = 1 };
+  const std::set<int> m_validMoves = {1, 2, 4, 8, 9, 10, 5, 6};
 
   bool           m_animThread;
   std::once_flag animationOnceFlag;
@@ -34,7 +33,7 @@ private:
   // in that map, setting the key as "idxFrom_idxTo" (for both cases)
   // to easy swith from one to other
   std::unordered_map<std::string, std::shared_ptr<Motion>> m_motions;
-  std::string m_currMotion;
+  std::string                                              m_currMotion;
 
   float step();
   void  drawBone(const std::shared_ptr<Joint>& J);
@@ -52,23 +51,19 @@ public:
   void onKey(int key, _IO_FUNC release = []() {}, _IO_FUNC press = []() {});
 
   // Add motions to skeleton motion map
-  void addMotion(const std::string& name, const std::string& file);
+  void addMotion(const std::string& name,
+                 const std::string& file,
+                 loopMode           lm = loopMode::firstFrame);
 
   // Modify current motion
   void currMotion(const std::string& motionName);
 
   /* Movement will be defined by the following truth table.
       F B L R / Val
-                                                          - Stillness cases
-      0 0 0 0 / 0  : No input             : Ø
-      0 0 1 1 / 3  : Right and Left       : Ø
-      1 1 0 0 / 12 : Forward and Backward : Ø
-                                                          - Basic moves
-      0 0 0 1 / 1  : Right    : ➡
-      0 0 1 0 / 2  : Left     : ⬅
-      0 1 0 0 / 4  : Backward : ↓
-      1 0 0 0 / 8  : Forward  : ↑
-                                                          - Combo moves
+      0 0 0 1 / 1  : Right            : ➡
+      0 0 1 0 / 2  : Left             : ⬅
+      0 1 0 0 / 4  : Backward         : ↓
+      1 0 0 0 / 8  : Forward          : ↑
       1 0 0 1 / 9  : Right + Forward  : ↗
       1 0 1 0 / 10 : Left + Forward   : ↖
       0 1 0 1 / 5  : Right + Backward : ↘
