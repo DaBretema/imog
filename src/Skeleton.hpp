@@ -16,6 +16,8 @@
 namespace brave {
 class Skeleton {
 
+  std::mutex _modifyDestMotion;
+
 private:
   enum struct directions { F = 8, B = 4, L = 2, R = 1 };
   const std::set<int> m_validMoves = {1, 2, 4, 8, 9, 10, 5, 6};
@@ -25,19 +27,29 @@ private:
 
   float        m_scale;
   unsigned int m_currFrame;
+  int          m_lastFrame = -1;
 
   std::shared_ptr<Camera> m_camera;
 
   // For intermediate steps between two motions, we create two new motions
   // one from animation 1 to animation 2 and viceversa, storing them
-  // in that map, setting the key as "idxFrom_idxTo" (for both cases)
+  // in that map, setting the key as "From_To" (for both cases)
   // to easy swith from one to other
   std::unordered_map<std::string, std::shared_ptr<Motion>> m_motions;
   std::string                                              m_currMotion;
 
+  // Compute hierarchy of the skeleton based on current frame and motion
+  void hierarchy(const std::string& motionName, unsigned int frame);
+
+  // Compute displacement to apply on next user input
   float step();
-  void  drawBone(const std::shared_ptr<Joint>& J);
-  void  hierarchy(const std::string& motionName, unsigned int frame);
+
+  // Compute displacement on 3 axis and get a vec3
+  glm::vec3 step3();
+
+  // Compute and draw a bone of a gived joint and its parent
+  void drawBone(const std::shared_ptr<Joint>& J);
+
 
 public:
   Transform transform;
@@ -48,7 +60,7 @@ public:
   ~Skeleton();
 
   // Define actions on key state
-  void onKey(int key, _IO_FUNC release = []() {}, _IO_FUNC press = []() {});
+  void onKey(int key, _IO_FUNC press = []() {}, _IO_FUNC release = []() {});
 
   // Add motions to skeleton motion map
   void addMotion(const std::string& name,
@@ -56,7 +68,7 @@ public:
                  loopMode           lm = loopMode::firstFrame);
 
   // Modify current motion
-  void currMotion(const std::string& motionName);
+  void currMotion(const std::string& motionName, unsigned int targetFrame = 0);
 
   /* Movement will be defined by the following truth table.
       F B L R / Val

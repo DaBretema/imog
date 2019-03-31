@@ -16,8 +16,8 @@ namespace brave {
 // Private variables definition
 // ====================================================================== //
 
-bool                    IO::m_pause{false};
-std::shared_ptr<Camera> IO::m_camera{nullptr};
+bool                    IO::m_pause;
+std::shared_ptr<Camera> IO::m_camera;
 
 GLFWwindow* IO::m_windowPtr{nullptr};
 
@@ -44,7 +44,7 @@ GLFWwindow* IO::window() { return m_windowPtr; }
 // WINDOW reply when is "initialized"
 // ====================================================================== //
 
-void IO::windowInit(std::shared_ptr<Camera> camera) {
+void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   // ---------------------------------------------------------
   // --- Validations -----------------------------------------

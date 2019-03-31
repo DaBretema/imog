@@ -109,15 +109,8 @@ int main(int argc, char const* argv[]) {
   skeleton.addMotion("Run", Motions::run, loopMode::cycle);
   skeleton.animation();
 
-  skeleton.onKey(GLFW_KEY_W,
-                 [&]() {
-                   skeleton.currMotion("Idle");
-                   skeleton.moveF(false);
-                 },
-                 [&]() {
-                   skeleton.currMotion("Run");
-                   skeleton.moveF(true);
-                 });
+  skeleton.onKey(GLFW_KEY_1, [&]() { skeleton.currMotion("Run"); });
+  skeleton.onKey(GLFW_KEY_2, [&]() { skeleton.currMotion("Idle"); });
 
 
   // ------------------------------------------ / Skeleton ---

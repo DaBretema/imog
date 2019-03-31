@@ -8,6 +8,7 @@
 #include "helpers/Consts.hpp"
 
 namespace brave {
+using uint = unsigned int;
 
 struct Joint {
   std::string            name{""};
@@ -29,10 +30,20 @@ struct Frame {
 
 class Motion {
 public:
-  std::string                         name;
+  std::string                         name; // If contains _ is a mix
   std::vector<std::shared_ptr<Joint>> joints;
   std::vector<Frame>                  frames;
   float                               timeStep;
+  std::string                         destMotion;
+
+  // Only for mixes
+  uint frameA;
+  uint frameB;
+
+  static bool isMix(const std::string& str);
+
+  // If its name contains _ is a mix
+  bool isMix();
 
   // Clean any motion to get a smoother loop
   void clean(loopMode lm);

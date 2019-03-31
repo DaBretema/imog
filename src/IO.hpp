@@ -32,7 +32,7 @@ private:
 public:
   static GLFWwindow* window();
 
-  static void  windowInit(std::shared_ptr<Camera> camera);
+  static void  windowInit(const std::shared_ptr<Camera>& camera);
   static void  windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn);
   static float windowAspectRatio();
   static void  windowOnScaleChange(GLFWwindow* w, int width, int height);

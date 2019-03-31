@@ -1,6 +1,7 @@
 #include "Skeleton.hpp"
 
 #include "IO.hpp"
+#include "Strings.hpp"
 #include "Async.hpp"
 #include "Logger.hpp"
 #include "Loader.hpp"
@@ -36,7 +37,10 @@ void Skeleton::hierarchy(const std::string& motionName, unsigned int frame) {
     auto jtm   = &joint->transformAsMatrix;
 
     // On root joint
-    if (joint->name == "Root") { *jtm = this->transform.asMatrix(); }
+    if (joint->name == "Root") {
+      *jtm = this->transform.asMatrix();
+      // Math::translate(*jtm, targetFrame.translation * m_scale);
+    }
 
     // On all joints
     if (joint->parent) { *jtm = joint->parent->transformAsMatrix; }
@@ -60,6 +64,12 @@ float Skeleton::step() {
   auto p1 = m_motions.at(m_currMotion)->frames.at(m_currFrame).translation;
   auto p2 = m_motions.at(m_currMotion)->frames.at(m_currFrame + 1).translation;
   return glm::distance2(p2, p1);
+}
+
+glm::vec3 Skeleton::step3() {
+  auto p1 = m_motions.at(m_currMotion)->frames.at(m_currFrame).translation;
+  auto p2 = m_motions.at(m_currMotion)->frames.at(m_currFrame + 1).translation;
+  return p2 - p1;
 }
 
 // ====================================================================== //
@@ -111,6 +121,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
     : m_animThread(true),
       m_scale(scale),
       m_currFrame(0u),
+      m_lastFrame(-1),
       m_camera(camera),
       m_currMotion(""),
       move(0),
@@ -135,7 +146,7 @@ Skeleton::~Skeleton() {
 // Define actions on key state
 // ====================================================================== //
 
-void Skeleton::onKey(int key, _IO_FUNC release, _IO_FUNC press) {
+void Skeleton::onKey(int key, _IO_FUNC press, _IO_FUNC release) {
   IO::keyboardAddAction(key, IO::kbState::release, release);
   IO::keyboardAddAction(key, IO::kbState::press, press);
 }
@@ -148,24 +159,21 @@ void Skeleton::onKey(int key, _IO_FUNC release, _IO_FUNC press) {
 void Skeleton::addMotion(const std::string& name,
                          const std::string& file,
                          loopMode           lm) {
-  if (name.find("_") != std::string::npos) {
-    LOGE("Motion names can NOT contains '_'");
+  if (Motion::isMix(name)) {
+    LOGE("Motion names can NOT contains '_' is reserved for motion mixeds");
     return;
   }
-  auto isMix = [&](const auto& motionMapItem) {
-    return motionMapItem.first.find("_") != std::string::npos;
-  };
+
   m_motions.try_emplace(name, loader::BVH(file, lm));
   m_motions[name]->name = m_currMotion = name;
 
   // Compute mix for current motions
   for (const auto& m1 : m_motions) {
-    if (isMix(m1)) continue;
+    if (m1.second->isMix()) continue;
 
     for (const auto& m2 : m_motions) {
-      // Ignore other mix and itself
-      if (m1.first == m2.first or isMix(m2)) continue;
-
+      // Ignore itself and mixes
+      if (m1.first == m2.first or m2.second->isMix()) continue;
       std::string key1 = m1.first + "_" + m2.first;
       std::string key2 = m2.first + "_" + m1.first;
 
@@ -185,7 +193,11 @@ void Skeleton::addMotion(const std::string& name,
 // Modify current motion
 // ====================================================================== //
 
-void Skeleton::currMotion(const std::string& motionName) {
+void Skeleton::currMotion(const std::string& motionName,
+                          unsigned int       targetFrame) {
+  // Ignore if is on transition
+  if (Motion::isMix(m_currMotion)) return;
+
 
   // Don't make any operation if motion name doesn't exist
   if (m_motions.count(motionName) < 1) {
@@ -193,22 +205,37 @@ void Skeleton::currMotion(const std::string& motionName) {
     return;
   }
 
-  // Reset curr frame, because not every motion have the same length
-  // and may incur a forbidden memory access
-  m_currFrame = 0;
-
-  for (const auto& mo : m_motions) { LOG("mo_key {}", mo.first); }
-
-  // Modify current motion
-  std::string key = m_currMotion + "_" + motionName;
+  std::string key             = m_currMotion + "_" + motionName;
+  bool        transitionExist = m_motions.count(key) > 0;
+  // bool        transitionExist = m_motions.count(key) - 1 == 0;
+  bool noEqualNames = m_currMotion != motionName;
   LOG("KEY CURR MOTION: {}", key);
-  // std::string key2 = motionName + "_" + m_currMotion;
 
-  //? If reply to (?) on addmotion is false: When/How flip motion order?
-  auto cond1 = m_motions.count(key) - 1 == 0;
-  auto cond2 = m_currMotion != motionName;
-  LOG("curr motion conds count/same_name: {}/{}", cond1, cond2);
-  m_currMotion = (cond1 and cond2) ? key : motionName;
+  if (transitionExist && noEqualNames) {
+    if (m_lastFrame > -1) {
+      LOG("SecondEntry");
+      m_lastFrame  = -1;
+      m_currFrame  = m_motions.at(key)->frameB;
+      m_currMotion = motionName;
+    } else {
+      LOGD("NEXT MOTION")
+      m_lastFrame = m_motions.at(key)->frameA;
+      LOGD("NEXT MOTION 2")
+      std::lock_guard<std::mutex> guard(_modifyDestMotion);
+      m_motions.at(m_currMotion)->destMotion = motionName;
+      LOGD("NEXT MOTION 3")
+      // LOG("Asigned output frame: {}", m_lastFrame);
+    }
+  } else {
+    // Reset curr frame, because not every motion have the same length
+    // and may incur a forbidden memory access
+    m_currFrame = targetFrame;
+    // Modify current motion
+    m_currMotion = motionName;
+  }
+
+  // ? If reply to (?) on addmotion is false: When/How flip motion order?
+  // m_currMotion = (transitionExist and noEqualNames) ? key : motionName;
 
   LOG("curr motion: {}", m_currMotion);
 }
@@ -253,21 +280,42 @@ void Skeleton::animation() {
           hierarchy(m_currMotion, m_currFrame);
 
           // Update frame counter
-          auto frameLimit = m_motions.at(m_currMotion)->frames.size() - 2;
-          (m_currFrame >= frameLimit) ? m_currFrame = 0 : ++m_currFrame;
+          auto frameLimit = (m_lastFrame < 0)
+                                ? m_motions.at(m_currMotion)->frames.size() - 2
+                                : m_lastFrame;
+
+          if (m_currFrame >= frameLimit) {
+            if (Motion::isMix(m_currMotion)) {
+              auto nextMotion = Strings::split(m_currMotion, "_").at(1);
+              currMotion(nextMotion, m_motions.at(m_currMotion)->frameB);
+            } else {
+              auto mo = m_motions.at(m_currMotion);
+              if (auto dm = mo->destMotion; !dm.empty()) {
+                LOG("HEREEEE");
+                mo->destMotion = "";
+                currMotion(dm);
+              } else {
+                m_currFrame = 0;
+              }
+            }
+          } else {
+            ++m_currFrame;
+          }
+
+
 
           // Camera rotation sync when skeleton is executing a valid move
-          if (m_validMoves.find(move) != m_validMoves.end()) {
-            this->transform.rot.y = m_camera->pivot.rot.y;
-          }
+          // this->transform.rot.y = m_camera->pivot.rot.y;
+          // if (m_validMoves.find(move) != m_validMoves.end()) {
+          // }
 
           // Move actions
-          switch (move) {
-            case (int)directions::F:
-              this->transform.pos += m_camera->pivot.frontXZ() * step();
-              break;
-            default: break;
-          }
+          // switch (move) {
+          //   case (int)directions::F:
+          //     this->transform.pos += m_camera->pivot.frontXZ() * step();
+          //     break;
+          //   default: break;
+          // }
 
           // Shoot an empty event if polling is not used
           if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
