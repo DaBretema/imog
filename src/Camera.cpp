@@ -17,10 +17,12 @@ Camera::Camera(float speed, float fov)
       m_pitch(0.0f),
       m_multSpeed(1.0f),
       m_following(false),
-      m_centeredOnTarget(false),
-      target(nullptr) {
+      m_centeredOnTarget(false) {
 
   pivot.rot = glm::vec3(Settings::mainCameraRot, 0.0f);
+}
+
+Camera::~Camera() { /* this->target.reset(); */
 }
 
 // ====================================================================== //

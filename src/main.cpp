@@ -74,15 +74,8 @@ void DBG_VEC(std::shared_ptr<brave::Camera> camera,
 // * ============================ APPLICATION ============================ * //
 // * ===================================================================== * //
 
-
 int main(int argc, char const* argv[]) {
 
-  // std::vector<glm::vec3> A(1000, glm::vec3(1.f));
-  // auto                   reduced = std::reduce(std::begin(A), std::end(A));
-
-  // LOGD("vec sum => {}" glm::to_string(reduced));
-
-  // return 0;
   // ---------------------------------------------------------
   // --- Initialization --------------------------------------
 
@@ -95,7 +88,6 @@ int main(int argc, char const* argv[]) {
   auto light = std::make_shared<Light>(Settings::mainLightPos,
                                        Settings::mainLightColor,
                                        Settings::mainLightIntensity);
-
 
   // ------------------------------------ / Initialization ---
   // ---------------------------------------------------------
@@ -111,7 +103,6 @@ int main(int argc, char const* argv[]) {
 
   skeleton.onKey(GLFW_KEY_1, [&]() { skeleton.currMotion("Run"); });
   skeleton.onKey(GLFW_KEY_2, [&]() { skeleton.currMotion("Idle"); });
-
 
   // ------------------------------------------ / Skeleton ---
   // ---------------------------------------------------------
@@ -136,6 +127,11 @@ int main(int argc, char const* argv[]) {
 
   IO::windowLoop(renderFn, updateFn);
 
+  // Skeleton invoke a thread that use render, shader and texture pools.
+  // So if we don't remove skeleton object before remove pools' content and
+  // let that OS' memory manager remove unfree data. May ocur
+  delete &skeleton;
+
   // ---------------------------------------------- / Loop ---
   // ---------------------------------------------------------
 
@@ -154,10 +150,6 @@ int main(int argc, char const* argv[]) {
 // * =============================== NOTES =============================== * //
 // * ===================================================================== * //
 /*
-
-Todo 1 : Allow multiple entries on same key state... (IO.cpp) unordered_multimap
-
-Todo 2 : Make a motion pool access wrapper inside skeleton.
 
 */
 // * ===================================================================== * //

@@ -35,6 +35,7 @@ public:
   Transform                  transform;
 
   Camera(float speed = 1.f, float fov = 0.5f);
+  ~Camera();
 
   // Getter for view
   glm::mat4 view() const;

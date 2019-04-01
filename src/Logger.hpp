@@ -12,12 +12,12 @@ typedef std::shared_ptr<spdlog::logger> _LogType;
 class Logger {
 
 #define PATTERN_PRINT "%v"
-#define PATTERN_ALERT "%t.%@ : %^%v%$"
+#define PATTERN_ALERT "%t %@ : %^%v%$"
 
 private:
   // Patterns
-  static const char *m_patternPrints;
-  static const char *m_patternAlerts;
+  static const char* m_patternPrints;
+  static const char* m_patternAlerts;
 
   // Loggers
   static _LogType m_info;
@@ -26,11 +26,11 @@ private:
 
 public:
   // Getter of info logger
-  static _LogType &info();
+  static _LogType& info();
   // Getter of error logger
-  static _LogType &error();
+  static _LogType& error();
   // Getter of print logger
-  static _LogType &print();
+  static _LogType& print();
 };
 
 } // namespace brave

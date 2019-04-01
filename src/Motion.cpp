@@ -157,7 +157,7 @@ std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
   M->joints = this->joints;
 
   // ? On that way, or 'frame by frame'
-  M->timeStep = (this->timeStep + m2->timeStep) * 0.5f;
+  M->timeStep = (this->timeStep + m2->timeStep) * 10.f;
 
   M->frames.push_back(this->frames.at(lefM1));
 

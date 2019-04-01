@@ -16,7 +16,8 @@ namespace brave {
 // Private variables definition
 // ====================================================================== //
 
-bool                    IO::m_pause;
+bool IO::m_pause;
+//todo: test make it weak_ptr to avoid excetipons
 std::shared_ptr<Camera> IO::m_camera;
 
 GLFWwindow* IO::m_windowPtr{nullptr};

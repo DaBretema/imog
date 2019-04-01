@@ -25,7 +25,7 @@ namespace brave {
 // Global pool and indexmap for textures
 // ====================================================================== //
 
-std::unordered_map<std::string, std::shared_ptr<Texture>> Texture::pool;
+std::unordered_map<std::string, std::shared_ptr<Texture>> Texture::pool{};
 
 
 // ====================================================================== //
