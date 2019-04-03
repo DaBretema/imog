@@ -16,8 +16,7 @@ namespace brave {
 // Private variables definition
 // ====================================================================== //
 
-bool IO::m_pause;
-//todo: test make it weak_ptr to avoid excetipons
+bool                    IO::m_pause;
 std::shared_ptr<Camera> IO::m_camera;
 
 GLFWwindow* IO::m_windowPtr{nullptr};
@@ -111,7 +110,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   // - Mouse
 
-  glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
+  // glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
   glfwSetCursorPosCallback(o_WINDOW, mouseOnMove);
   glfwSetMouseButtonCallback(o_WINDOW, mouseOnClick);
 
@@ -151,16 +150,18 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   // Create default Shaders
   Shader::createByName("base", true);
   Shader::createByName("light");
+  auto sks = Shader::createByName("sk", true);
 
   // Create default Renderables
-  Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange);
-  Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange);
-  Renderable::create(false, "MonkeyHead", Figures::monkey, "", Colors::orange);
+  Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange, sks);
+  Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange, sks);
+  Renderable::create(
+      false, "MonkeyHead", Figures::monkey, "", Colors::orange, sks);
 
   // Create floor
-  auto floor =
-      Renderable::create(true, "Floor", Figures::plane, Textures::chess);
-  floor->transform.pos -= glm::vec3(0, 6.0f, 0);
+  auto floor = Renderable::create(
+      true, "Floor", Figures::plane, Textures::chess, Colors::white);
+  floor->transform.pos -= glm::vec3(0, 10.f, 0);
   floor->transform.scl = glm::vec3(500.f, 1.f, 500.f);
 
   // ------------------------------------------ / Defaults ---

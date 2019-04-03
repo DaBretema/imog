@@ -56,11 +56,13 @@ void Camera::zoom(float variation) { m_fov += glm::radians(variation); }
 // ====================================================================== //
 
 void Camera::frame() {
-  if (target) { pivot.pos = target->pos; }
+  if (target) {
+    auto yOffset = (Math::unitVecY * Settings::mainCameraPos);
+    pivot.pos    = target->pos + yOffset;
+  }
 
   auto modZ = pivot.front() * Settings::mainCameraPos.z;
-  // auto modY = Math::unitVecY * Settings::mainCameraPos.y;
-  auto eye = pivot.pos - modZ; //+modY;
+  auto eye  = pivot.pos - modZ;
 
   m_proj     = glm::perspective(m_fov, IO::windowAspectRatio(), m_near, m_far);
   m_view     = glm::lookAt(eye, pivot.pos, Math::unitVecY);

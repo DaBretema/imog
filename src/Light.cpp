@@ -18,13 +18,13 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
       m_intensity(intensity),
       m_renderableID("Light_" + std::to_string(g_lastLightID++)) {
 
-  Renderable::create(true,
-                     m_renderableID,
-                     Figures::mark,
-                     "",
-                     m_color,
-                     Shader::getByName("light"),
-                     false);
+  // Renderable::create(true,
+  //                    m_renderableID,
+  //                    Figures::mark,
+  //                    "",
+  //                    m_color,
+  //                    Shader::getByName("light"),
+  //                    false);
 }
 
 // ====================================================================== //
@@ -34,8 +34,8 @@ Light::Light(const glm::vec3& pos, const glm::vec3& color, float intensity)
 
 glm::vec3 Light::pos() const { return m_pos; }
 void      Light::pos(const glm::vec3& newPos) {
-  m_pos                                                = newPos;
-  Renderable::getByName(m_renderableID)->transform.pos = m_pos;
+  m_pos = newPos;
+  // Renderable::getByName(m_renderableID)->transform.pos = m_pos;
 }
 
 // ====================================================================== //
@@ -46,7 +46,7 @@ void      Light::pos(const glm::vec3& newPos) {
 glm::vec3 Light::color() const { return m_color; }
 void      Light::color(const glm::vec3& newColor) {
   m_color = newColor;
-  Renderable::getByName(m_renderableID)->color(m_color);
+  // Renderable::getByName(m_renderableID)->color(m_color);
 }
 
 // ====================================================================== //

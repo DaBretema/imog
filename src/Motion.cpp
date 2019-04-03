@@ -117,6 +117,20 @@ void Motion::clean(loopMode lm) {
       std::vector<Frame> auxFrames;
       auxFrames.reserve(E);
       for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
+      // auto FI = auxFrames.front();
+      // auto FL = auxFrames.back();
+      // for (auto alpha = 0.f; alpha <= 1.f; alpha += 0.1f) {
+      //   Frame frame;
+      //   // Translation
+      //   frame.translation = glm::mix(FI.translation, FL.translation, alpha);
+      //   // Rotations
+      //   for (auto i = 0u; i < FI.rotations.size(); ++i) {
+      //     auto newRot = glm::mix(FI.rotations[i], FL.rotations[i], alpha);
+      //     frame.rotations.push_back(newRot);
+      //   }
+      //   // Store frame
+      //   auxFrames.push_back(frame);
+      // }
       // Store
       this->frames = auxFrames;
     } break;
@@ -159,38 +173,27 @@ std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
   // ? On that way, or 'frame by frame'
   M->timeStep = (this->timeStep + m2->timeStep) * 10.f;
 
-  M->frames.push_back(this->frames.at(lefM1));
-
   auto M1 = this->frames.at(lefM1);
   auto M2 = m2->frames.at(lefM2);
   assert(M1.rotations.size() == M2.rotations.size());
 
-  //DEBUG
-  // LOG("M1")
-  // for (auto i = 0u; i < M1Rots.size(); ++i) {
-  //   LOG("{}", glm::to_string(M1Rots[i]));
-  // }
-  // LOG("\nM2")
-  // for (auto i = 0u; i < M2Rots.size(); ++i) {
-  //   LOG("{}", glm::to_string(M2Rots[i]));
-  // }
-  ///DEBUG
-
-  for (auto alpha = 0.1f; alpha <= 0.9f; alpha += 0.01f) {
-    // for (auto alpha = 0.1f; alpha <= 0.2f; alpha += 0.1f) {
-    // LOG("Frame: {}", alpha);
+  for (auto alpha = 0.f; alpha <= 1.f; alpha += 0.1f) {
     Frame frame;
-    frame.translation = glm::mix(M1.translation, M2.translation, alpha);
+
+    // Translation
+    auto T            = M1.translation;
+    auto TLerp        = glm::mix(M1.translation, M2.translation, alpha);
+    frame.translation = glm::vec3(T.x, TLerp.y, T.z);
+
+    // Rotations
     for (auto i = 0u; i < M1.rotations.size(); ++i) {
       auto newRot = glm::mix(M1.rotations[i], M2.rotations[i], alpha);
-      // LOG("{}", glm::to_string(newRot));
       frame.rotations.push_back(newRot);
     }
-    // LOG("\n\n");
+
+    // Store frame
     M->frames.push_back(frame);
   }
-
-  M->frames.push_back(m2->frames.at(lefM2));
 
   return M;
 }

@@ -8,8 +8,7 @@
                             # ################## #
 
 
-$(VERBOSE).SILENT: # Un/comment this to avoid/allow verbosity output
-
+# $(VERBOSE).SILENT: # Un/comment this to avoid/allow verbosity output
 
 
 # ########################################################################### #
@@ -59,7 +58,7 @@ RELEASE_FLAGS  = -DNDEBUG -O3 -static -static-libgcc -static-libstdc++
 ICON_DIR      = $(SOURCE_DIR)/icon
 
 BUILD_DIR     = .bin
-DIST_DIR      = app
+DIST_DIR      = dist
 SOURCE_DIR    = src
 INCL_DIR      = $(SOURCE_DIR)/submodules
 LIB_DIR       = $(SOURCE_DIR)/submodules

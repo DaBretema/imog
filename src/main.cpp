@@ -96,13 +96,26 @@ int main(int argc, char const* argv[]) {
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
 
-  auto skeleton = Skeleton(camera, 0.33f);
-  skeleton.addMotion("Idle", Motions::idle, loopMode::mirror);
+  auto skeleton = Skeleton(camera, 0.5f);
+  // skeleton.addMotion(
+  //     "TEST",
+  //     "c:\\Users\\camba\\OneDrive\\Escritorio\\cmu-mocap\\data\\020\\20_13.bvh",
+  //     loopMode::firstFrame);
+  skeleton.addMotion("Idle", Motions::idle, loopMode::cycle);
   skeleton.addMotion("Run", Motions::run, loopMode::cycle);
   skeleton.animation();
 
-  skeleton.onKey(GLFW_KEY_1, [&]() { skeleton.currMotion("Run"); });
-  skeleton.onKey(GLFW_KEY_2, [&]() { skeleton.currMotion("Idle"); });
+  // skeleton.onKey(GLFW_KEY_1, [&]() { skeleton.currMotion("Run"); });
+  // skeleton.onKey(GLFW_KEY_2, [&]() { skeleton.currMotion("Idle"); });
+
+  skeleton.onKey(GLFW_KEY_1, [&]() {
+    skeleton.currMotion("Run");
+    // skeleton.moveF(true);
+  });
+  skeleton.onKey(GLFW_KEY_2, [&]() {
+    skeleton.currMotion("Idle");
+    // skeleton.moveF(false);
+  });
 
   // ------------------------------------------ / Skeleton ---
   // ---------------------------------------------------------
@@ -119,10 +132,10 @@ int main(int argc, char const* argv[]) {
   };
 
   auto renderFn = [&]() {
-    Shader::poolUpdate(camera, light);
-    Renderable::poolDraw(camera);
     skeleton.draw();
     camera->frame();
+    Shader::poolUpdate(camera, light);
+    Renderable::poolDraw(camera);
   };
 
   IO::windowLoop(renderFn, updateFn);
@@ -134,7 +147,7 @@ int main(int argc, char const* argv[]) {
 
   // ---------------------------------------------- / Loop ---
   // ---------------------------------------------------------
-
+  LOGD("Closing app");
   return 0;
 }
 

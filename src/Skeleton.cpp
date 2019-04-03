@@ -39,6 +39,9 @@ void Skeleton::hierarchy(const std::string& motionName, unsigned int frame) {
     // On root joint
     if (joint->name == "Root") {
       *jtm = this->transform.asMatrix();
+      // auto yDist = this->step3().y;
+      // Math::translate(*jtm, glm::vec3(0.f, yDist, 0.f));
+      // Math::translate(*jtm, this->step3());
       // Math::translate(*jtm, targetFrame.translation * m_scale);
     }
 
@@ -193,51 +196,51 @@ void Skeleton::addMotion(const std::string& name,
 // Modify current motion
 // ====================================================================== //
 
-void Skeleton::currMotion(const std::string& motionName,
-                          unsigned int       targetFrame) {
+void Skeleton::currMotion(const std::string& dest, unsigned int frame) {
   // Ignore if is on transition
-  if (Motion::isMix(m_currMotion)) return;
-
+  // if (Motion::isMix(m_currMotion)) return;
 
   // Don't make any operation if motion name doesn't exist
-  if (m_motions.count(motionName) < 1) {
-    if (!Settings::quiet) LOGE("Zero motions with name {}.", motionName);
+  if (m_motions.count(dest) < 1) {
+    if (!Settings::quiet) LOGE("Zero motions with name {}.", dest);
     return;
   }
 
-  std::string key             = m_currMotion + "_" + motionName;
+  LOGD("CURR MOTION = {}", m_currMotion);
+  LOGD("DEST MOTION = {}", dest);
+
+  std::string key             = m_currMotion + "_" + dest;
   bool        transitionExist = m_motions.count(key) > 0;
   // bool        transitionExist = m_motions.count(key) - 1 == 0;
-  bool noEqualNames = m_currMotion != motionName;
-  LOG("KEY CURR MOTION: {}", key);
+  bool noEqualNames = m_currMotion != dest;
 
+  // Put mix in queue
   if (transitionExist && noEqualNames) {
-    if (m_lastFrame > -1) {
-      LOG("SecondEntry");
-      m_lastFrame  = -1;
-      m_currFrame  = m_motions.at(key)->frameB;
-      m_currMotion = motionName;
-    } else {
-      LOGD("NEXT MOTION")
-      m_lastFrame = m_motions.at(key)->frameA;
-      LOGD("NEXT MOTION 2")
-      std::lock_guard<std::mutex> guard(_modifyDestMotion);
-      m_motions.at(m_currMotion)->destMotion = motionName;
-      LOGD("NEXT MOTION 3")
-      // LOG("Asigned output frame: {}", m_lastFrame);
-    }
-  } else {
-    // Reset curr frame, because not every motion have the same length
-    // and may incur a forbidden memory access
-    m_currFrame = targetFrame;
-    // Modify current motion
-    m_currMotion = motionName;
+    LOGD("Put mix in queue");
+    m_lastFrame                            = m_motions.at(key)->frameA;
+    m_motions.at(m_currMotion)->destMotion = key;
   }
-
-  // ? If reply to (?) on addmotion is false: When/How flip motion order?
-  // m_currMotion = (transitionExist and noEqualNames) ? key : motionName;
-
-  LOG("curr motion: {}", m_currMotion);
+  // Mix motion completed
+  else if (Motion::isMix(dest)) {
+    LOGD("Play mix");
+    m_lastFrame  = -1;
+    m_currMotion = dest;
+    m_currFrame  = frame; // 0
+    // Puts next simple motion in queue
+    m_motions.at(m_currMotion)->destMotion = Strings::split(dest, "_")[1];
+  }
+  // From mix to dest motion
+  else if (Motion::isMix(m_currMotion)) {
+    LOGD("From mix to dest: {}", dest);
+    m_currFrame  = m_motions.at(m_currMotion)->frameB;
+    m_currMotion = dest;
+  }
+  // Base case ¿?
+  // else {
+  //   LOGD("BASE CASE: {}", dest);
+  //   m_currFrame  = frame; // 0
+  //   m_currMotion = dest;
+  // }
 }
 
 
@@ -275,47 +278,50 @@ void Skeleton::animation() {
         &m_animThread,
         [&]() {
           if (!this->play) return;
+          auto mo = m_motions.at(m_currMotion);
 
           // Update hierarchy
           hierarchy(m_currMotion, m_currFrame);
 
-          // Update frame counter
-          auto frameLimit = (m_lastFrame < 0)
-                                ? m_motions.at(m_currMotion)->frames.size() - 2
-                                : m_lastFrame;
+          // Update frame limit
+          auto frameLimit =
+              (m_lastFrame < 0) ? mo->frames.size() - 2 : m_lastFrame;
 
+          // Limit reached
           if (m_currFrame >= frameLimit) {
-            if (Motion::isMix(m_currMotion)) {
-              auto nextMotion = Strings::split(m_currMotion, "_").at(1);
-              currMotion(nextMotion, m_motions.at(m_currMotion)->frameB);
-            } else {
-              auto mo = m_motions.at(m_currMotion);
-              if (auto dm = mo->destMotion; !dm.empty()) {
-                LOG("HEREEEE");
-                mo->destMotion = "";
-                currMotion(dm);
-              } else {
-                m_currFrame = 0;
-              }
+
+            // There is a motion on queue
+            if (auto dm = mo->destMotion; !dm.empty()) {
+              LOGD("THERE IS");
+              mo->destMotion = "";
+              currMotion(dm);
             }
-          } else {
+
+            // There isn't a motion on queue
+            else {
+              m_currFrame = 0;
+            }
+          }
+
+          // Adavance frames in curr motion
+          else {
             ++m_currFrame;
           }
 
 
 
           // Camera rotation sync when skeleton is executing a valid move
-          // this->transform.rot.y = m_camera->pivot.rot.y;
-          // if (m_validMoves.find(move) != m_validMoves.end()) {
-          // }
+          if (m_validMoves.find(move) != m_validMoves.end()) {
+            this->transform.rot.y = m_camera->pivot.rot.y;
+          }
 
           // Move actions
-          // switch (move) {
-          //   case (int)directions::F:
-          //     this->transform.pos += m_camera->pivot.frontXZ() * step();
-          //     break;
-          //   default: break;
-          // }
+          switch (move) {
+            case (int)directions::F:
+              this->transform.pos += m_camera->pivot.frontXZ() * step();
+              break;
+            default: break;
+          }
 
           // Shoot an empty event if polling is not used
           if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
@@ -335,7 +341,7 @@ void Skeleton::draw() {
     auto joints = m_motions.at(m_currMotion)->joints;
 
     // Draw joints
-    for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
+    for (auto idx = 0u; idx < joints.size(); ++idx) {
       auto J = joints.at(idx);
       if (!J->parent) continue;
 
@@ -352,10 +358,11 @@ void Skeleton::draw() {
     }
 
     // Draw bones
-    for (auto idx = 0u; idx < joints.size() - 2; ++idx) {
+    for (auto idx = 0u; idx < joints.size(); ++idx) {
       auto J = joints.at(idx);
       if (!J->parent) continue;
-      if (J->name != "Head") { drawBone(J); }
+      // if (J->name != "Head") { drawBone(J); }
+      drawBone(J);
     }
   } catch (const std::out_of_range& e) { LOGE("OOR: {}", e.what()); }
 }
