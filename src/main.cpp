@@ -110,11 +110,11 @@ int main(int argc, char const* argv[]) {
 
   skeleton.onKey(GLFW_KEY_1, [&]() {
     skeleton.currMotion("Run");
-    // skeleton.moveF(true);
+    skeleton.moveF(true);
   });
   skeleton.onKey(GLFW_KEY_2, [&]() {
     skeleton.currMotion("Idle");
-    // skeleton.moveF(false);
+    skeleton.moveF(false);
   });
 
   // ------------------------------------------ / Skeleton ---
