@@ -253,17 +253,18 @@ int __move(bool active, int direction) {
   return ((active) ? 1 : -1) * direction;
 }
 void Skeleton::moveF(bool active) {
-  move += __move(active, (int)directions::F);
+  // move += __move(active, (int)directions::F);
+  move = __move(active, (int)directions::F);
 }
-void Skeleton::moveR(bool active) {
-  move += __move(active, (int)directions::R);
-}
-void Skeleton::moveL(bool active) {
-  move += __move(active, (int)directions::L);
-}
-void Skeleton::moveB(bool active) {
-  move += __move(active, (int)directions::B);
-}
+// void Skeleton::moveR(bool active) {
+//   move += __move(active, (int)directions::R);
+// }
+// void Skeleton::moveL(bool active) {
+//   move += __move(active, (int)directions::L);
+// }
+// void Skeleton::moveB(bool active) {
+//   move += __move(active, (int)directions::B);
+// }
 
 
 // ====================================================================== //
