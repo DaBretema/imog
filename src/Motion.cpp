@@ -171,13 +171,18 @@ std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
   M->joints = this->joints;
 
   // ? On that way, or 'frame by frame'
-  M->timeStep = (this->timeStep + m2->timeStep) * 10.f;
+  M->timeStep = (this->timeStep + m2->timeStep) * 2.f;
 
   auto M1 = this->frames.at(lefM1);
   auto M2 = m2->frames.at(lefM2);
   assert(M1.rotations.size() == M2.rotations.size());
 
-  for (auto alpha = 0.f; alpha <= 1.f; alpha += 0.1f) {
+  // DEBUG
+  LOGD("M1 rot 0: {}", glm::to_string(M1.rotations.at(0)));
+  LOGD("M2 rot 0: {}", glm::to_string(M2.rotations.at(0)));
+  // / DEBUG
+
+  for (auto alpha = 0.f; alpha <= 1.5f; alpha += 0.1f) {
     Frame frame;
 
     // Translation
@@ -188,6 +193,12 @@ std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
     // Rotations
     for (auto i = 0u; i < M1.rotations.size(); ++i) {
       auto newRot = glm::mix(M1.rotations[i], M2.rotations[i], alpha);
+      // Avoid X and Z rotations of root to avoid visual bugs
+      if (i == 0) {
+        newRot.y = (newRot.x + newRot.z) * 0.5f + newRot.y;
+        newRot.x = 0;
+        newRot.z = 0;
+      }
       frame.rotations.push_back(newRot);
     }
 
