@@ -182,7 +182,7 @@ std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
   LOGD("M2 rot 0: {}", glm::to_string(M2.rotations.at(0)));
   // / DEBUG
 
-  for (auto alpha = 0.f; alpha <= 1.5f; alpha += 0.1f) {
+  for (auto alpha = 0.f; alpha <= 1.2f; alpha += 0.01f) {
     Frame frame;
 
     // Translation
