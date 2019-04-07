@@ -102,56 +102,22 @@ bool Motion::isMix() { return isMix(this->name); }
 // Clean any motion to get a smoother loop
 // ====================================================================== //
 
-void Motion::clean(loopMode lm) {
+void Motion::clean(bool makeLoop) {
+  this->frames.erase(this->frames.begin());
+  if (!makeLoop) return;
 
-  auto cleanFirstFrame = [&]() { this->frames.erase(this->frames.begin()); };
+  // Get low errror frames of animation to generate a loop
+  auto [I, E] = lowestErrFrames_1(this->frames);
+  // Clean
+  std::vector<Frame> auxFrames;
+  auxFrames.reserve(E);
+  for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
 
-  switch (lm) {
-    default:
-    case loopMode::firstFrame: cleanFirstFrame(); break;
+  // LERP
+  /* ... */
 
-    case loopMode::cycle: {
-      // Get low errror frames of animation to generate a loop
-      auto [I, E] = lowestErrFrames_1(this->frames);
-      // Clean
-      std::vector<Frame> auxFrames;
-      auxFrames.reserve(E);
-      for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
-      // auto FI = auxFrames.front();
-      // auto FL = auxFrames.back();
-      // for (auto alpha = 0.f; alpha <= 1.f; alpha += 0.1f) {
-      //   Frame frame;
-      //   // Translation
-      //   frame.translation = glm::mix(FI.translation, FL.translation, alpha);
-      //   // Rotations
-      //   for (auto i = 0u; i < FI.rotations.size(); ++i) {
-      //     auto newRot = glm::mix(FI.rotations[i], FL.rotations[i], alpha);
-      //     frame.rotations.push_back(newRot);
-      //   }
-      //   // Store frame
-      //   auxFrames.push_back(frame);
-      // }
-      // Store
-      this->frames = auxFrames;
-    } break;
-
-    case loopMode::mirror: {
-      cleanFirstFrame();
-      auto framesN = this->frames.size();
-      for (auto i = 0u; i < framesN; ++i) {
-        auto idx   = framesN - 1 - i;
-        auto frame = this->frames.at(idx);
-        this->frames.push_back(frame);
-      }
-    } break;
-  }
-
-
-
-  // // Log
-  // auto d1 = this->frames.size();
-  // auto d2 = auxFrames.size();
-  // if (!Settings::quiet) LOGD("Saved frames: {} - {} = {}", d1, d2, d1 - d2);
+  // Store
+  this->frames = auxFrames;
 }
 
 // ====================================================================== //
@@ -161,41 +127,34 @@ void Motion::clean(loopMode lm) {
 // ====================================================================== //
 
 std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
-  auto [lefM1, lefM2] = lowestErrFrames_2(this->frames, m2->frames);
+  auto [LEF1, LEF2] = lowestErrFrames_2(this->frames, m2->frames);
 
   auto M = std::make_shared<Motion>();
 
-  M->frameA = lefM1;
-  M->frameB = lefM2;
+  M->frameA      = LEF1;
+  M->frameB      = LEF2;
+  M->joints      = this->joints;
+  M->lockRotOnXZ = (this->lockRotOnXZ || m2->lockRotOnXZ);
+  M->timeStep    = (this->timeStep + m2->timeStep) * 0.5f;
 
-  M->joints = this->joints;
+  auto F1 = this->frames.at(LEF1);
+  auto F2 = m2->frames.at(LEF2);
+  assert(F1.rotations.size() == F2.rotations.size());
 
-  // ? On that way, or 'frame by frame'
-  M->timeStep = (this->timeStep + m2->timeStep) * 2.f;
-
-  auto M1 = this->frames.at(lefM1);
-  auto M2 = m2->frames.at(lefM2);
-  assert(M1.rotations.size() == M2.rotations.size());
-
-  // DEBUG
-  LOGD("M1 rot 0: {}", glm::to_string(M1.rotations.at(0)));
-  LOGD("M2 rot 0: {}", glm::to_string(M2.rotations.at(0)));
-  // / DEBUG
-
-  for (auto alpha = 0.f; alpha <= 1.2f; alpha += 0.01f) {
+  for (auto alpha = 0.f; alpha <= 1.f; alpha += 0.01f) {
     Frame frame;
 
-    // Translation
-    auto T            = M1.translation;
-    auto TLerp        = glm::mix(M1.translation, M2.translation, alpha);
+    // Translation // ?
+    auto T            = F1.translation;
+    auto TLerp        = glm::mix(F1.translation, F2.translation, alpha);
     frame.translation = glm::vec3(T.x, TLerp.y, T.z);
 
     // Rotations
-    for (auto i = 0u; i < M1.rotations.size(); ++i) {
-      auto newRot = glm::mix(M1.rotations[i], M2.rotations[i], alpha);
+    for (auto i = 0u; i < F1.rotations.size(); ++i) {
+      auto newRot = glm::mix(F1.rotations[i], F2.rotations[i], alpha);
       // Avoid X and Z rotations of root to avoid visual bugs
-      if (i == 0) {
-        newRot.y = (newRot.x + newRot.z) * 0.5f + newRot.y;
+      if (i == 0 /*&& M->lockRotOnXZ*/) {
+        newRot.y = (newRot.x + newRot.z) * 0.5f - newRot.y;
         newRot.x = 0;
         newRot.z = 0;
       }
