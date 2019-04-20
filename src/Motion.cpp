@@ -73,6 +73,65 @@ std::tuple<uint, uint> lowestErrFrames_2(const std::vector<Frame>& framesA,
   return std::make_tuple(f1, f2);
 }
 
+// ====================================================================== //
+// ====================================================================== //
+// Transform rot to y-rot
+// ====================================================================== //
+
+glm::vec3 yRot(const glm::vec3& rot, float dir = 1.0f) {
+  auto Y = (rot.x + rot.z) * 0.5f - rot.y;
+  return glm::vec3{0.0f, Y * dir, 0.0f};
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Interpolate between two frames
+// ====================================================================== //
+
+std::vector<Frame>
+    lerp(Frame F1Prev, Frame F1, Frame F2, uint steps = 10, bool lerpT = true) {
+
+  LOGD("F1.ROT.0 = {}", glm::to_string(F1.rotations.at(0)));
+  LOGD("F2.ROT.0 = {}", glm::to_string(F2.rotations.at(0)));
+  assert(F1.rotations.size() == F2.rotations.size());
+
+  std::vector<Frame> lerpFrames;
+  if (steps < 1) return lerpFrames;
+
+  float alphaStep = 1.0f / (float)steps;
+
+  auto y1 = yRot(F1.rotations.at(0)).y;
+  LOGD("Y1 = {}", y1);
+  auto y1Prev = yRot(F1Prev.rotations.at(0)).y;
+  LOGD("Y1_Prev = {}", y1Prev);
+  auto DIR = (y1 > y1Prev) ? -1.0f : 1.0f;
+  LOGD("DIR = {}", DIR);
+
+  for (auto alpha = 0.0f; alpha <= 1.0f; alpha += alphaStep) {
+    Frame frame;
+
+    // Translation
+    frame.translation = (lerpT)
+                            ? glm::mix(F1.translation, F2.translation, alpha)
+                            : F1.translation;
+
+    // Rotations
+    for (auto i = 0u; i < F1.rotations.size(); ++i) {
+      auto newRot = glm::mix(F1.rotations[i], F2.rotations[i], alpha);
+      if (i == 0) {
+        newRot = yRot(newRot, DIR);
+        LOGD("newrot = {}", glm::to_string(newRot));
+      } // Avoid X & Z root rotations
+      frame.rotations.push_back(newRot);
+    }
+
+    // Store frame
+    lerpFrames.push_back(frame);
+  }
+  return lerpFrames;
+}
+
+
 
 // * class methods
 
@@ -83,8 +142,18 @@ std::tuple<uint, uint> lowestErrFrames_2(const std::vector<Frame>& framesA,
 // ====================================================================== //
 
 glm::vec3 Frame::sumRots() const {
-  glm::vec3 sum{0.f};
-  for (const auto& r : this->rotations) { sum += r; }
+
+  // * V1 all joints weighs the same
+  // glm::vec3 sum{0.0f};
+  // for (const auto& r : this->rotations) { sum += r; }
+  // return sum;
+
+  // * V2 root joint weigh the double that the rest of joints
+  auto sum = this->rotations.at(0) * 2.0f; //! awesome improvement
+  for (auto i = 1u; i < this->rotations.size(); i++) {
+    sum += this->rotations.at(i);
+  }
+
   return sum;
 }
 
@@ -92,7 +161,7 @@ glm::vec3 Frame::sumRots() const {
 // ====================================================================== //
 // If its name contains _ is a mix
 // ====================================================================== //
-bool Motion::isMix(const std::string& str) {
+bool Motion::isMix(const std::string& str) { // ! static
   return str.find("_") != std::string::npos;
 }
 bool Motion::isMix() { return isMix(this->name); }
@@ -102,22 +171,29 @@ bool Motion::isMix() { return isMix(this->name); }
 // Clean any motion to get a smoother loop
 // ====================================================================== //
 
-void Motion::clean(bool makeLoop) {
+void Motion::clean(loopMode lm, uint steps) {
   this->frames.erase(this->frames.begin());
-  if (!makeLoop) return;
+  if (lm == loopMode::none) return;
 
   // Get low errror frames of animation to generate a loop
   auto [I, E] = lowestErrFrames_1(this->frames);
+
   // Clean
-  std::vector<Frame> auxFrames;
-  auxFrames.reserve(E);
-  for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
+  if (lm == loopMode::shortLoop) {
+    std::vector<Frame> auxFrames;
+    auxFrames.reserve(E);
+    for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
+    this->frames = auxFrames; // Store
+  }
 
-  // LERP
-  /* ... */
+  // Lerp
+  auto first  = this->frames.front();
+  auto last   = this->frames.back();
+  auto lastL3 = this->frames.at(this->frames.size() - 3u);
 
-  // Store
-  this->frames = auxFrames;
+  for (const auto& F : lerp(lastL3, last, first, steps, false)) {
+    this->frames.push_back(F);
+  }
 }
 
 // ====================================================================== //
@@ -131,39 +207,19 @@ std::shared_ptr<Motion> Motion::mix(const std::shared_ptr<Motion>& m2) {
 
   auto M = std::make_shared<Motion>();
 
-  M->frameA      = LEF1;
-  M->frameB      = LEF2;
-  M->joints      = this->joints;
-  M->lockRotOnXZ = (this->lockRotOnXZ || m2->lockRotOnXZ);
-  M->timeStep    = (this->timeStep + m2->timeStep) * 0.5f;
+  // "Copy"
+  M->frameA   = LEF1;
+  M->frameB   = LEF2;
+  M->joints   = this->joints;
+  M->timeStep = (this->timeStep + m2->timeStep) * 0.5f;
 
-  auto F1 = this->frames.at(LEF1);
-  auto F2 = m2->frames.at(LEF2);
-  assert(F1.rotations.size() == F2.rotations.size());
+  // Lerp
+  auto fM1     = this->frames.at(LEF1);
+  auto fM1Prev = this->frames.at(LEF1 - 3u);
 
-  for (auto alpha = 0.f; alpha <= 1.f; alpha += 0.01f) {
-    Frame frame;
+  auto fM2 = m2->frames.at(LEF2);
 
-    // Translation // ?
-    auto T            = F1.translation;
-    auto TLerp        = glm::mix(F1.translation, F2.translation, alpha);
-    frame.translation = glm::vec3(T.x, TLerp.y, T.z);
-
-    // Rotations
-    for (auto i = 0u; i < F1.rotations.size(); ++i) {
-      auto newRot = glm::mix(F1.rotations[i], F2.rotations[i], alpha);
-      // Avoid X and Z rotations of root to avoid visual bugs
-      if (i == 0 /*&& M->lockRotOnXZ*/) {
-        newRot.y = (newRot.x + newRot.z) * 0.5f - newRot.y;
-        newRot.x = 0;
-        newRot.z = 0;
-      }
-      frame.rotations.push_back(newRot);
-    }
-
-    // Store frame
-    M->frames.push_back(frame);
-  }
+  for (const auto& F : lerp(fM1Prev, fM1, fM2, 50u)) { M->frames.push_back(F); }
 
   return M;
 }

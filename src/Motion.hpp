@@ -34,7 +34,6 @@ public:
   std::vector<std::shared_ptr<Joint>> joints;
   std::vector<Frame>                  frames;
   float                               timeStep;
-  bool                                lockRotOnXZ;
 
   // Only for mixes
   uint frameA = 0u;
@@ -47,7 +46,7 @@ public:
   bool isMix();
 
   // Clean any motion to get a smoother loop
-  void clean(bool makeLoop);
+  void clean(loopMode lm, uint steps = 0);
 
   // Mix any motion with other and get a new animation
   // that conect both smoothly

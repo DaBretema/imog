@@ -103,7 +103,8 @@ public:
   // Add motions to skeleton motion map
   void addMotion(const std::string& name,
                  const std::string& file,
-                 bool               makeLoop = true);
+                 loopMode           lm    = loopMode::none,
+                 unsigned int       steps = 0u);
 
 
   // * ----------------------

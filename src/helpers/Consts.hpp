@@ -49,6 +49,6 @@ namespace Textures {
 } // namespace Textures
 
 
-enum struct loopMode { firstFrame, cycle, mirror };
+enum struct loopMode { none, loop, shortLoop };
 
 } // namespace brave

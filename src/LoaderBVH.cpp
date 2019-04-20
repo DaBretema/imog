@@ -118,7 +118,8 @@ void addNewJoint(const std::string&                          name,
 namespace brave {
 namespace loader {
 
-  std::shared_ptr<Motion> BVH(const std::string& bvhFilePath, bool makeLoop) {
+  std::shared_ptr<Motion>
+      BVH(const std::string& bvhFilePath, loopMode lm, unsigned int steps) {
     auto out = std::make_shared<Motion>();
     if (!Files::ok(bvhFilePath, true)) { return out; }
 
@@ -216,7 +217,7 @@ namespace loader {
       }
     }
 
-    out->clean(makeLoop);
+    out->clean(lm, steps);
     return out;
   }
 } // namespace loader

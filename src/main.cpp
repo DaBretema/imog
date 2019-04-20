@@ -47,9 +47,15 @@ int main(int argc, char const* argv[]) {
   // --- Skeleton --------------------------------------------
 
   auto skeleton = Skeleton(camera, 0.5f);
-  skeleton.addMotion("Idle", Motions::idle);
-  skeleton.addMotion("Run", Motions::run);
+  skeleton.addMotion("Idle", Motions::idle, loopMode::loop, 25u);
+  // skeleton.addMotion("Run", Motions::run, loopMode::shortLoop);
   skeleton.animate();
+
+  skeleton.onKey(GLFW_KEY_0, [&]() { skeleton.play = !skeleton.play; });
+
+  IO::keyboardAddAction(GLFW_KEY_0, IO::kbState::repeat, [&]() {
+    skeleton.play = !skeleton.play;
+  });
 
   skeleton.onKey(GLFW_KEY_1, [&]() {
     skeleton.setMotion("Run");

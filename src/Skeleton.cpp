@@ -73,8 +73,10 @@ void Skeleton::frameStep() {
       _setMotion(nm);
     } else
       m_currFrame = 0;
-  } else
+  } else {
+    // LOGD("currframe = {}", m_currFrame);
     ++m_currFrame;
+  }
 }
 
 // ====================================================================== //
@@ -110,20 +112,10 @@ void Skeleton::hierarchy() {
   // * ROOT JOINT
   // -------------------------------------------------
 
-  auto root = joints[0];
-  auto rtm  = &root->transformAsMatrix;
-  // Root movement
-  *rtm       = m_transform.asMatrix();
-  auto yDist = this->step3().y * 2.f;
-  Math::translate(*rtm, glm::vec3(0.f, yDist, 0.f));
-  // Root rotation (blocking X and Z rots)
-  auto rot = targetFrame.rotations.at(0);
-  if (m_motions.at(m_currMotion)->lockRotOnXZ) {
-    auto yAngle = (rot.x + rot.z) * 0.5 + rot.y;
-    Math::rotate(*rtm, glm::radians(yAngle), Math::unitVecY);
-  } else {
-    Math::rotateXYZ(*rtm, rot);
-  }
+  auto rtm = &joints[0]->transformAsMatrix;
+  *rtm     = m_transform.asMatrix();
+  Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
+  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
 
 
   // -------------------------------------------------
@@ -133,8 +125,8 @@ void Skeleton::hierarchy() {
   for (auto idx = 1u; idx < joints.size(); ++idx) {
     auto joint = joints.at(idx);
     auto jtm   = &joint->transformAsMatrix;
+    *jtm       = joint->parent->transformAsMatrix;
     // Process current joint
-    *jtm = joint->parent->transformAsMatrix;
     Math::translate(*jtm, joint->offset * m_scale);
     Math::rotateXYZ(*jtm, targetFrame.rotations.at(idx));
     // Process joint end-site (if exists)
@@ -189,8 +181,8 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
   bone->transform.pos = (JPos + JParentPos) * 0.5f;
 
   // Rotation
-  auto vB2                 = bone->transform.pos + glm::vec3(0, .5f, 0);
-  auto vB1                 = bone->transform.pos - glm::vec3(0, .5f, 0);
+  auto vB2                 = bone->transform.pos + glm::vec3(0, 0.5f, 0);
+  auto vB1                 = bone->transform.pos - glm::vec3(0, 0.5f, 0);
   auto vJ                  = glm::normalize(JPos - JParentPos);
   auto vB                  = glm::normalize(vB2 - vB1);
   bone->transform.rotAngle = glm::angle(vB, vJ);
@@ -198,7 +190,7 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
 
   // Scale
   auto jointsMidDistance = glm::distance(JPos, JParentPos) * 0.5f;
-  bone->transform.scl    = glm::vec3{1.f, jointsMidDistance, 1.f};
+  bone->transform.scl    = glm::vec3{1.f, jointsMidDistance, 1.0f};
 
   // Draw
   bone->draw(m_camera);
@@ -301,14 +293,15 @@ void Skeleton::setMotion(const std::string& dest) {
 
 void Skeleton::addMotion(const std::string& name,
                          const std::string& file,
-                         bool               makeLoop) {
+                         loopMode           lm,
+                         unsigned int       steps) {
 
   if (Motion::isMix(name)) {
     LOGE("Motion names can NOT contains '_' is reserved for mixed motions");
     return;
   }
 
-  m_motions.try_emplace(name, loader::BVH(file, makeLoop));
+  m_motions.try_emplace(name, loader::BVH(file, lm, steps));
   m_motions.at(name)->name = m_currMotion = name;
 
   // Compute transition for current motions
