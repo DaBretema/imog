@@ -48,7 +48,7 @@ int main(int argc, char const* argv[]) {
 
   auto skeleton = Skeleton(camera, 0.5f);
   skeleton.addMotion("Idle", Motions::idle, loopMode::loop, 25u);
-  // skeleton.addMotion("Run", Motions::run, loopMode::shortLoop);
+  skeleton.addMotion("Run", Motions::run, loopMode::shortLoop);
   skeleton.animate();
 
   skeleton.onKey(GLFW_KEY_0, [&]() { skeleton.play = !skeleton.play; });
@@ -99,3 +99,13 @@ int main(int argc, char const* argv[]) {
 
   return 0;
 }
+
+
+
+/*
+
+<<SELF>> SIMILARITY MATRIX`
+ROTACIONES RELATIVAS
+
+
+*/

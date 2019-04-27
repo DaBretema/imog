@@ -86,9 +86,9 @@ void Skeleton::frameStep() {
 
 void Skeleton::rootMovement() {
   // Camera rotation sync when skeleton is executing a valid move
-  // if (m_validMoves.find(m_move) != m_validMoves.end()) {
-  //   m_transform.rot.y = m_camera->pivot.rot.y;
-  // }
+  if (m_validMoves.find(m_move) != m_validMoves.end()) {
+    m_transform.rot.y = m_camera->pivot.rot.y;
+  }
 
   // Move actions
   switch ((directions)m_move) {

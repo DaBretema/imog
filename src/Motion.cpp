@@ -100,8 +100,10 @@ std::vector<Frame>
 
   float alphaStep = 1.0f / (float)steps;
 
+  auto y2 = yRot(F2.rotations.at(0)).y;
+  LOGD("Y2 = {}, {}", y2, F2.rotations.at(0).y);
   auto y1 = yRot(F1.rotations.at(0)).y;
-  LOGD("Y1 = {}", y1);
+  LOGD("Y1 = {}, {}", y1, F1.rotations.at(0).y);
   auto y1Prev = yRot(F1Prev.rotations.at(0)).y;
   LOGD("Y1_Prev = {}", y1Prev);
   auto DIR = (y1 > y1Prev) ? -1.0f : 1.0f;
@@ -118,9 +120,9 @@ std::vector<Frame>
     // Rotations
     for (auto i = 0u; i < F1.rotations.size(); ++i) {
       auto newRot = glm::mix(F1.rotations[i], F2.rotations[i], alpha);
-      if (i == 0) {
+      if (i == 0u) {
         newRot = yRot(newRot, DIR);
-        LOGD("newrot = {}", glm::to_string(newRot));
+        LOGD("newrot = {}", newRot.y);
       } // Avoid X & Z root rotations
       frame.rotations.push_back(newRot);
     }
