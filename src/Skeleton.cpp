@@ -22,19 +22,32 @@ namespace brave {
 // ====================================================================== //
 
 float Skeleton::step() {
-  auto p1 = m_motions.at(m_currMotion)->frames.at(m_currFrame).translation;
-  auto p2 = m_motions.at(m_currMotion)->frames.at(m_currFrame + 1).translation;
+  auto p1 = m_currMotion->frames.at(m_currFrame).translation;
+  auto p2 = m_currMotion->frames.at(m_currFrame + 1).translation;
   return glm::distance2(p2, p1);
 }
 
 // ====================================================================== //
 // ====================================================================== //
-// Compute displacement per component to apply on next user input
+// Compute translation displacement per component to apply on next user input
 // ====================================================================== //
 
-glm::vec3 Skeleton::step3() {
-  auto p1 = m_motions.at(m_currMotion)->frames.at(m_currFrame).translation;
-  auto p2 = m_motions.at(m_currMotion)->frames.at(m_currFrame + 1).translation;
+glm::vec3 Skeleton::tStep3() {
+  auto cmFrames = m_currMotion->frames;
+  auto p1       = cmFrames.at(m_currFrame).translation;
+  auto p2       = cmFrames.at(m_currFrame + 1).translation;
+  return p2 - p1;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Compute rotation displacement per component to apply on next user input
+// ====================================================================== //
+
+glm::vec3 Skeleton::rStep3() {
+  auto cmFrames = m_currMotion->frames;
+  auto p1       = cmFrames.at(m_currFrame).rotations.at(0);
+  auto p2       = cmFrames.at(m_currFrame + 1).rotations.at(0);
   return p2 - p1;
 }
 
@@ -62,40 +75,18 @@ bool Skeleton::motionExists(const std::string& dest) {
 // ====================================================================== //
 
 void Skeleton::frameStep() {
-  auto frameLimit = (m_lastFrame < 0)
-                        ? m_motions.at(m_currMotion)->frames.size() - 2
-                        : m_lastFrame;
+  auto frameLimit =
+      (m_lastFrame < 0) ? m_currMotion->frames.size() - 2 : m_lastFrame;
   // Limit reached
   if (m_currFrame >= frameLimit) {
     if (!m_nextMotion.empty()) {
       auto nm = m_nextMotion; // ! copy assigned next motion before clear it
       m_nextMotion.clear();   // ! must be cleared before call setMotion
-      _setMotion(nm);
+      this->_setMotion(nm);
     } else
       m_currFrame = 0;
   } else {
-    // LOGD("currframe = {}", m_currFrame);
     ++m_currFrame;
-  }
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// User input movement over root node
-// ====================================================================== //
-
-void Skeleton::rootMovement() {
-  // Camera rotation sync when skeleton is executing a valid move
-  if (m_validMoves.find(m_move) != m_validMoves.end()) {
-    m_transform.rot.y = m_camera->pivot.rot.y;
-  }
-
-  // Move actions
-  switch ((directions)m_move) {
-    case directions::F:
-      m_transform.pos += m_camera->pivot.frontXZ() * step();
-      break;
-    default: break;
   }
 }
 
@@ -105,17 +96,23 @@ void Skeleton::rootMovement() {
 // ====================================================================== //
 
 void Skeleton::hierarchy() {
-  auto joints      = m_motions.at(m_currMotion)->joints;
-  auto targetFrame = m_motions.at(m_currMotion)->frames.at(m_currFrame);
+  auto joints      = m_currMotion->joints;
+  auto targetFrame = m_currMotion->frames.at(m_currFrame);
 
   // -------------------------------------------------
   // * ROOT JOINT
   // -------------------------------------------------
 
   auto rtm = &joints[0]->transformAsMatrix;
-  *rtm     = m_transform.asMatrix();
-  Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
-  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
+  transform.pos += transform.front() * this->step(); //this->tStep3();
+  transform.rot += this->rStep3();                   //this->tStep3();
+
+  *rtm = transform.asMatrix();
+  Math::translate(*rtm, glm::vec3(0.f, tStep3().y, 0.f));
+  // Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
+  // Math::rotateXYZ(*rtm, this->rStep3());
+  // Math::translate(*rtm, targetFrame.translation);
+  // Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
 
 
   // -------------------------------------------------
@@ -126,9 +123,11 @@ void Skeleton::hierarchy() {
     auto joint = joints.at(idx);
     auto jtm   = &joint->transformAsMatrix;
     *jtm       = joint->parent->transformAsMatrix;
+
     // Process current joint
     Math::translate(*jtm, joint->offset * m_scale);
     Math::rotateXYZ(*jtm, targetFrame.rotations.at(idx));
+
     // Process joint end-site (if exists)
     if (auto je = joint->endsite) {
       je->transformAsMatrix = *jtm;
@@ -144,13 +143,15 @@ void Skeleton::hierarchy() {
 
 void Skeleton::animate() {
 
-  auto timestepFn = [&]() { return m_motions.at(m_currMotion)->timeStep; };
+  auto timestepFn = [&]() {
+    return (m_currMotion) ? m_currMotion->timeStep : 0.5f;
+  };
 
   auto animationFn = [&]() {
-    if (!this->play) return;
+    if (!this->play or !m_currMotion) return;
     hierarchy();
     frameStep();
-    rootMovement();
+    // rootMovement();
     if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
   };
 
@@ -205,7 +206,8 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
 // ====================================================================== //
 
 void Skeleton::draw() {
-  auto joints = m_motions.at(m_currMotion)->joints;
+  if (!m_currMotion) return;
+  auto joints = m_currMotion->joints;
 
   // Draw joints
   for (auto idx = 0u; idx < joints.size(); ++idx) {
@@ -242,23 +244,27 @@ void Skeleton::draw() {
 // Modify current motion (intern call)
 // ====================================================================== //
 
-void Skeleton::_setMotion(const std::string& dest) {
+void Skeleton::_setMotion(const std::string& _dest) {
+  auto dest = Strings::toLower(_dest);
   // Don't make any operation if motion name doesn't exist
   if (!motionExists(dest)) return;
+
+  // LOGD("currmotion = {}", m_currMotion->name);
+  // LOGD("dest = {}", dest);
 
   // Mix motion completed
   if (Motion::isMix(dest)) {
     m_lastFrame  = -1;
-    m_currMotion = dest;
+    m_currMotion = m_motions.at(dest);
     m_currFrame  = 0;
     // Puts next simple motion in 'queue'
     m_nextMotion = Strings::split(dest, "_")[1];
   }
 
   // From mix to dest motion
-  else if (Motion::isMix(m_currMotion)) {
-    m_currFrame  = m_motions.at(m_currMotion)->frameB;
-    m_currMotion = dest;
+  else if (m_currMotion->isMix()) {
+    m_currFrame  = m_currMotion->frameB;
+    m_currMotion = m_motions.at(dest);
   }
 
   // Never...
@@ -273,14 +279,16 @@ void Skeleton::_setMotion(const std::string& dest) {
 // ! Modify current motion (user call)
 // ====================================================================== //
 
-void Skeleton::setMotion(const std::string& dest) {
+void Skeleton::setMotion(const std::string& _dest) {
+  if (!m_currMotion) return;
+  auto dest = Strings::toLower(_dest);
   // Don't make any operation if motion name doesn't exist
   if (!motionExists(dest)) return;
   // Ignore if is on transition
-  if (Motion::isMix(m_currMotion)) return;
+  if (m_currMotion->isMix()) return;
 
-  std::string KEY = m_currMotion + "_" + dest;
-  if (motionExists(KEY) && m_currMotion != dest) {
+  std::string KEY = m_currMotion->name + "_" + dest;
+  if (motionExists(KEY) && m_currMotion->name != dest) {
     m_lastFrame  = m_motions.at(KEY)->frameA;
     m_nextMotion = KEY; // Put mix in 'queue'
   }
@@ -291,61 +299,35 @@ void Skeleton::setMotion(const std::string& dest) {
 // ! Add motions to skeleton motion map
 // ====================================================================== //
 
-void Skeleton::addMotion(const std::string& name,
-                         const std::string& file,
-                         loopMode           lm,
-                         unsigned int       steps) {
+void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
 
-  if (Motion::isMix(name)) {
+  // @lambda : Manage motion list and wrap the process of mix two motions
+  auto _mix = [&](auto _m1, auto _m2) {
+    std::string key = _m1->name + "_" + _m2->name;
+    auto        aux = _m1->mix(_m2);
+    aux->name       = key;
+    if (m_motions.count(key) < 1) m_motions.try_emplace(key, aux);
+  };
+
+  // ----
+  //
+
+  if (m2->isMix()) {
     LOGE("Motion names can NOT contains '_' is reserved for mixed motions");
     return;
   }
-
-  m_motions.try_emplace(name, loader::BVH(file, lm, steps));
-  m_motions.at(name)->name = m_currMotion = name;
+  m2->name = Strings::toLower(m2->name);
 
   // Compute transition for current motions
-  for (const auto& m1 : m_motions) {
-    if (m1.second->isMix()) continue;
-    for (const auto& m2 : m_motions) {
-      if (m1.first == m2.first or m2.second->isMix()) continue;
-      // Keys
-      std::string key1 = m1.first + "_" + m2.first;
-      std::string key2 = m2.first + "_" + m1.first;
-      // Motion A-B
-      if (m_motions.count(key1) < 1)
-        m_motions.try_emplace(key1, m1.second->mix(m2.second));
-      // Motion B-A
-      if (m_motions.count(key2) < 1)
-        m_motions.try_emplace(key2, m2.second->mix(m1.second));
-    }
+  for (const auto& [_, m1] : m_motions) {
+    if (m1->isMix()) continue;
+    _mix(m1, m2);
+    _mix(m2, m1);
   }
+
+  m_motions.try_emplace(m2->name, m2);
+  m_currMotion = m_motions.at(m2->name);
 }
-
-
-
-// * ----------------------
-// * Movement
-// * ----------------------
-
-int __move(bool active, int direction) {
-  return ((active) ? 1 : -1) * direction;
-}
-void Skeleton::moveF(bool active) {
-  // move += __move(active, (int)directions::F);
-  m_move = __move(active, (int)directions::F);
-}
-// void Skeleton::moveR(bool active) {
-//   move += __move(active, (int)directions::R);
-// }
-// void Skeleton::moveL(bool active) {
-//   move += __move(active, (int)directions::L);
-// }
-// void Skeleton::moveB(bool active) {
-//   move += __move(active, (int)directions::B);
-// }
-
-
 
 // * ----------------------
 // * Object
@@ -358,16 +340,15 @@ void Skeleton::moveF(bool active) {
 
 Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
     : m_camera(camera),
-      m_move(0),
       m_animThread(true),
       m_nextMotion(""),
       m_scale(scale),
       m_currFrame(0u),
       m_lastFrame(-1),
-      m_currMotion(""),
+      m_currMotion(nullptr),
       play(true) {
 
-  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&m_transform);
+  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&transform);
 }
 
 // ====================================================================== //

@@ -30,6 +30,7 @@ public:
   static glm::vec3   mainCameraPos;
   static glm::vec2   mainCameraRot;
   static float       mainCameraSpeed;
+  static float       mainCameraFov;
   static glm::vec3   mainLightPos;
   static glm::vec3   mainLightColor;
   static float       mainLightIntensity;

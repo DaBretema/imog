@@ -8,40 +8,39 @@ namespace brave {
 struct Transform {
   Transform();
 
-  // Get the front of the transform, computed from transform as matrix
+  glm::vec3 pos;
+  glm::vec3 scl;
+  glm::vec3 rot;
+  float     rotAngle; // arround rotAxis
+  glm::vec3 rotAxis;  // if is defined ignore 'rot'
+
+  // If its defined, ignore other values of transform
+  // and use this as matrix when transform is requested as matrix
+  glm::mat4 overrideMatrix{0.f}; //! MUST be initialize to {0.f}
+
+  // Get transform direction vectors
+  glm::vec3 up() const;
+  glm::vec3 right() const;
   glm::vec3 front() const;
 
+  // Get a vector as result of (v.x*RIGHT + v.y*UP + v.z*FRONT)
+  glm::vec3 RUF(const glm::vec3 value);
+
+  // Go methods implies a movement and rotation of the transform
+  // !!! SHIT: This will NOT work (so easy as we think) because we need the camera front vector.
+  void goForward();
+  void goBackward();
+  void goRight();
+  void goLeft();
+  void goUp();
+
   // Get the front of the transform with Y == 0.0f
-  glm::vec3 frontXZ() const;
+  // glm::vec3 frontXZ() const;
 
   // Generate matrix with transform values or return override matrix
   // if is defined
   glm::mat4 asMatrix() const;
 
-  // 3D position vector
-  glm::vec3 pos;
-
-  // 3D scale vector
-  glm::vec3 scl;
-
-  // If rotAxis is zero Rotate...
-  // Angle X arround Axis (1,0,0)
-  // Angle Y arround Axis (0,1,0)
-  // Angle Z arround Axis (0,0,1)
-  glm::vec3 rot;
-
-  // -----------------------
-
-
-  // If rotAxis is NOT zero Rotate rotAngle arround it
-  float rotAngle;
-
-  // If rotAxis is NOT zero Rotate rotAngle arround it
-  glm::vec3 rotAxis;
-
-  // If its defined, ignore other values of transform
-  // and use this as matrix when transform is requested as matrix
-  glm::mat4 overrideMatrix{0.f}; //! MUST be initialize to {0.f}
 
 
   // -----------------------

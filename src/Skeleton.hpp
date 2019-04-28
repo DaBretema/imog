@@ -16,10 +16,10 @@ class Skeleton {
 
 private:
   std::shared_ptr<Camera> m_camera;
-  enum struct directions { F = 8, B = 4, L = 2, R = 1 };
-  const std::set<int> m_validMoves = {1, 2, 4, 8, 9, 10, 5, 6};
 
-  int            m_move;
+  // enum struct directions { F = 8, B = 4, L = 2, R = 1 };
+  // const std::set<int> m_validMoves = {1, 2, 4, 8, 9, 10, 5, 6};
+
   bool           m_animThread;
   std::string    m_nextMotion;
   std::once_flag m_animationOnceFlag;
@@ -27,17 +27,18 @@ private:
   float        m_scale;
   unsigned int m_currFrame;
   int          m_lastFrame;
-  Transform    m_transform;
 
   // The name of current motion
-  std::string m_currMotion;
+  // std::string m_currMotion;
+  std::shared_ptr<Motion> m_currMotion;
 
   // Transitions between motions are computed as new motions,
   // as new motions come in map.
   std::unordered_map<std::string, std::shared_ptr<Motion>> m_motions;
 
 public:
-  bool play;
+  bool      play;
+  Transform transform;
 
 
   // * ----------------------
@@ -48,8 +49,10 @@ private:
   // Compute displacement to apply on next user input
   float step();
 
-  // Compute displacement on 3 axis and get a vec3
-  glm::vec3 step3();
+  // Compute translation displacement per component to apply on next user input
+  glm::vec3 tStep3();
+  // Compute rotation displacement per component to apply on next user input
+  glm::vec3 rStep3();
 
   // Verify if motion exist on motion map
   bool motionExists(const std::string& dest);
@@ -65,9 +68,6 @@ private:
 
   // Frame step
   void frameStep();
-
-  // User input movement over root node
-  void rootMovement();
 
 public:
   // Run a detached thread for animation process
@@ -93,36 +93,16 @@ public:
 
 private:
   // Modify current motion (intern call)
+  //-> Always lowercase
   void _setMotion(const std::string& dest);
 
 public:
   // Modify current motion (user call)
+  //-> Always lowercase
   void setMotion(const std::string& dest);
-
-
   // Add motions to skeleton motion map
-  void addMotion(const std::string& name,
-                 const std::string& file,
-                 loopMode           lm    = loopMode::none,
-                 unsigned int       steps = 0u);
-
-
-  // * ----------------------
-  // * Movement
-  // * ----------------------
-
-public:
-  // Movement will be defined by the following truth table.
-  //                            F B L R  |  Value  |     Direction      | Sign
-  //                            -------- - ------- - ------------------ - ----
-  void moveR(bool active);  //  0 0 0 1  |    1    |  Right             |  ➡
-  void moveL(bool active);  //  0 0 1 0  |    2    |  Left              |  ⬅
-  void moveB(bool active);  //  0 1 0 0  |    4    |  Backward          |  ↓
-  void moveF(bool active);  //  1 0 0 0  |    8    |  Forward           |  ↑
-  void moveFR(bool active); //  1 0 0 1  |    9    |  Right + Forward   |  ↗
-  void moveFL(bool active); //  1 0 1 0  |    10   |  Left + Forward    |  ↖
-  void moveBR(bool active); //  0 1 0 1  |    5    |  Right + Backward  |  ↘
-  void moveBL(bool active); //  0 1 1 0  |    6    |  Left + Backward   |  ↙
+  //-> The motion name is converted to lowercase
+  void addMotion(const std::shared_ptr<Motion> motion);
 
 
   // * ----------------------
@@ -130,8 +110,8 @@ public:
   // * ----------------------
 
 public:
-  Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
   ~Skeleton();
+  Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
 
   // Define actions on key state
   void onKey(int key, _IO_FUNC press = []() {}, _IO_FUNC release = []() {});

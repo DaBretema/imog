@@ -30,6 +30,11 @@ struct Frame {
 
 class Motion {
 public:
+  static std::shared_ptr<Motion> create(const std::string& name,
+                                        const std::string& filepath,
+                                        loopMode           lm,
+                                        uint               steps);
+
   std::string                         name; // If contains _ is a mix
   std::vector<std::shared_ptr<Joint>> joints;
   std::vector<Frame>                  frames;
@@ -38,12 +43,10 @@ public:
   // Only for mixes
   uint frameA = 0u;
   uint frameB = 0u;
-  // / Only for mixes
-
-  static bool isMix(const std::string& str);
 
   // If its name contains _ is a mix
-  bool isMix();
+  bool        isMix();
+  static bool isMix(const std::string& str);
 
   // Clean any motion to get a smoother loop
   void clean(loopMode lm, uint steps = 0);

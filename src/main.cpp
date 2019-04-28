@@ -31,7 +31,8 @@ int main(int argc, char const* argv[]) {
 
   Settings::init(Paths::settings);
 
-  auto camera = std::make_shared<Camera>(Settings::mainCameraSpeed);
+  auto camera = std::make_shared<Camera>(Settings::mainCameraSpeed,
+                                         Settings::mainCameraFov);
 
   IO::windowInit(camera);
 
@@ -46,25 +47,26 @@ int main(int argc, char const* argv[]) {
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
 
-  auto skeleton = Skeleton(camera, 0.5f);
-  skeleton.addMotion("Idle", Motions::idle, loopMode::loop, 25u);
-  skeleton.addMotion("Run", Motions::run, loopMode::shortLoop);
-  skeleton.animate();
+  // auto idle = Motion::create("idle", Motions::idle, loopMode::shortLoop, 10u);
+  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 10u);
+  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 10u);
+  // auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
 
-  skeleton.onKey(GLFW_KEY_0, [&]() { skeleton.play = !skeleton.play; });
+  auto sk = Skeleton(camera, 0.5f);
+  // sk.addMotion(idle);
+  sk.addMotion(walk);
+  sk.addMotion(run);
+  // sk.addMotion(jump);
+  sk.animate();
 
-  IO::keyboardAddAction(GLFW_KEY_0, IO::kbState::repeat, [&]() {
-    skeleton.play = !skeleton.play;
-  });
+  sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
+  IO::keyboardAddAction(
+      GLFW_KEY_0, IO::kbState::repeat, [&]() { sk.play = !sk.play; });
 
-  skeleton.onKey(GLFW_KEY_1, [&]() {
-    skeleton.setMotion("Run");
-    skeleton.moveF(true);
-  });
-  skeleton.onKey(GLFW_KEY_2, [&]() {
-    skeleton.setMotion("Idle");
-    skeleton.moveF(false);
-  });
+  sk.onKey(GLFW_KEY_1, [&]() { sk.setMotion("idle"); });
+  sk.onKey(GLFW_KEY_2, [&]() { sk.setMotion("walk"); });
+  sk.onKey(GLFW_KEY_3, [&]() { sk.setMotion("run"); });
+  sk.onKey(GLFW_KEY_4, [&]() { sk.setMotion("jump"); });
 
   // ------------------------------------------ / Skeleton ---
   // ---------------------------------------------------------
@@ -81,7 +83,7 @@ int main(int argc, char const* argv[]) {
   };
 
   auto renderFn = [&]() {
-    skeleton.draw();
+    sk.draw();
     camera->frame();
     Shader::poolUpdate(camera, light);
     Renderable::poolDraw(camera);
@@ -92,7 +94,7 @@ int main(int argc, char const* argv[]) {
   // Skeleton invoke a thread that use render, shader and texture pools.
   // So if we don't remove skeleton object before remove pools' content and
   // let that OS' memory manager remove unfree data. May ocur
-  delete &skeleton;
+  delete &sk;
 
   // ---------------------------------------------- / Loop ---
   // ---------------------------------------------------------

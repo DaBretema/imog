@@ -59,7 +59,6 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   // --------------------------------------- / Validations ---
   // ---------------------------------------------------------
 
-
   // ---------------------------------------------------------
   // --- Init vars -------------------------------------------
 
@@ -86,6 +85,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+  glfwSwapInterval(0); // v-sync: 0-disable, 1-enable
 
   GLFWwindow* o_WINDOW = glfwCreateWindow(
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
@@ -110,7 +110,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   // - Mouse
 
-  // glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
+  glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
   glfwSetCursorPosCallback(o_WINDOW, mouseOnMove);
   glfwSetMouseButtonCallback(o_WINDOW, mouseOnClick);
 
@@ -168,6 +168,10 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   // ---------------------------------------------------------
 
   m_windowPtr = o_WINDOW; // Store window ptr
+
+  const GLubyte* vendor   = glGetString(GL_VENDOR);
+  const GLubyte* renderer = glGetString(GL_RENDERER);
+  LOG("Rendered using: {} - {}", vendor, renderer);
 }
 
 // ====================================================================== //

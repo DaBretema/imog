@@ -13,8 +13,7 @@ namespace loader {
   Renderable::data OBJ(const std::string& filePath);
 
   // Return data needed to create a Skeleton from a BVH file
-  std::shared_ptr<Motion>
-      BVH(const std::string& bvhFilePath, loopMode lm, unsigned int steps = 0u);
+  std::shared_ptr<Motion> BVH(const std::string& bvhFilePath);
 
 } // namespace loader
 } // namespace brave

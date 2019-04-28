@@ -1,6 +1,7 @@
 #include "Strings.hpp"
 
 #include <fstream>
+#include <locale>
 
 namespace brave {
 
@@ -41,5 +42,20 @@ std::vector<std::string> Strings::split(const std::string& str,
 
   return splitted;
 }
+
+// ====================================================================== //
+// ====================================================================== //
+// Split gives a vector with splitted strings
+// ====================================================================== //
+
+std::string Strings::toLower(const std::string& str) {
+  std::locale loc;
+  std::string out;
+
+  for (auto c : str) out += std::tolower(c, loc);
+
+  return out;
+}
+
 
 } // namespace brave
