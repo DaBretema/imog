@@ -78,11 +78,16 @@ glm::vec3 yRot(const glm::vec3& rot, float dir = 1.0f) {
 // ====================================================================== //
 
 std::vector<Frame>
-    lerp(Frame F1, Frame F2, uint steps = 10, bool lerpT = true) {
+    lerp(Frame F1, Frame F2, uint steps = 0u, bool lerpT = true) {
   assert(F1.rotations.size() == F2.rotations.size());
 
   std::vector<Frame> lerpFrames;
-  if (steps < 2) steps = 2;
+
+  if (steps < 1)
+    return lerpFrames;
+  else if (steps < 2)
+    steps = 2;
+
   float alphaStep = 1.0f / (float)steps;
 
   for (auto alpha = 0.0f; alpha <= 1.0f; alpha += alphaStep) {
@@ -172,9 +177,11 @@ void Motion::clean(loopMode lm, uint steps) {
 
   // Clean
   if (lm == loopMode::shortLoop) {
+
     std::vector<Frame> auxFrames;
     auxFrames.reserve(E);
     for (auto f = I; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
+
     this->frames = auxFrames; // Store
   }
 

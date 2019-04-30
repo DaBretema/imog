@@ -33,7 +33,7 @@ public:
   static std::shared_ptr<Motion> create(const std::string& name,
                                         const std::string& filepath,
                                         loopMode           lm,
-                                        uint               steps);
+                                        uint               steps = 0u);
 
   std::string                         name; // If contains _ is a mix
   std::vector<std::shared_ptr<Joint>> joints;
@@ -49,7 +49,7 @@ public:
   static bool isMix(const std::string& str);
 
   // Clean any motion to get a smoother loop
-  void clean(loopMode lm, uint steps = 0);
+  void clean(loopMode lm, uint steps = 0u);
 
   // Mix any motion with other and get a new animation
   // that conect both smoothly

@@ -56,7 +56,7 @@ RELEASE_FLAGS  = -DNDEBUG -O3 -static -static-libgcc -static-libstdc++
 ICON_DIR      = $(SOURCE_DIR)/icon
 
 BUILD_DIR     = .bin
-DIST_DIR      = dist
+DIST_DIR      = .
 SOURCE_DIR    = src
 INCL_DIR      = $(SOURCE_DIR)/submodules
 LIB_DIR       = $(SOURCE_DIR)/submodules
@@ -77,7 +77,6 @@ default_target: noflags
 # CLEAN
 clean:
 	@rm -rf $(DIST_DIR)/$(PROJECT_NAME).exe
-	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)
 	@rm -rf $(BUILD_DIR)/*
 
 # DEBUG
@@ -103,7 +102,7 @@ release: $(PROJECT_NAME)
 $(PROJECT_NAME): $(OBJECTS) $(BUILD_DIR)/icon.o
 	@mkdir -p $(DIST_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
-	@mv -f ./$@.exe ./$(DIST_DIR)/$@.exe
+	# @mv -f ./$@.exe ./$(DIST_DIR)/$@.exe
 
 #* ICON COMPILATION
 $(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc

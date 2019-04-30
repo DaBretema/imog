@@ -46,27 +46,32 @@ int main(int argc, char const* argv[]) {
 
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
-
-  // auto idle = Motion::create("idle", Motions::idle, loopMode::shortLoop, 10u);
-  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 10u);
-  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 10u);
-  // auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
-
   auto sk = Skeleton(camera, 0.5f);
-  // sk.addMotion(idle);
-  sk.addMotion(walk);
-  sk.addMotion(run);
-  // sk.addMotion(jump);
+  {
+    auto idle = Motion::create("idle", Motions::idle, loopMode::loop, 25u);
+    sk.onKey(GLFW_KEY_1, [&]() { sk.setMotion("idle"); });
+    sk.addMotion(idle);
+
+    // auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop);
+    sk.onKey(GLFW_KEY_2, [&]() { sk.setMotion("walk"); });
+    // sk.addMotion(walk);
+    //
+    // auto run  = Motion::create("run", Motions::run, loopMode::shortLoop);
+    sk.onKey(GLFW_KEY_3, [&]() { sk.setMotion("run"); });
+    // sk.addMotion(run);
+    //
+    auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 25u);
+    sk.onKey(GLFW_KEY_4, [&]() { sk.setMotion("jump"); });
+    sk.addMotion(jump);
+
+    sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
+
+    IO::keyboardAddAction(
+        GLFW_KEY_0, IO::kbState::repeat, [&]() { sk.play = !sk.play; });
+  }
   sk.animate();
 
-  sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
-  IO::keyboardAddAction(
-      GLFW_KEY_0, IO::kbState::repeat, [&]() { sk.play = !sk.play; });
 
-  sk.onKey(GLFW_KEY_1, [&]() { sk.setMotion("idle"); });
-  sk.onKey(GLFW_KEY_2, [&]() { sk.setMotion("walk"); });
-  sk.onKey(GLFW_KEY_3, [&]() { sk.setMotion("run"); });
-  sk.onKey(GLFW_KEY_4, [&]() { sk.setMotion("jump"); });
 
   // ------------------------------------------ / Skeleton ---
   // ---------------------------------------------------------

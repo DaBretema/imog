@@ -171,7 +171,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   const GLubyte* vendor   = glGetString(GL_VENDOR);
   const GLubyte* renderer = glGetString(GL_RENDERER);
-  LOG("Rendered using: {} - {}", vendor, renderer);
+  LOG("Rendered using:\n{} - {}\n\n", vendor, renderer);
 }
 
 // ====================================================================== //

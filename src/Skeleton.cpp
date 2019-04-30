@@ -104,15 +104,17 @@ void Skeleton::hierarchy() {
   // -------------------------------------------------
 
   auto rtm = &joints[0]->transformAsMatrix;
-  transform.pos += transform.front() * this->step(); //this->tStep3();
-  transform.rot += this->rStep3();                   //this->tStep3();
+  // transform.pos += transform.front() * this->step(); //this->tStep3();
+  // transform.pos += this->tStep3() * Math::unitVecY;
+  // transform.pos += this->tStep3();
+  // transform.rot += this->rStep3();                   //this->tStep3();
 
   *rtm = transform.asMatrix();
-  Math::translate(*rtm, glm::vec3(0.f, tStep3().y, 0.f));
+  // Math::translate(*rtm, Math::unitVecY * tStep3());
   // Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
   // Math::rotateXYZ(*rtm, this->rStep3());
   // Math::translate(*rtm, targetFrame.translation);
-  // Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
+  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
 
 
   // -------------------------------------------------
@@ -348,7 +350,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
       m_currMotion(nullptr),
       play(true) {
 
-  if (m_camera) m_camera->target = std::shared_ptr<Transform>(&transform);
+  // if (m_camera) m_camera->target = std::shared_ptr<Transform>(&transform);
 }
 
 // ====================================================================== //
