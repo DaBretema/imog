@@ -25,6 +25,7 @@ public:
   static glm::vec3 unitVecX;
   static glm::vec3 unitVecY;
   static glm::vec3 unitVecZ;
+  static glm::vec3 vecXZ;
 
   // Wrap mat4 translation
   static glm::mat4 translate(glm::mat4& mat, const glm::vec3& T);

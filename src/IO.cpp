@@ -105,17 +105,14 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   // --- Callbacks -------------------------------------------
 
   // - Keyboard
-
   glfwSetKeyCallback(o_WINDOW, keyboardOnPress);
 
   // - Mouse
-
   glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
   glfwSetCursorPosCallback(o_WINDOW, mouseOnMove);
   glfwSetMouseButtonCallback(o_WINDOW, mouseOnClick);
 
   // - Window
-
   glfwSetWindowCloseCallback(o_WINDOW, windowOnClose);
   glfwSetWindowSizeCallback(o_WINDOW, windowOnScaleChange);
 

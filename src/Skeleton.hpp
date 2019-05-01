@@ -15,8 +15,6 @@ namespace brave {
 class Skeleton {
 
 private:
-  std::shared_ptr<Camera> m_camera;
-
   // enum struct directions { F = 8, B = 4, L = 2, R = 1 };
   // const std::set<int> m_validMoves = {1, 2, 4, 8, 9, 10, 5, 6};
 
@@ -37,23 +35,25 @@ private:
   std::unordered_map<std::string, std::shared_ptr<Motion>> m_motions;
 
 public:
-  bool      play;
-  Transform transform;
+  bool                    play;
+  std::shared_ptr<Camera> camera;
+  Transform               transform;
+
 
 
   // * ----------------------
   // * Helpers
   // * ----------------------
 
-private:
+public:
   // Compute displacement to apply on next user input
   float step();
-
   // Compute translation displacement per component to apply on next user input
   glm::vec3 tStep3();
   // Compute rotation displacement per component to apply on next user input
   glm::vec3 rStep3();
 
+private:
   // Verify if motion exist on motion map
   bool motionExists(const std::string& dest);
 
@@ -114,7 +114,10 @@ public:
   Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
 
   // Define actions on key state
-  void onKey(int key, _IO_FUNC press = []() {}, _IO_FUNC release = []() {});
+  void onKey(int      key,
+             _IO_FUNC press   = []() {},
+             _IO_FUNC release = []() {},
+             _IO_FUNC repeat  = []() {});
 };
 
 } // namespace brave

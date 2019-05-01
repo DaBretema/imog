@@ -26,21 +26,6 @@ glm::vec3 Transform::right() const {
 glm::vec3 Transform::front() const {
   return glm::normalize(this->asMatrix()[2]);
 }
-glm::vec3 Transform::RUF(const glm::vec3 value) {
-  return this->right() * value.x + this->up() * value.y +
-         this->front() * value.z;
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Get the front of the transform with Y == 0.0f
-// ====================================================================== //
-
-// glm::vec3 Transform::frontXZ() const {
-//   auto front = this->front();
-//   front.y    = 0.0f;
-//   return front;
-// }
 
 // ====================================================================== //
 // ====================================================================== //

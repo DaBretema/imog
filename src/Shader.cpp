@@ -244,9 +244,11 @@ void Shader::update(const std::shared_ptr<Camera>& camera,
     uFloat1("u_lightIntensity", light->intensity());
   }
 
-  uMat4("u_matV", camera->view());
-  uMat4("u_matP", camera->proj());
-  uMat4("u_matVP", camera->viewproj());
+  if (camera) {
+    uMat4("u_matV", camera->view());
+    uMat4("u_matP", camera->proj());
+    uMat4("u_matVP", camera->viewproj());
+  }
 }
 
 // ====================================================================== //

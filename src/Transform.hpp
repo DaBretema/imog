@@ -23,20 +23,6 @@ struct Transform {
   glm::vec3 right() const;
   glm::vec3 front() const;
 
-  // Get a vector as result of (v.x*RIGHT + v.y*UP + v.z*FRONT)
-  glm::vec3 RUF(const glm::vec3 value);
-
-  // Go methods implies a movement and rotation of the transform
-  // !!! SHIT: This will NOT work (so easy as we think) because we need the camera front vector.
-  void goForward();
-  void goBackward();
-  void goRight();
-  void goLeft();
-  void goUp();
-
-  // Get the front of the transform with Y == 0.0f
-  // glm::vec3 frontXZ() const;
-
   // Generate matrix with transform values or return override matrix
   // if is defined
   glm::mat4 asMatrix() const;

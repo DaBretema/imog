@@ -114,7 +114,7 @@ void Skeleton::hierarchy() {
   // Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
   // Math::rotateXYZ(*rtm, this->rStep3());
   // Math::translate(*rtm, targetFrame.translation);
-  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
+  // Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
 
 
   // -------------------------------------------------
@@ -153,7 +153,6 @@ void Skeleton::animate() {
     if (!this->play or !m_currMotion) return;
     hierarchy();
     frameStep();
-    // rootMovement();
     if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
   };
 
@@ -196,7 +195,7 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
   bone->transform.scl    = glm::vec3{1.f, jointsMidDistance, 1.0f};
 
   // Draw
-  bone->draw(m_camera);
+  bone->draw(camera);
 
   // Draw also its endsite
   if (J->endsite) drawBone(J->endsite);
@@ -219,13 +218,13 @@ void Skeleton::draw() {
     if (J->name == "Head" and J->endsite) {
       auto headRE                      = Renderable::getByName("MonkeyHead");
       headRE->transform.overrideMatrix = J->endsite->transformAsMatrix;
-      headRE->draw(m_camera);
+      headRE->draw(camera);
       continue;
     }
 
     auto jointRE                      = Renderable::getByName("Joint");
     jointRE->transform.overrideMatrix = J->transformAsMatrix;
-    jointRE->draw(m_camera);
+    jointRE->draw(camera);
   }
 
   // Draw bones
@@ -341,16 +340,16 @@ void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
 // ====================================================================== //
 
 Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
-    : m_camera(camera),
-      m_animThread(true),
+    : m_animThread(true),
       m_nextMotion(""),
       m_scale(scale),
       m_currFrame(0u),
       m_lastFrame(-1),
       m_currMotion(nullptr),
-      play(true) {
+      play(true),
+      camera(camera) {
 
-  // if (m_camera) m_camera->target = std::shared_ptr<Transform>(&transform);
+  if (camera) camera->target = std::shared_ptr<Transform>(&transform);
 }
 
 // ====================================================================== //
@@ -369,9 +368,13 @@ Skeleton::~Skeleton() {
 // ! Define actions on key state
 // ====================================================================== //
 
-void Skeleton::onKey(int key, _IO_FUNC press, _IO_FUNC release) {
-  IO::keyboardAddAction(key, IO::kbState::release, release);
+void Skeleton::onKey(int      key,
+                     _IO_FUNC press,
+                     _IO_FUNC release,
+                     _IO_FUNC repeat) {
   IO::keyboardAddAction(key, IO::kbState::press, press);
+  IO::keyboardAddAction(key, IO::kbState::release, release);
+  IO::keyboardAddAction(key, IO::kbState::repeat, repeat);
 }
 
 } // namespace brave
