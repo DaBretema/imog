@@ -114,7 +114,7 @@ void Skeleton::hierarchy() {
   // Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
   // Math::rotateXYZ(*rtm, this->rStep3());
   // Math::translate(*rtm, targetFrame.translation);
-  // Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
+  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
 
 
   // -------------------------------------------------
@@ -173,31 +173,12 @@ void Skeleton::animate() {
 // ====================================================================== //
 
 void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
-  auto bone = Renderable::getByName("Bone");
+  auto P1    = J->transformAsMatrix[3].xyz();
+  auto P2    = J->parent->transformAsMatrix[3].xyz();
+  auto scale = glm::distance(P1, P2) * 0.5f;
+  auto bone  = Renderable::cylBetween2p(P1, P2, scale);
 
-  // Joints positions
-  auto JPos       = J->transformAsMatrix[3].xyz();
-  auto JParentPos = J->parent->transformAsMatrix[3].xyz();
-
-  // Position
-  bone->transform.pos = (JPos + JParentPos) * 0.5f;
-
-  // Rotation
-  auto vB2                 = bone->transform.pos + glm::vec3(0, 0.5f, 0);
-  auto vB1                 = bone->transform.pos - glm::vec3(0, 0.5f, 0);
-  auto vJ                  = glm::normalize(JPos - JParentPos);
-  auto vB                  = glm::normalize(vB2 - vB1);
-  bone->transform.rotAngle = glm::angle(vB, vJ);
-  bone->transform.rotAxis  = glm::cross(vB, vJ);
-
-  // Scale
-  auto jointsMidDistance = glm::distance(JPos, JParentPos) * 0.5f;
-  bone->transform.scl    = glm::vec3{1.f, jointsMidDistance, 1.0f};
-
-  // Draw
   bone->draw(camera);
-
-  // Draw also its endsite
   if (J->endsite) drawBone(J->endsite);
 }
 

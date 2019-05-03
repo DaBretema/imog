@@ -114,6 +114,11 @@ public:
 
   // Draw execute the Renderable in the viewport using its shader and vbos
   void draw(const std::shared_ptr<Camera>& camera);
+
+  // Draw cyl between 2points
+  static std::shared_ptr<Renderable> cylBetween2p(const glm::vec3& P1,
+                                                  const glm::vec3& P2,
+                                                  float scale = 10.f);
 };
 
 } // namespace brave

@@ -261,4 +261,29 @@ void Renderable::draw(const std::shared_ptr<Camera>& camera) {
   this->unbind();
 }
 
+
+// ====================================================================== //
+// ====================================================================== //
+// Draw cyl between 2points
+// ====================================================================== //
+//
+std::shared_ptr<Renderable> Renderable::cylBetween2p(const glm::vec3& P1,
+                                                     const glm::vec3& P2,
+                                                     float            scale) {
+  auto cyl = Renderable::getByName("Bone");
+  {
+    cyl->transform.pos = (P1 + P2) * 0.5f;
+    // ---
+    auto C1                 = cyl->transform.pos + glm::vec3(0, 0.5f, 0);
+    auto C2                 = cyl->transform.pos - glm::vec3(0, 0.5f, 0);
+    auto vP                 = glm::normalize(P1 - P2);
+    auto vC                 = glm::normalize(C1 - C2);
+    cyl->transform.rotAngle = glm::angle(vC, vP);
+    cyl->transform.rotAxis  = glm::cross(vC, vP);
+    // ---
+    cyl->transform.scl = glm::vec3{1.f, scale, 1.0f};
+  }
+  return cyl;
+}
+
 } // namespace brave

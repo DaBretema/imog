@@ -150,6 +150,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   auto sks = Shader::createByName("sk", true);
 
   // Create default Renderables
+  Renderable::create(false, "Cube", Figures::cube, "", Colors::orange, sks);
   Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange, sks);
   Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange, sks);
   Renderable::create(
