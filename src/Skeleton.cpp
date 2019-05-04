@@ -11,7 +11,6 @@
 
 namespace brave {
 
-
 // * ----------------------
 // * Helpers
 // * ----------------------
@@ -64,7 +63,6 @@ bool Skeleton::motionExists(const std::string& dest) {
   return true;
 }
 
-
 // * ----------------------
 // * Animation
 // * ----------------------
@@ -116,7 +114,6 @@ void Skeleton::hierarchy() {
   // Math::translate(*rtm, targetFrame.translation);
   Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
 
-
   // -------------------------------------------------
   // * OTHERS JOINTS
   // -------------------------------------------------
@@ -144,9 +141,8 @@ void Skeleton::hierarchy() {
 // ====================================================================== //
 
 void Skeleton::animate() {
-
   auto timestepFn = [&]() {
-    return (m_currMotion) ? m_currMotion->timeStep : 0.5f;
+    return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
   };
 
   auto animationFn = [&]() {
@@ -161,7 +157,6 @@ void Skeleton::animate() {
     Async::periodic(timestepFn, &m_animThread, animationFn);
   });
 }
-
 
 // * ----------------------
 // * Draw
@@ -196,14 +191,14 @@ void Skeleton::draw() {
     auto J = joints.at(idx);
     if (!J->parent) continue;
 
-    if (J->name == "Head" and J->endsite) {
-      auto headRE                      = Renderable::getByName("MonkeyHead");
+    if (Strings::toLower(J->name) == "head" and J->endsite) {
+      auto headRE                      = Renderable::getByName("Monkey");
       headRE->transform.overrideMatrix = J->endsite->transformAsMatrix;
       headRE->draw(camera);
-      continue;
+      // continue;
     }
 
-    auto jointRE                      = Renderable::getByName("Joint");
+    auto jointRE                      = Renderable::getByName("Ball");
     jointRE->transform.overrideMatrix = J->transformAsMatrix;
     jointRE->draw(camera);
   }
@@ -211,9 +206,7 @@ void Skeleton::draw() {
   // Draw bones
   for (auto idx = 0u; idx < joints.size(); ++idx) {
     auto J = joints.at(idx);
-    if (!J->parent) continue;
-    // if (J->name != "Head") { drawBone(J); }
-    drawBone(J);
+    if (J->parent) drawBone(J);
   }
 }
 
@@ -226,27 +219,27 @@ void Skeleton::draw() {
 // Modify current motion (intern call)
 // ====================================================================== //
 
-void Skeleton::_setMotion(const std::string& _dest) {
-  auto dest = Strings::toLower(_dest);
+void Skeleton::_setMotion(const std::string& dest) {
+  auto _dest = Strings::toLower(dest);
   // Don't make any operation if motion name doesn't exist
-  if (!motionExists(dest)) return;
+  if (!motionExists(_dest)) return;
 
   // LOGD("currmotion = {}", m_currMotion->name);
   // LOGD("dest = {}", dest);
 
   // Mix motion completed
-  if (Motion::isMix(dest)) {
+  if (Motion::isMix(_dest)) {
     m_lastFrame  = -1;
-    m_currMotion = m_motions.at(dest);
+    m_currMotion = m_motions.at(_dest);
     m_currFrame  = 0;
     // Puts next simple motion in 'queue'
-    m_nextMotion = Strings::split(dest, "_")[1];
+    m_nextMotion = Strings::split(_dest, "_")[1];
   }
 
   // From mix to dest motion
   else if (m_currMotion->isMix()) {
     m_currFrame  = m_currMotion->frameB;
-    m_currMotion = m_motions.at(dest);
+    m_currMotion = m_motions.at(_dest);
   }
 
   // Never...
@@ -255,22 +248,21 @@ void Skeleton::_setMotion(const std::string& _dest) {
   }
 }
 
-
 // ====================================================================== //
 // ====================================================================== //
 // ! Modify current motion (user call)
 // ====================================================================== //
 
-void Skeleton::setMotion(const std::string& _dest) {
+void Skeleton::setMotion(const std::string& dest) {
   if (!m_currMotion) return;
-  auto dest = Strings::toLower(_dest);
+  auto _dest = Strings::toLower(dest);
   // Don't make any operation if motion name doesn't exist
-  if (!motionExists(dest)) return;
+  if (!motionExists(_dest)) return;
   // Ignore if is on transition
   if (m_currMotion->isMix()) return;
 
-  std::string KEY = m_currMotion->name + "_" + dest;
-  if (motionExists(KEY) && m_currMotion->name != dest) {
+  std::string KEY = m_currMotion->name + "_" + _dest;
+  if (motionExists(KEY) && m_currMotion->name != _dest) {
     m_lastFrame  = m_motions.at(KEY)->frameA;
     m_nextMotion = KEY; // Put mix in 'queue'
   }
@@ -282,7 +274,6 @@ void Skeleton::setMotion(const std::string& _dest) {
 // ====================================================================== //
 
 void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
-
   // @lambda : Manage motion list and wrap the process of mix two motions
   auto _mix = [&](auto _m1, auto _m2) {
     std::string key = _m1->name + "_" + _m2->name;
@@ -320,7 +311,9 @@ void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
 // ! Param constructor
 // ====================================================================== //
 
-Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
+Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
+                   float                                 scale,
+                   float                                 speed)
     : m_animThread(true),
       m_nextMotion(""),
       m_scale(scale),
@@ -329,7 +322,6 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale)
       m_currMotion(nullptr),
       play(true),
       camera(camera) {
-
   if (camera) camera->target = std::shared_ptr<Transform>(&transform);
 }
 

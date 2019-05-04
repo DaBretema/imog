@@ -40,7 +40,8 @@ std::shared_ptr<Shader> Shader::getFromCache(const std::string& paths) {
 // ====================================================================== //
 
 std::shared_ptr<Shader> Shader::getByName(const std::string& name) {
-  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
+  auto _name = Strings::toLower(name);
+  if (poolIndices.count(_name) > 0) { return pool[poolIndices[_name]]; }
 
   if (!Settings::quiet) LOGE("Zero entries @ shaders pool with name {}.", name);
   return nullptr;
@@ -70,11 +71,12 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
   auto paths = vertexPath + geomPath + fragPath;
   if (auto S = getFromCache(paths)) { return S; }
 
+  auto _name = Strings::toLower(name);
   pool.push_back(
-      std::make_shared<Shader>(name, vertexPath, geomPath, fragPath));
+      std::make_shared<Shader>(_name, vertexPath, geomPath, fragPath));
 
   auto idx           = pool.size() - 1;
-  poolIndices[name]  = idx;
+  poolIndices[_name] = idx;
   poolIndices[paths] = idx;
   return pool.at(idx);
 }
@@ -87,14 +89,15 @@ std::shared_ptr<Shader> Shader::create(const std::string& name,
 std::shared_ptr<Shader> Shader::createByName(const std::string& name,
                                              bool               hasGeometry,
                                              bool hasTesselation) {
-  std::string sPath = Paths::shaders + name + "/" + name;
+  auto        _name = Strings::toLower(name);
+  std::string sPath = Paths::shaders + _name + "/" + _name;
   std::string sV    = sPath + ".vert";
   std::string sG    = (hasGeometry) ? sPath + ".geom" : "";
   // std::string sTC   = (hasTesselation) ? sPath + ".tesc" : "";
   // std::string sTE   = (hasTesselation) ? sPath + ".tese" : "";
   std::string sF = sPath + ".frag";
-  // return Shader::create(name, sV, sG, sTC, sTE, sF);
-  return Shader::create(name, sV, sG, sF);
+  // return Shader::create(_name, sV, sG, sTC, sTE, sF);
+  return Shader::create(_name, sV, sG, sF);
 }
 
 // ====================================================================== //

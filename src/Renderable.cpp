@@ -5,6 +5,7 @@
 
 #include "Loader.hpp"
 #include "Logger.hpp"
+#include "Strings.hpp"
 #include "Settings.hpp"
 
 #include "helpers/Consts.hpp"
@@ -40,7 +41,8 @@ std::unordered_map<std::string, unsigned int> Renderable::poolIndices{};
 // ====================================================================== //
 
 std::shared_ptr<Renderable> Renderable::getByName(const std::string& name) {
-  if (poolIndices.count(name) > 0) { return pool[poolIndices[name]]; }
+  auto _name = Strings::toLower(name);
+  if (poolIndices.count(_name) > 0) { return pool[poolIndices[_name]]; }
 
   LOGE("Zero entries @ renderables pool with name {}.", name);
   return nullptr;
@@ -60,11 +62,16 @@ std::shared_ptr<Renderable>
                        const std::shared_ptr<Shader>& shader,
                        bool                           culling) {
 
-  pool.push_back(std::make_shared<Renderable>(
-      allowGlobalDraw, name, objFilePath, texturePath, color, shader, culling));
-
-  poolIndices[name] = pool.size() - 1;
-  return pool.at(poolIndices[name]);
+  auto _name = Strings::toLower(name);
+  pool.push_back(std::make_shared<Renderable>(allowGlobalDraw,
+                                              _name,
+                                              objFilePath,
+                                              texturePath,
+                                              color,
+                                              shader,
+                                              culling));
+  poolIndices[_name] = pool.size() - 1;
+  return pool.at(poolIndices[_name]);
 }
 
 // ====================================================================== //
@@ -270,7 +277,7 @@ void Renderable::draw(const std::shared_ptr<Camera>& camera) {
 std::shared_ptr<Renderable> Renderable::cylBetween2p(const glm::vec3& P1,
                                                      const glm::vec3& P2,
                                                      float            scale) {
-  auto cyl = Renderable::getByName("Bone");
+  auto cyl = Renderable::getByName("cyl");
   {
     cyl->transform.pos = (P1 + P2) * 0.5f;
     // ---

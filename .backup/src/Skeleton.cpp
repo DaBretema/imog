@@ -219,7 +219,7 @@ void Skeleton::draw() {
       continue;
     }
 
-    auto jointRE                      = Renderable::getByName("Joint");
+    auto jointRE                      = Renderable::getByName("Ball");
     jointRE->transform.overrideMatrix = J->transformAsMatrix;
     jointRE->draw(m_camera);
   }

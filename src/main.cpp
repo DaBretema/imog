@@ -8,7 +8,6 @@
 #include "helpers/Colors.hpp"
 using namespace brave;
 
-
 // * ===================================================================== * //
 void DBG_VEC(std::shared_ptr<brave::Camera> camera,
              glm::vec3                      P,
@@ -28,12 +27,10 @@ void DBG_POINT(std::shared_ptr<brave::Camera> camera,
                glm::vec3                      center = glm::vec3(0.f)) {
   auto box           = Renderable::getByName("Cube");
   box->transform.pos = center + P;
-  // box->transform.scl *= 2.f;
   box->color(color);
   box->draw(camera);
 };
 // * ===================================================================== * //
-
 
 int main(int argc, char const* argv[]) {
 
@@ -54,10 +51,9 @@ int main(int argc, char const* argv[]) {
   // ------------------------------------ / Initialization ---
   // ---------------------------------------------------------
 
-
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
-  auto sk = Skeleton(camera, 0.5f);
+  auto sk = Skeleton(camera, 0.5f, 1.35f);
   {
     // auto idle = Motion::create("idle", Motions::idle, loopMode::loop, 25u);
     // sk.onKey(GLFW_KEY_1, [&]() { sk.setMotion("idle"); });
@@ -81,54 +77,33 @@ int main(int argc, char const* argv[]) {
   glm::vec3 cameraFront;
 
   {
-    auto angle = [&](const glm::vec3& v2) {
-      auto skF  = sk.transform.front();
-      auto dir1 = glm::compAdd(skF) < glm::compAdd(v2);
-      auto dir2 = sk.transform.rot.y < 0;
-      auto dir  = (dir1) ? 1.f : -1.f;
-      LOGD("\n{}\n{}\n{}",
-           glm::to_string(sk.transform.rot),
-           glm::to_string(camera->pivot.rot),
-           glm::to_string(camera->transform.rot));
-      auto angle = dir * glm::degrees(glm::angle(skF.xz(), v2.xz()));
-      return angle * Math::unitVecY;
-    };
-    auto angleF = [&]() { return angle(cameraFront); };
-    auto angleR = [&]() { return angleF() + Math::unitVecY * 90.f; };
-    auto angleB = [&]() { return angleF() + Math::unitVecY * -180.f; };
-    auto angleL = [&]() { return angleF() + Math::unitVecY * 270.f; };
-
     auto step = [&]() { return sk.transform.front() * sk.step(); };
 
-    auto goF = [&]() {
-      sk.transform.pos += step();
-      sk.transform.rot += angleF();
-    };
-    auto goB = [&]() {
-      sk.transform.pos -= step();
-      sk.transform.rot += angleB();
-    };
-    sk.onKey(GLFW_KEY_W, goF, emptyFn, goF);
-    sk.onKey(GLFW_KEY_S, goB, emptyFn, goB);
+    auto angle = [&]() {
+      sk.transform.pos += step(); // Just here for 'd.r.y.'
 
-    // auto stepR = [&]() { return sk.transform.right() * sk.step(); };
-    auto goR = [&]() {
-      // sk.transform.pos += step();
-      sk.transform.rot += angleR();
+      auto skF = sk.transform.front();
+      auto cF  = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
+
+      auto angle = glm::angle(skF, cF);
+      auto cross = glm::cross(skF, cF);
+      auto dot   = glm::dot(cross, Math::unitVecY);
+      return Math::unitVecY * ((dot < 0) ? -angle : angle);
     };
-    auto goL = [&]() {
-      // sk.transform.pos += step();
-      sk.transform.rot += angleL();
-    };
+    auto goF = [&]() { sk.transform.rot += angle(); };
+    auto goR = [&]() { sk.transform.rot += angle() + Math::unitVecY * -90.f; };
+    auto goB = [&]() { sk.transform.rot += angle() + Math::unitVecY * 180.f; };
+    auto goL = [&]() { sk.transform.rot += angle() + Math::unitVecY * 90.f; };
+
+    sk.onKey(GLFW_KEY_W, goF, emptyFn, goF);
     sk.onKey(GLFW_KEY_D, goR, emptyFn, goR);
+    sk.onKey(GLFW_KEY_S, goB, emptyFn, goB);
     sk.onKey(GLFW_KEY_A, goL, emptyFn, goL);
   }
   sk.animate();
 
-
   // ------------------------------------------ / Skeleton ---
   // ---------------------------------------------------------
-
 
   // ---------------------------------------------------------
   // --- Loop ------------------------------------------------
@@ -146,9 +121,11 @@ int main(int argc, char const* argv[]) {
 
     sk.draw();
     Renderable::poolDraw(camera);
-    cameraFront = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
     Shader::poolUpdate(camera, light);
 
+    cameraFront = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
+    DBG_VEC(camera, Math::unitVecZ, Colors::black, sk.transform.pos);
+    DBG_VEC(camera, Math::unitVecX, Colors::white, sk.transform.pos);
     DBG_VEC(camera, cameraFront, Colors::cyan, sk.transform.pos);
     DBG_VEC(camera, camera->pivot.right(), Colors::yellow, sk.transform.pos);
     DBG_VEC(camera, sk.transform.front(), Colors::blue, sk.transform.pos);
@@ -183,8 +160,6 @@ int main(int argc, char const* argv[]) {
 
   return 0;
 }
-
-
 
 /*
 

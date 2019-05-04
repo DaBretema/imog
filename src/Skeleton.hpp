@@ -36,6 +36,7 @@ private:
 
 public:
   bool                    play;
+  float                   speed;
   std::shared_ptr<Camera> camera;
   Transform               transform;
 
@@ -111,7 +112,9 @@ public:
 
 public:
   ~Skeleton();
-  Skeleton(const std::shared_ptr<brave::Camera>& camera, float scale = 1.f);
+  Skeleton(const std::shared_ptr<brave::Camera>& camera,
+           float                                 scale = 1.f,
+           float                                 speed = 1.f);
 
   // Define actions on key state
   void onKey(int      key,

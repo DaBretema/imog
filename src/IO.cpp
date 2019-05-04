@@ -151,10 +151,9 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   // Create default Renderables
   Renderable::create(false, "Cube", Figures::cube, "", Colors::orange, sks);
-  Renderable::create(false, "Joint", Figures::sphere, "", Colors::orange, sks);
-  Renderable::create(false, "Bone", Figures::cylinder, "", Colors::orange, sks);
-  Renderable::create(
-      false, "MonkeyHead", Figures::monkey, "", Colors::orange, sks);
+  Renderable::create(false, "Cyl", Figures::cylinder, "", Colors::orange, sks);
+  Renderable::create(false, "Ball", Figures::sphere, "", Colors::orange, sks);
+  Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange, sks);
 
   // Create floor
   auto floor = Renderable::create(
