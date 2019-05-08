@@ -38,67 +38,103 @@ int main(int argc, char const* argv[]) {
   // --- Initialization --------------------------------------
 
   Settings::init(Paths::settings);
-
   auto camera = std::make_shared<Camera>(Settings::mainCameraSpeed,
                                          Settings::mainCameraFov);
-
   IO::windowInit(camera);
-
-  auto light = std::make_shared<Light>(Settings::mainLightPos,
-                                       Settings::mainLightColor,
-                                       Settings::mainLightIntensity);
 
   // ------------------------------------ / Initialization ---
   // ---------------------------------------------------------
 
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
-  auto sk = Skeleton(camera, 0.5f, 1.35f);
+  auto sk = Skeleton(camera, 0.3f, 1.f);
+
+  // auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 25u);
+  // sk.onKey(GLFW_KEY_SPACE,
+  //          [&]() { sk.setMotion("jump"); },
+  //          [&]() { sk.setMotion("walk"); });
+  // sk.addMotion(jump);
+
+  // auto walk      = Motion::create("walk", Motions::walk, loopMode::shortLoop);
+  // bool walking   = false;
+  // auto startWalk = [&]() {
+  //   sk.setMotion("walk");
+  //   walking = true;
+  // };
+  // auto stopWalk = [&]() {
+  //   sk.setMotion("idle");
+  //   walking = false;
+  // };
+  // sk.addMotion(walk);
+
+  // auto run       = Motion::create("run", Motions::run, loopMode::shortLoop);
+  // bool toggleRun = false;
+  // sk.onKey(GLFW_KEY_R, [&]() {
+  //   toggleRun = !toggleRun;
+  //   (toggleRun) ? sk.setMotion("run")
+  //               : (walking) ? sk.setMotion("walk") : sk.setMotion("idle");
+  // });
+  // sk.addMotion(run);
+
+  auto idle = Motion::create("idle", Motions::idle, loopMode::loop, 25u);
+  sk.addMotion(idle);
+
+
+
+  sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
+
   {
-    // auto idle = Motion::create("idle", Motions::idle, loopMode::loop, 25u);
-    // sk.onKey(GLFW_KEY_1, [&]() { sk.setMotion("idle"); });
-    // sk.addMotion(idle);
+    // auto step = [&]() { return sk.transform.front() * sk.step(); };
 
-    auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop);
-    // sk.onKey(GLFW_KEY_2, [&]() { sk.setMotion("walk"); });
-    sk.addMotion(walk);
-    //
-    // auto run  = Motion::create("run", Motions::run, loopMode::shortLoop);
-    // sk.onKey(GLFW_KEY_3, [&]() { sk.setMotion("run"); });
-    // sk.addMotion(run);
-    //
-    // auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 25u);
-    // sk.onKey(GLFW_KEY_4, [&]() { sk.setMotion("jump"); });
-    // sk.addMotion(jump);
+    auto angle = [&](float rotAngle) {
+      sk.transform.pos +=
+          sk.transform.front() * sk.step() * 2.f; // Just 'd.r.y.'
 
-    // sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
-  }
+      auto sF = sk.transform.front();
+      auto cF = glm::rotateY(camera->pivot.front(), glm::radians(rotAngle));
 
-  glm::vec3 cameraFront;
-
-  {
-    auto step = [&]() { return sk.transform.front() * sk.step(); };
-
-    auto angle = [&]() {
-      sk.transform.pos += step(); // Just here for 'd.r.y.'
-
-      auto skF = sk.transform.front();
-      auto cF  = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
-
-      auto angle = glm::angle(skF, cF);
-      auto cross = glm::cross(skF, cF);
+      auto angle = glm::angle(sF, cF) * 2.f;
+      auto cross = glm::cross(sF, cF);
       auto dot   = glm::dot(cross, Math::unitVecY);
+
       return Math::unitVecY * ((dot < 0) ? -angle : angle);
     };
-    auto goF = [&]() { sk.transform.rot += angle(); };
-    auto goR = [&]() { sk.transform.rot += angle() + Math::unitVecY * -90.f; };
-    auto goB = [&]() { sk.transform.rot += angle() + Math::unitVecY * 180.f; };
-    auto goL = [&]() { sk.transform.rot += angle() + Math::unitVecY * 90.f; };
 
-    sk.onKey(GLFW_KEY_W, goF, emptyFn, goF);
-    sk.onKey(GLFW_KEY_D, goR, emptyFn, goR);
-    sk.onKey(GLFW_KEY_S, goB, emptyFn, goB);
-    sk.onKey(GLFW_KEY_A, goL, emptyFn, goL);
+    auto goF = [&]() { sk.transform.rot += angle(0.f); };
+    auto goR = [&]() { sk.transform.rot += angle(-90.f); };
+    auto goB = [&]() { sk.transform.rot += angle(180.f); };
+    auto goL = [&]() { sk.transform.rot += angle(90.f); };
+
+
+
+    // sk.onKey(GLFW_KEY_W,
+    //          [&]() {
+    //            goF();
+    //            startWalk();
+    //          },
+    //          stopWalk,
+    //          goF);
+    // sk.onKey(GLFW_KEY_D,
+    //          [&]() {
+    //            goR();
+    //            startWalk();
+    //          },
+    //          stopWalk,
+    //          goR);
+    // sk.onKey(GLFW_KEY_S,
+    //          [&]() {
+    //            goB();
+    //            startWalk();
+    //          },
+    //          stopWalk,
+    //          goB);
+    // sk.onKey(GLFW_KEY_A,
+    //          [&]() {
+    //            goL();
+    //            startWalk();
+    //          },
+    //          stopWalk,
+    //          goL);
   }
   sk.animate();
 
@@ -108,56 +144,30 @@ int main(int argc, char const* argv[]) {
   // ---------------------------------------------------------
   // --- Loop ------------------------------------------------
 
-  auto updateFn = [&]() {
-    camera->speed(Settings::mainCameraSpeed);
-
-    light->pos(Settings::mainLightPos);
-    light->color(Settings::mainLightColor);
-    light->intensity(Settings::mainLightIntensity);
-  };
+  auto updateFn = [&]() { camera->speed(Settings::mainCameraSpeed); };
 
   auto renderFn = [&]() {
     camera->frame();
 
     sk.draw();
+
+    // DBG_POINT(camera, glm::vec3(0.f), Colors::teal);
+    // DBG_POINT(camera, glm::vec3(0.2f, 0.f, 0.2f), Colors::red);
+
     Renderable::poolDraw(camera);
-    Shader::poolUpdate(camera, light);
-
-    cameraFront = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
-    DBG_VEC(camera, Math::unitVecZ, Colors::black, sk.transform.pos);
-    DBG_VEC(camera, Math::unitVecX, Colors::white, sk.transform.pos);
-    DBG_VEC(camera, cameraFront, Colors::cyan, sk.transform.pos);
-    DBG_VEC(camera, camera->pivot.right(), Colors::yellow, sk.transform.pos);
-    DBG_VEC(camera, sk.transform.front(), Colors::blue, sk.transform.pos);
-    DBG_VEC(camera, sk.transform.right(), Colors::red, sk.transform.pos);
-
-    DBG_POINT(
-        camera, sk.transform.front() * 10.f, Colors::green, sk.transform.pos);
-    DBG_POINT(
-        camera, sk.transform.right() * 10.f, Colors::green, sk.transform.pos);
-    DBG_POINT(
-        camera, sk.transform.front() * -10.f, Colors::white, sk.transform.pos);
-    DBG_POINT(
-        camera, sk.transform.right() * -10.f, Colors::white, sk.transform.pos);
-
-    DBG_POINT(camera, cameraFront * 10.f, Colors::green, sk.transform.pos);
-    DBG_POINT(
-        camera, camera->pivot.right() * 10.f, Colors::green, sk.transform.pos);
-    DBG_POINT(camera, cameraFront * -10.f, Colors::white, sk.transform.pos);
-    DBG_POINT(
-        camera, camera->pivot.right() * -10.f, Colors::white, sk.transform.pos);
+    Shader::poolUpdate(camera);
   };
 
   IO::windowLoop(renderFn, updateFn);
 
-  // Skeleton invoke a thread that use render, shader and texture pools.
-  // So if we don't remove skeleton object before remove pools' content and
-  // let that OS' memory manager remove unfree data. May ocur
-  delete &sk;
-
   // ---------------------------------------------- / Loop ---
   // ---------------------------------------------------------
 
+  // Skeleton invoke a thread that use render, shader and texture pools.
+  // So if we don't remove skeleton object before remove pools' content and
+  // let that OS' memory manager remove unfree data. May ocur
+
+  delete &sk;
   return 0;
 }
 

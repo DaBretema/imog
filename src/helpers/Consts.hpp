@@ -28,7 +28,6 @@ namespace Figures {
   const std::string sphere   = Paths::figures + "sphere.obj";
   const std::string cube     = Paths::figures + "cube.obj";
   const std::string monkey   = Paths::figures + "monkey.obj";
-  const std::string light    = Paths::figures + "light.obj";
   const std::string mark     = Paths::figures + "mark.obj";
   const std::string cylinder = Paths::figures + "cylinder.obj";
 } // namespace Figures

@@ -102,17 +102,26 @@ void Skeleton::hierarchy() {
   // -------------------------------------------------
 
   auto rtm = &joints[0]->transformAsMatrix;
-  // transform.pos += transform.front() * this->step(); //this->tStep3();
-  // transform.pos += this->tStep3() * Math::unitVecY;
+  // transform.rot += this->rStep3();
   // transform.pos += this->tStep3();
-  // transform.rot += this->rStep3();                   //this->tStep3();
-
   *rtm = transform.asMatrix();
-  // Math::translate(*rtm, Math::unitVecY * tStep3());
   // Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
-  // Math::rotateXYZ(*rtm, this->rStep3());
-  // Math::translate(*rtm, targetFrame.translation);
-  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
+  auto rrot = targetFrame.rotations.at(0);
+  // {
+  //   auto maxAngle   = 2.5f;
+  //   auto clampAngle = 200.f;
+  //   auto scl        = maxAngle / clampAngle;
+  //   auto x          = glm::clamp(rrot.x, -clampAngle, clampAngle);
+  //   auto z          = glm::clamp(rrot.z, -clampAngle, clampAngle);
+  //   if (abs(x) > maxAngle) { x *= scl; }
+  //   if (abs(z) > maxAngle) { z *= scl; }
+  //   auto rot = glm::vec3(x, 0.f, z);
+  //   Math::rotateXYZ(*rtm, rot);
+  // }
+  // if (rrot.x < 0.f) { rrot.x = -360.f - rrot.x; }
+  // if (rrot.y < 0.f) { rrot.y = -360.f - rrot.y; }
+  // if (rrot.z < 0.f) { rrot.z = -360.f - rrot.z; }
+  Math::rotateXYZ(*rtm, rrot);
 
   // -------------------------------------------------
   // * OTHERS JOINTS
@@ -122,11 +131,9 @@ void Skeleton::hierarchy() {
     auto joint = joints.at(idx);
     auto jtm   = &joint->transformAsMatrix;
     *jtm       = joint->parent->transformAsMatrix;
-
     // Process current joint
     Math::translate(*jtm, joint->offset * m_scale);
     Math::rotateXYZ(*jtm, targetFrame.rotations.at(idx));
-
     // Process joint end-site (if exists)
     if (auto je = joint->endsite) {
       je->transformAsMatrix = *jtm;
@@ -142,7 +149,8 @@ void Skeleton::hierarchy() {
 
 void Skeleton::animate() {
   auto timestepFn = [&]() {
-    return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
+    // return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
+    return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
   };
 
   auto animationFn = [&]() {
@@ -173,6 +181,7 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
   auto scale = glm::distance(P1, P2) * 0.5f;
   auto bone  = Renderable::cylBetween2p(P1, P2, scale);
 
+  bone->transform.scl *= glm::vec3(1.25f, 1.f, 1.25f);
   bone->draw(camera);
   if (J->endsite) drawBone(J->endsite);
 }
@@ -191,22 +200,18 @@ void Skeleton::draw() {
     auto J = joints.at(idx);
     if (!J->parent) continue;
 
-    if (Strings::toLower(J->name) == "head" and J->endsite) {
-      auto headRE                      = Renderable::getByName("Monkey");
-      headRE->transform.overrideMatrix = J->endsite->transformAsMatrix;
+    if (J->name == "Head" and J->endsite) {
+      auto headRE = Renderable::getByName("Ball");
+
+      auto aux = J->endsite->transformAsMatrix;
+      aux      = glm::translate(aux, glm::vec3{0.f, 0.25f, 0.f});
+      aux      = glm::scale(aux, glm::vec3{1.5f});
+
+      headRE->transform.overrideMatrix = aux;
       headRE->draw(camera);
-      // continue;
     }
 
-    auto jointRE                      = Renderable::getByName("Ball");
-    jointRE->transform.overrideMatrix = J->transformAsMatrix;
-    jointRE->draw(camera);
-  }
-
-  // Draw bones
-  for (auto idx = 0u; idx < joints.size(); ++idx) {
-    auto J = joints.at(idx);
-    if (J->parent) drawBone(J);
+    drawBone(J);
   }
 }
 

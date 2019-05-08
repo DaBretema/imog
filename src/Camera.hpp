@@ -2,8 +2,6 @@
 
 #include <memory>
 
-
-
 #include "Math.hpp"
 #include "Transform.hpp"
 
@@ -11,8 +9,8 @@
 namespace brave {
 
 class Camera {
-  static constexpr float m_near = 0.0001f;
-  static constexpr float m_far  = 10000.f;
+  static constexpr float m_near = 0.1f;
+  static constexpr float m_far  = 1000.f;
 
 private:
   glm::mat4 m_view;

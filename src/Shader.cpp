@@ -105,9 +105,8 @@ std::shared_ptr<Shader> Shader::createByName(const std::string& name,
 // Update all shaders of the pool
 // ====================================================================== //
 
-void Shader::poolUpdate(const std::shared_ptr<Camera>& camera,
-                        const std::shared_ptr<Light>&  light) {
-  for (const auto& s : pool) { s->update(camera, light); }
+void Shader::poolUpdate(const std::shared_ptr<Camera>& camera) {
+  for (const auto& s : pool) { s->update(camera); }
 }
 
 // * private
@@ -233,19 +232,12 @@ void Shader::unbind() { glUseProgram(0); }
 
 // ====================================================================== //
 // ====================================================================== //
-// Update upload to the shader camera and light data
+// Update upload to the shader camera data
 // ====================================================================== //
 
-void Shader::update(const std::shared_ptr<Camera>& camera,
-                    const std::shared_ptr<Light>&  light) {
+void Shader::update(const std::shared_ptr<Camera>& camera) {
 
   uFloat3("u_clearColor", Settings::clearColor);
-
-  if (light) {
-    uFloat3("u_lightPos", light->pos());
-    uFloat3("u_lightColor", light->color());
-    uFloat1("u_lightIntensity", light->intensity());
-  }
 
   if (camera) {
     uMat4("u_matV", camera->view());

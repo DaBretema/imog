@@ -5,7 +5,6 @@
 #include <unordered_map>
 
 #include "Math.hpp"
-#include "Light.hpp"
 #include "Camera.hpp"
 
 
@@ -38,8 +37,7 @@ public:
                                               bool hasTesselation = false);
 
   // Update all shaders of the pool
-  static void poolUpdate(const std::shared_ptr<Camera>& camera,
-                         const std::shared_ptr<Light>&  light = nullptr);
+  static void poolUpdate(const std::shared_ptr<Camera>& camera);
 
 
 private:
@@ -81,9 +79,8 @@ public:
   void unbind();
 
 
-  // Update upload to the shader camera and light data
-  void update(const std::shared_ptr<Camera>& camera,
-              const std::shared_ptr<Light>&  light = nullptr);
+  // Update upload to the shader camera data
+  void update(const std::shared_ptr<Camera>& camera);
 
 
   // Returns the ID of the uniform associated to that string,

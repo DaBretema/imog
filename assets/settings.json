@@ -1,12 +1,12 @@
 {
   "quiet": true,
-  "openglMajorV": 3,
-  "openglMinorV": 3,
+  "openglMajorV": 4,
+  "openglMinorV": 5,
   "pollEvents": true,
   "clearColor": [
-    0.75,
-    0.75,
-    0.75
+    0.15,
+    0.15,
+    0.15
   ],
   "windowWidth": 800,
   "windowHeight": 600,

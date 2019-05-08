@@ -32,7 +32,7 @@
 # ########################################################################### #
 
 # Un/comment this to allow/avoid verbosity output
-$(VERBOSE).SILENT:
+# $(VERBOSE).SILENT:
 
 # --- PROJECT NAME ---------------------------------------------------------- #
 
@@ -46,7 +46,7 @@ SHELL = powershell.exe
 
 CXX            = g++
 CXX_VERSION    = 17
-CXX_FLAGS      = -std='c++$(CXX_VERSION)' -fopenmp
+CXX_FLAGS      = -std='c++$(CXX_VERSION)'
 
 DEBUG_FLAGS    = -DDEBUG -g -Wall -O0
 RELEASE_FLAGS  = -DNDEBUG -O3 -static -static-libgcc -static-libstdc++
@@ -80,7 +80,7 @@ clean:
 	@rm -rf $(BUILD_DIR)/*
 
 # DEBUG
-noflags: CXX_FLAGS += -DNDEBUG
+noflags: CXX_FLAGS += -DNDEBUG -O0
 noflags: $(PROJECT_NAME)
 
 # DEBUG
@@ -100,9 +100,7 @@ release: $(PROJECT_NAME)
 
 #! EXECUTABLE
 $(PROJECT_NAME): $(OBJECTS) $(BUILD_DIR)/icon.o
-	@mkdir -p $(DIST_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
-	# @mv -f ./$@.exe ./$(DIST_DIR)/$@.exe
 
 #* ICON COMPILATION
 $(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc

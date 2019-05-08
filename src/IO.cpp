@@ -7,6 +7,7 @@
 #include "Renderable.hpp"
 
 #include "helpers/Consts.hpp"
+#include "helpers/GLAssert.hpp"
 
 
 namespace brave {
@@ -59,6 +60,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   // --------------------------------------- / Validations ---
   // ---------------------------------------------------------
 
+
   // ---------------------------------------------------------
   // --- Init vars -------------------------------------------
 
@@ -85,7 +87,6 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-  glfwSwapInterval(0); // v-sync: 0-disable, 1-enable
 
   GLFWwindow* o_WINDOW = glfwCreateWindow(
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
@@ -105,14 +106,17 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   // --- Callbacks -------------------------------------------
 
   // - Keyboard
+
   glfwSetKeyCallback(o_WINDOW, keyboardOnPress);
 
   // - Mouse
+
   glfwSetScrollCallback(o_WINDOW, mouseOnScroll);
   glfwSetCursorPosCallback(o_WINDOW, mouseOnMove);
   glfwSetMouseButtonCallback(o_WINDOW, mouseOnClick);
 
   // - Window
+
   glfwSetWindowCloseCallback(o_WINDOW, windowOnClose);
   glfwSetWindowSizeCallback(o_WINDOW, windowOnScaleChange);
 
@@ -141,6 +145,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   glFrontFace(GL_CCW);
   glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LEQUAL);
   glm::vec3 cc = Settings::clearColor;
   glClearColor(cc.r, cc.g, cc.b, 1.0f);
 
@@ -151,8 +156,8 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   // Create default Renderables
   Renderable::create(false, "Cube", Figures::cube, "", Colors::orange, sks);
-  Renderable::create(false, "Cyl", Figures::cylinder, "", Colors::orange, sks);
   Renderable::create(false, "Ball", Figures::sphere, "", Colors::orange, sks);
+  Renderable::create(false, "Cyl", Figures::cylinder, "", Colors::orange, sks);
   Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange, sks);
 
   // Create floor
@@ -165,10 +170,6 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   // ---------------------------------------------------------
 
   m_windowPtr = o_WINDOW; // Store window ptr
-
-  const GLubyte* vendor   = glGetString(GL_VENDOR);
-  const GLubyte* renderer = glGetString(GL_RENDERER);
-  LOG("Rendered using:\n{} - {}\n\n", vendor, renderer);
 }
 
 // ====================================================================== //
@@ -206,7 +207,6 @@ void IO::windowLoop(const _IO_FUNC& renderFn, const _IO_FUNC& updateFn) {
 
     // Render
     renderFn();
-
     glfwSwapBuffers(m_windowPtr);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }

@@ -28,7 +28,7 @@ std::vector<std::string> Strings::split(const std::string& str,
   size_t                   ini{0}, end{0};
 
   // Split and store the string body
-  while ((end = str.find(delimeter, ini)) < str.size()) {
+  while ((end = str.find(delimeter, ini)) <= str.size()) {
     token = str.substr(ini, end - ini);
     ini   = end + delimeter.size();
     splitted.push_back(token);

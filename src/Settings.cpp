@@ -61,9 +61,6 @@ glm::vec3   Settings::mainCameraPos{0.0f, 25.0f, 27.5f};
 glm::vec2   Settings::mainCameraRot{45.0f, 0.0f};
 float       Settings::mainCameraSpeed{0.1f};
 float       Settings::mainCameraFov{0.75f};
-glm::vec3   Settings::mainLightPos{0.0f, 5.0f, 0.0f};
-glm::vec3   Settings::mainLightColor{1.0f};
-float       Settings::mainLightIntensity{500.0f};
 
 
 // ====================================================================== //
@@ -96,9 +93,6 @@ void Settings::init(const std::string& filePath) {
         glmParse(mainCameraRot, glm::vec2(0.f));
         stdParse(mainCameraSpeed, 0.1f);
         stdParse(mainCameraFov, 0.75f);
-        glmParse(mainLightPos, glm::vec3(0, 0, 0));
-        glmParse(mainLightColor, glm::vec3(1.0, 0, 1.0));
-        stdParse(mainLightIntensity, 1.f);
 
         m_corrupted = false;
       }
@@ -141,9 +135,6 @@ void Settings::dump() {
   glmPrint(mainCameraPos);
   glmPrint(mainCameraRot);
   stdPrint(mainCameraSpeed);
-  glmPrint(mainLightPos);
-  glmPrint(mainLightColor);
-  stdPrint(mainLightIntensity);
   LOG("");
 }
 
