@@ -91,6 +91,17 @@ std::vector<Frame>
 
   float alphaStep = 1.0f / (float)steps;
 
+  glm::vec3 rrot{0.f};
+  {
+    glm::mat4 aux1(1.f);
+    Math::rotateXYZ(aux1, F1.rotations[0]);
+    glm::mat4 aux2(1.f);
+    Math::rotateXYZ(aux2, F2.rotations[0]);
+    auto angle = glm::angle(aux1[2].xyz(), aux2[2].xyz());
+    auto cross = glm::cross(aux1[2].xyz(), aux2[2].xyz());
+    auto dot   = glm::dot(cross, Math::unitVecY);
+    rrot       = Math::unitVecY * glm::degrees((dot < 0.f) ? -angle : angle);
+  }
 
   for (auto alpha = 0.0f; alpha <= 1.0f; alpha += alphaStep) {
     Frame frame;
@@ -99,18 +110,7 @@ std::vector<Frame>
                             ? glm::mix(F1.translation, F2.translation, alpha)
                             : F1.translation;
     // Rotation of root
-    glm::mat4 aux1(1.f);
-    Math::rotateXYZ(aux1, F1.rotations[0]);
-    glm::mat4 aux2(1.f);
-    Math::rotateXYZ(aux2, F2.rotations[0]);
-    auto angle = glm::angle(aux1[2].xyz(), aux2[2].xyz());
-    auto cross = glm::cross(aux1[2].xyz(), aux2[2].xyz());
-    auto dot   = glm::dot(cross, Math::unitVecY);
-    auto _rot =
-        F1.rotations[0] +
-        alpha * Math::unitVecY * glm::degrees((dot < 0.f) ? -angle : angle);
-    LOGD(glm::to_string(_rot));
-    frame.rotations.push_back(_rot);
+    frame.rotations.push_back(F1.rotations[0] + alpha * rrot);
 
     // Rotation of joints
     for (auto i = 1u; i < F1.rotations.size(); ++i) {
