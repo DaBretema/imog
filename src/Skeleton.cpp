@@ -102,26 +102,11 @@ void Skeleton::hierarchy() {
   // -------------------------------------------------
 
   auto rtm = &joints[0]->transformAsMatrix;
-  // transform.rot += this->rStep3();
-  // transform.pos += this->tStep3();
+  // transform.rot += this->rStep3(); //! Not works as expected
+  // transform.pos += this->tStep3(); //! Not works as expected
   *rtm = transform.asMatrix();
-  // Math::translate(*rtm, glm::vec3(0.f, this->step3().y * 2.f, 0.f));
-  auto rrot = targetFrame.rotations.at(0);
-  // {
-  //   auto maxAngle   = 2.5f;
-  //   auto clampAngle = 200.f;
-  //   auto scl        = maxAngle / clampAngle;
-  //   auto x          = glm::clamp(rrot.x, -clampAngle, clampAngle);
-  //   auto z          = glm::clamp(rrot.z, -clampAngle, clampAngle);
-  //   if (abs(x) > maxAngle) { x *= scl; }
-  //   if (abs(z) > maxAngle) { z *= scl; }
-  //   auto rot = glm::vec3(x, 0.f, z);
-  //   Math::rotateXYZ(*rtm, rot);
-  // }
-  // if (rrot.x < 0.f) { rrot.x = -360.f - rrot.x; }
-  // if (rrot.y < 0.f) { rrot.y = -360.f - rrot.y; }
-  // if (rrot.z < 0.f) { rrot.z = -360.f - rrot.z; }
-  Math::rotateXYZ(*rtm, rrot);
+  // Math::translate(*rtm, targetFrame.translation);
+  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
 
   // -------------------------------------------------
   // * OTHERS JOINTS

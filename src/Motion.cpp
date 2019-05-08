@@ -92,7 +92,7 @@ std::vector<Frame>
   float alphaStep = 1.0f / (float)steps;
 
   glm::vec3 rrot{0.f};
-  {
+  { // Get rotation needed to go from F1 to F2
     glm::mat4 aux1(1.f);
     Math::rotateXYZ(aux1, F1.rotations[0]);
     glm::mat4 aux2(1.f);
@@ -103,7 +103,7 @@ std::vector<Frame>
     rrot       = Math::unitVecY * glm::degrees((dot < 0.f) ? -angle : angle);
   }
 
-  for (auto alpha = 0.0f; alpha <= 1.0f; alpha += alphaStep) {
+  for (auto alpha = 0.1f; alpha <= 1.0f; alpha += alphaStep) {
     Frame frame;
     // Translation
     frame.translation = (lerpT)
