@@ -8,31 +8,8 @@
 #include "helpers/Colors.hpp"
 using namespace brave;
 
-// * ===================================================================== * //
-void DBG_VEC(std::shared_ptr<brave::Camera> camera,
-             glm::vec3                      P,
-             glm::vec3                      color  = glm::vec3(1.f, 0.f, 0.f),
-             glm::vec3                      center = glm::vec3(0.f)) {
-  auto P1 = center + P * 0.5f;
-  auto P2 = center + P * -0.5f;
-
-  auto cyl = Renderable::cylBetween2p(P1, P2, 10.f);
-  cyl->color(color);
-  cyl->draw(camera);
-};
-// * ===================================================================== * //
-void DBG_POINT(std::shared_ptr<brave::Camera> camera,
-               glm::vec3                      P,
-               glm::vec3                      color  = glm::vec3(1.f, 0.f, 0.f),
-               glm::vec3                      center = glm::vec3(0.f)) {
-  auto box           = Renderable::getByName("Cube");
-  box->transform.pos = center + P;
-  box->color(color);
-  box->draw(camera);
-};
-// * ===================================================================== * //
-
 int main(int argc, char const* argv[]) {
+
 
   // ---------------------------------------------------------
   // --- Initialization --------------------------------------
@@ -45,27 +22,38 @@ int main(int argc, char const* argv[]) {
   // ------------------------------------ / Initialization ---
   // ---------------------------------------------------------
 
+
+
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
-  auto sk = Skeleton(camera, 0.3f, 1.f);
+  auto sk         = Skeleton(camera, 0.3f, 1.f);
+  sk.allowedTrans = Math::nullVec;
 
-  // auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 25u);
-  // sk.onKey(GLFW_KEY_SPACE,
-  //          [&]() { sk.setMotion("jump"); },
-  //          [&]() { sk.setMotion("walk"); });
-  // sk.addMotion(jump);
+  auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 25u);
+  sk.onKey(GLFW_KEY_SPACE,
+           [&]() {
+             sk.setMotion("jump");
+             sk.allowedTrans = Math::unitVecY;
+           },
+           [&]() {
+             sk.setMotion("walk");
+             sk.allowedTrans = Math::nullVec;
+           });
+  sk.addMotion(jump);
 
-  // auto walk      = Motion::create("walk", Motions::walk, loopMode::shortLoop);
-  // bool walking   = false;
-  // auto startWalk = [&]() {
-  //   sk.setMotion("walk");
-  //   walking = true;
-  // };
-  // auto stopWalk = [&]() {
-  //   sk.setMotion("idle");
-  //   walking = false;
-  // };
-  // sk.addMotion(walk);
+  auto walk      = Motion::create("walk", Motions::walk, loopMode::shortLoop);
+  bool walking   = false;
+  auto startWalk = [&]() {
+    sk.setMotion("walk");
+    walking        = true;
+    sk.allowedRots = Math::unitVec;
+  };
+  auto stopWalk = [&]() {
+    sk.setMotion("idle");
+    walking        = false;
+    sk.allowedRots = Math::unitVecY;
+  };
+  sk.addMotion(walk);
 
   // auto run       = Motion::create("run", Motions::run, loopMode::shortLoop);
   // bool toggleRun = false;
@@ -105,36 +93,34 @@ int main(int argc, char const* argv[]) {
     auto goB = [&]() { sk.transform.rot += angle(180.f); };
     auto goL = [&]() { sk.transform.rot += angle(90.f); };
 
-
-
-    // sk.onKey(GLFW_KEY_W,
-    //          [&]() {
-    //            goF();
-    //            startWalk();
-    //          },
-    //          stopWalk,
-    //          goF);
-    // sk.onKey(GLFW_KEY_D,
-    //          [&]() {
-    //            goR();
-    //            startWalk();
-    //          },
-    //          stopWalk,
-    //          goR);
-    // sk.onKey(GLFW_KEY_S,
-    //          [&]() {
-    //            goB();
-    //            startWalk();
-    //          },
-    //          stopWalk,
-    //          goB);
-    // sk.onKey(GLFW_KEY_A,
-    //          [&]() {
-    //            goL();
-    //            startWalk();
-    //          },
-    //          stopWalk,
-    //          goL);
+    sk.onKey(GLFW_KEY_W,
+             [&]() {
+               goF();
+               startWalk();
+             },
+             stopWalk,
+             goF);
+    sk.onKey(GLFW_KEY_D,
+             [&]() {
+               goR();
+               startWalk();
+             },
+             stopWalk,
+             goR);
+    sk.onKey(GLFW_KEY_S,
+             [&]() {
+               goB();
+               startWalk();
+             },
+             stopWalk,
+             goB);
+    sk.onKey(GLFW_KEY_A,
+             [&]() {
+               goL();
+               startWalk();
+             },
+             stopWalk,
+             goL);
   }
   sk.animate();
 
@@ -156,6 +142,9 @@ int main(int argc, char const* argv[]) {
 
     Renderable::poolDraw(camera);
     Shader::poolUpdate(camera);
+
+
+    // if (glfwGetKey())
   };
 
   IO::windowLoop(renderFn, updateFn);

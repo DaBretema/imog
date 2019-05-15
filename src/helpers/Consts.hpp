@@ -34,22 +34,22 @@ namespace Figures {
 
 
 namespace Motions {
-  const std::string jump = Paths::motions + "jump.bvh";
-  const std::string run  = Paths::motions + "run.bvh";
-  const std::string walk = Paths::motions + "walk.bvh";
-  const std::string idle = Paths::motions + "idle.bvh";
+  const std::string jump        = Paths::motions + "jump.bvh";
+  const std::string run         = Paths::motions + "run.bvh";
+  const std::string walk        = Paths::motions + "walk.bvh";
+  const std::string idle        = Paths::motions + "idle.bvh";
+  const std::string idle_static = Paths::motions + "idle_static.bvh";
+  const std::string dance       = Paths::motions + "dance.bvh";
+  const std::string backflip    = Paths::motions + "backflip.bvh";
 } // namespace Motions
 
 
 namespace Textures {
-  const std::string chess      = Paths::textures + "chess.jpg";
-  const std::string metal      = Paths::textures + "metal.jpg";
-  const std::string markborder = Paths::textures + "markborder.png";
+  const std::string chess = Paths::textures + "chess.jpg";
 } // namespace Textures
 
 
-enum struct loopMode { none, loop, shortLoop };
-
 auto emptyFn = []() {};
+enum struct loopMode { none, loop, shortLoop };
 
 } // namespace brave

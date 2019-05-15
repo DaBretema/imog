@@ -32,7 +32,7 @@
 # ########################################################################### #
 
 # Un/comment this to allow/avoid verbosity output
-# $(VERBOSE).SILENT:
+$(VERBOSE).SILENT:
 
 # --- PROJECT NAME ---------------------------------------------------------- #
 

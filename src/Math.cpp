@@ -3,15 +3,30 @@
 
 namespace brave {
 
+float Math::dirAngle(glm::vec3 from, glm::vec3 to) {
+  auto angle = glm::angle(from, to);
+  auto cross = glm::cross(from, to);
+  auto dot   = glm::dot(cross, Math::unitVecY);
+  return glm::degrees((dot < 0.f) ? -angle : angle);
+}
+
+glm::vec3 Math::rotToVec(glm::vec3 xyzRot) {
+  glm::mat4 out(1.f);
+  Math::rotateXYZ(out, xyzRot);
+  return out[2].xyz();
+}
+
 // ====================================================================== //
 // ====================================================================== //
 // Unit vectors
 // ====================================================================== //
 
+glm::vec3 Math::vecXZ{1.f, 0.f, 1.f};
+glm::vec3 Math::nullVec{0.f, 0.f, 0.f};
+glm::vec3 Math::unitVec{1.f, 1.f, 1.f};
 glm::vec3 Math::unitVecX{1.f, 0.f, 0.f};
 glm::vec3 Math::unitVecY{0.f, 1.f, 0.f};
 glm::vec3 Math::unitVecZ{0.f, 0.f, 1.f};
-glm::vec3 Math::vecXZ{1.f, 0.f, 1.f};
 
 // ====================================================================== //
 // ====================================================================== //

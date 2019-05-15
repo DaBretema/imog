@@ -11,26 +11,100 @@
 
 namespace brave {
 
-// * ----------------------
-// * Helpers
-// * ----------------------
+// ====================================================================== //
+// ====================================================================== //
+// Param constructor
+// ====================================================================== //
+
+Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
+                   float                                 scale,
+                   float                                 speed)
+    : m_scale(scale),
+      m_animThread(true),
+      m_currFrame(0u),
+      m_nextFrame(0u),
+      m_currMotion(nullptr),
+      m_nextMotion(nullptr),
+      play(true),
+      speed(speed),
+      camera(camera),
+      allowedRots(1.f),
+      allowedTrans(1.f) {
+  if (camera) camera->target = std::shared_ptr<Transform>(&transform);
+}
+
 
 // ====================================================================== //
 // ====================================================================== //
-// Compute distance to apply on next user input
+// Destructor
 // ====================================================================== //
 
+Skeleton::~Skeleton() {
+  if (!Settings::quiet) LOGD("Skeleton destroyed!");
+  this->play   = false;
+  m_animThread = false;
+}
+
+
+// * --- Private --------------------------------------------------------- //
+
+// ====================================================================== //
+// ====================================================================== //
+// Frame counter
+// ====================================================================== //
+
+void Skeleton::frameCounter() {
+  bool limitReached = m_currFrame >= m_currMotion->frames.size() - 2;
+  (limitReached) ? loadNextMotion() : (void)++m_currFrame;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Compute hierarchy of the skeleton based on current frame and motion
+// ====================================================================== //
+
+void Skeleton::hierarchy() {
+  auto joints    = m_currMotion->joints;
+  auto currFrame = m_currMotion->frames.at(m_currFrame);
+
+  // Root joint
+  auto rtm = &joints[0]->transformAsMatrix;
+  transform.rot += this->rStep3() * allowedRots;
+  transform.pos += this->tStep3() * allowedTrans;
+  *rtm = transform.asMatrix();
+
+  // Rest of joints
+  for (auto idx = 1u; idx < joints.size(); ++idx) {
+    auto joint = joints.at(idx);
+    auto jtm   = &joint->transformAsMatrix;
+    *jtm       = joint->parent->transformAsMatrix;
+
+    // Process current joint
+    Math::translate(*jtm, joint->offset * m_scale);
+    Math::rotateXYZ(*jtm, currFrame.rotations.at(idx));
+
+    // Process joint end-site (if exists)
+    if (auto je = joint->endsite) {
+      je->transformAsMatrix = *jtm;
+      Math::translate(je->transformAsMatrix, je->offset * m_scale);
+    }
+  }
+}
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Steps
+// ====================================================================== //
+
+// Distance
 float Skeleton::step() {
   auto p1 = m_currMotion->frames.at(m_currFrame).translation;
   auto p2 = m_currMotion->frames.at(m_currFrame + 1).translation;
   return glm::distance2(p2, p1);
 }
 
-// ====================================================================== //
-// ====================================================================== //
-// Compute translation displacement per component to apply on next user input
-// ====================================================================== //
-
+// 3-axes displacement
 glm::vec3 Skeleton::tStep3() {
   auto cmFrames = m_currMotion->frames;
   auto p1       = cmFrames.at(m_currFrame).translation;
@@ -38,11 +112,7 @@ glm::vec3 Skeleton::tStep3() {
   return p2 - p1;
 }
 
-// ====================================================================== //
-// ====================================================================== //
-// Compute rotation displacement per component to apply on next user input
-// ====================================================================== //
-
+// 3-axes rotation
 glm::vec3 Skeleton::rStep3() {
   auto cmFrames = m_currMotion->frames;
   auto p1       = cmFrames.at(m_currFrame).rotations.at(0);
@@ -55,105 +125,23 @@ glm::vec3 Skeleton::rStep3() {
 // Verify if motion exist on motion map
 // ====================================================================== //
 
-bool Skeleton::motionExists(const std::string& dest) {
-  if (m_motions.count(dest) < 1) {
-    if (!Settings::quiet) LOGE("Zero motions with name {}.", dest);
+template <typename T>
+bool Skeleton::motionExistsOnMap(const std::unordered_map<std::string, T>& map,
+                                 const std::string& name) {
+  if (map.count(name) < 1) {
+    if (!Settings::quiet) LOGE("Zero motions with name {}.", name);
     return false;
   }
   return true;
 }
-
-// * ----------------------
-// * Animation
-// * ----------------------
-
-// ====================================================================== //
-// ====================================================================== //
-// Frame step
-// ====================================================================== //
-
-void Skeleton::frameStep() {
-  auto frameLimit =
-      (m_lastFrame < 0) ? m_currMotion->frames.size() - 2 : m_lastFrame;
-  // Limit reached
-  if (m_currFrame >= frameLimit) {
-    if (!m_nextMotion.empty()) {
-      auto nm = m_nextMotion; // ! copy assigned next motion before clear it
-      m_nextMotion.clear();   // ! must be cleared before call setMotion
-      this->_setMotion(nm);
-    } else
-      m_currFrame = 0;
-  } else {
-    ++m_currFrame;
-  }
+// Check for motion in mix map
+bool Skeleton::mixMotionExists(const std::string& name) {
+  return motionExistsOnMap(m_motionMap, name);
 }
-
-// ====================================================================== //
-// ====================================================================== //
-// Compute hierarchy of the skeleton based on current frame and motion
-// ====================================================================== //
-
-void Skeleton::hierarchy() {
-  auto joints      = m_currMotion->joints;
-  auto targetFrame = m_currMotion->frames.at(m_currFrame);
-
-  // -------------------------------------------------
-  // * ROOT JOINT
-  // -------------------------------------------------
-
-  auto rtm = &joints[0]->transformAsMatrix;
-  // transform.rot += this->rStep3(); //! Not works as expected
-  // transform.pos += this->tStep3(); //! Not works as expected
-  *rtm = transform.asMatrix();
-  // Math::translate(*rtm, targetFrame.translation);
-  Math::rotateXYZ(*rtm, targetFrame.rotations.at(0));
-
-  // -------------------------------------------------
-  // * OTHERS JOINTS
-  // -------------------------------------------------
-
-  for (auto idx = 1u; idx < joints.size(); ++idx) {
-    auto joint = joints.at(idx);
-    auto jtm   = &joint->transformAsMatrix;
-    *jtm       = joint->parent->transformAsMatrix;
-    // Process current joint
-    Math::translate(*jtm, joint->offset * m_scale);
-    Math::rotateXYZ(*jtm, targetFrame.rotations.at(idx));
-    // Process joint end-site (if exists)
-    if (auto je = joint->endsite) {
-      je->transformAsMatrix = *jtm;
-      Math::translate(je->transformAsMatrix, je->offset * m_scale);
-    }
-  }
+// Check for motion in regular map
+bool Skeleton::motionExists(const std::string& name) {
+  return motionExistsOnMap(m_motions, name);
 }
-
-// ====================================================================== //
-// ====================================================================== //
-// ! Run a detached thread for animation process
-// ====================================================================== //
-
-void Skeleton::animate() {
-  auto timestepFn = [&]() {
-    // return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
-    return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
-  };
-
-  auto animationFn = [&]() {
-    if (!this->play or !m_currMotion) return;
-    hierarchy();
-    frameStep();
-    if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
-  };
-
-  // Thread lauch
-  std::call_once(m_animationOnceFlag, [&]() {
-    Async::periodic(timestepFn, &m_animThread, animationFn);
-  });
-}
-
-// * ----------------------
-// * Draw
-// * ----------------------
 
 // ====================================================================== //
 // ====================================================================== //
@@ -173,7 +161,85 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
 
 // ====================================================================== //
 // ====================================================================== //
-// ! Compute joints transform matrices and draw its renderable bone
+// Jump from current motion to next motion modifying also
+// the value of the current frame
+// ====================================================================== //
+
+void Skeleton::loadNextMotion() {
+  if (!m_currMotion) return;
+
+  if (!m_nextMotion) {
+    m_currFrame = 0u;
+    return;
+  }
+
+  m_currFrame  = m_nextFrame;
+  m_currMotion = m_nextMotion;
+
+  m_nextFrame  = 0u;
+  m_nextMotion = nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Modify current motion (intern call)
+// ====================================================================== //
+
+// void Skeleton::_setMotion(const std::string& dest) {
+//   auto _dest = Strings::toLower(dest);
+//   if (!motionExists(_dest)) return;
+
+//   // Mix motion completed
+//   if (Motion::isMix(_dest)) {
+//     m_lastFrame  = -1;
+//     m_currMotion = m_motions.at(_dest);
+//     m_currFrame  = 0;
+//     // Puts next simple motion in 'queue'
+//     m_nextMotion = Strings::split(_dest, "_")[1];
+//   }
+
+//   // From mix to dest motion
+//   else if (m_currMotion->isMix()) {
+//     m_currFrame  = m_currMotion->frameB;
+//     m_currMotion = m_motions.at(_dest);
+//   }
+
+//   // Never...
+//   else {
+//     LOGE("SHOULD NOT BE HERE!!!");
+//   }
+// }
+
+// * --- Public --------------------------------------------------------- //
+
+// ====================================================================== //
+// ====================================================================== //
+// Run a detached thread for animation process
+// ====================================================================== //
+
+void Skeleton::animate() {
+  auto timestepFn = [&]() {
+    // return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
+    return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
+  };
+
+  auto animationFn = [&]() {
+    if (!this->play or !m_currMotion) return;
+    hierarchy();
+    frameCounter();
+    if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
+  };
+
+  // Thread lauch
+  std::call_once(m_animationOnceFlag, [&]() {
+    Async::periodic(timestepFn, &m_animThread, animationFn);
+  });
+}
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Compute joints models and draw its renderable bone
 // ====================================================================== //
 
 void Skeleton::draw() {
@@ -200,88 +266,53 @@ void Skeleton::draw() {
   }
 }
 
-// * ----------------------
-// * Motions setup
-// * ----------------------
-
 // ====================================================================== //
 // ====================================================================== //
-// Modify current motion (intern call)
+// Modify current motion (user call)
+//-> Always lowercase
 // ====================================================================== //
-
-void Skeleton::_setMotion(const std::string& dest) {
-  auto _dest = Strings::toLower(dest);
-  // Don't make any operation if motion name doesn't exist
-  if (!motionExists(_dest)) return;
-
-  // LOGD("currmotion = {}", m_currMotion->name);
-  // LOGD("dest = {}", dest);
-
-  // Mix motion completed
-  if (Motion::isMix(_dest)) {
-    m_lastFrame  = -1;
-    m_currMotion = m_motions.at(_dest);
-    m_currFrame  = 0;
-    // Puts next simple motion in 'queue'
-    m_nextMotion = Strings::split(_dest, "_")[1];
-  }
-
-  // From mix to dest motion
-  else if (m_currMotion->isMix()) {
-    m_currFrame  = m_currMotion->frameB;
-    m_currMotion = m_motions.at(_dest);
-  }
-
-  // Never...
-  else {
-    LOGE("SHOULD NOT BE HERE!!!");
-  }
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// ! Modify current motion (user call)
-// ====================================================================== //
-
+//
 void Skeleton::setMotion(const std::string& dest) {
-  if (!m_currMotion) return;
-  auto _dest = Strings::toLower(dest);
-  // Don't make any operation if motion name doesn't exist
-  if (!motionExists(_dest)) return;
-  // Ignore if is on transition
-  if (m_currMotion->isMix()) return;
+  auto        _dest = Strings::toLower(dest);
+  std::string key   = m_currMotion->name + "_" + _dest;
 
-  std::string KEY = m_currMotion->name + "_" + _dest;
-  if (motionExists(KEY) && m_currMotion->name != _dest) {
-    m_lastFrame  = m_motions.at(KEY)->frameA;
-    m_nextMotion = KEY; // Put mix in 'queue'
-  }
+  if (!m_currMotion || !motionExists(_dest) || m_currMotion->isMix() ||
+      !(mixMotionExists(key) && m_currMotion->name != _dest))
+    return;
+
+  auto t = m_motionMap.at(key).at(m_currFrame);
+
+  m_nextFrame  = t.first;
+  m_nextMotion = m_motions.at(_dest);
+
+  m_currFrame  = 0u;
+  m_currMotion = t.second;
 }
 
 // ====================================================================== //
 // ====================================================================== //
-// ! Add motions to skeleton motion map
+// Add motions to skeleton motion map
+//-> The motion name is converted to lowercase
 // ====================================================================== //
 
 void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
   // @lambda : Manage motion list and wrap the process of mix two motions
-  auto _mix = [&](auto _m1, auto _m2) {
-    std::string key = _m1->name + "_" + _m2->name;
-    auto        aux = _m1->mix(_m2);
-    aux->name       = key;
-    if (m_motions.count(key) < 1) m_motions.try_emplace(key, aux);
+  auto _mix = [&](const std::shared_ptr<Motion>& _m1,
+                  const std::shared_ptr<Motion>& _m2) {
+    std::string key    = _m1->name + "_" + _m2->name;
+    auto        mixMap = _m1->mix(_m2);
+    this->m_motionMap.insert({key, mixMap});
   };
 
   // ----
-  //
 
   if (m2->isMix()) {
     LOGE("Motion names can NOT contains '_' is reserved for mixed motions");
     return;
   }
-  m2->name = Strings::toLower(m2->name);
+  m2->name = Strings::toLower(m2->name); // ! must
 
-  // Compute transition for current motions
+  // Compute transitions
   for (const auto& [_, m1] : m_motions) {
     if (m1->isMix()) continue;
     _mix(m1, m2);
@@ -292,43 +323,10 @@ void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
   m_currMotion = m_motions.at(m2->name);
 }
 
-// * ----------------------
-// * Object
-// * ----------------------
 
 // ====================================================================== //
 // ====================================================================== //
-// ! Param constructor
-// ====================================================================== //
-
-Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
-                   float                                 scale,
-                   float                                 speed)
-    : m_animThread(true),
-      m_nextMotion(""),
-      m_scale(scale),
-      m_currFrame(0u),
-      m_lastFrame(-1),
-      m_currMotion(nullptr),
-      play(true),
-      camera(camera) {
-  if (camera) camera->target = std::shared_ptr<Transform>(&transform);
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// ! Destructor
-// ====================================================================== //
-
-Skeleton::~Skeleton() {
-  if (!Settings::quiet) LOGD("Skeleton destroyed!");
-  this->play   = false;
-  m_animThread = false;
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// ! Define actions on key state
+// Define actions on key state
 // ====================================================================== //
 
 void Skeleton::onKey(int      key,

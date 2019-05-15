@@ -21,11 +21,16 @@ namespace brave {
 
 class Math {
 public:
+  static float     dirAngle(glm::vec3 from, glm::vec3 to);
+  static glm::vec3 rotToVec(glm::vec3 xyzRot);
+
   // Unit vectors
+  static glm::vec3 vecXZ;
+  static glm::vec3 nullVec;
+  static glm::vec3 unitVec;
   static glm::vec3 unitVecX;
   static glm::vec3 unitVecY;
   static glm::vec3 unitVecZ;
-  static glm::vec3 vecXZ;
 
   // Wrap mat4 translation
   static glm::mat4 translate(glm::mat4& mat, const glm::vec3& T);

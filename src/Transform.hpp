@@ -8,6 +8,9 @@ namespace brave {
 struct Transform {
   Transform();
 
+  glm::vec3 allowedTrans{1.f};
+  glm::vec3 allowedRots{1.f};
+
   glm::vec3 pos;
   glm::vec3 scl;
   glm::vec3 rot;

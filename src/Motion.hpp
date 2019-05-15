@@ -3,9 +3,11 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include "Math.hpp"
 #include "helpers/Consts.hpp"
+
 
 namespace brave {
 using uint = unsigned int;
@@ -23,37 +25,34 @@ struct Joint {
 struct Frame {
   std::vector<glm::vec3> rotations;
   glm::vec3              translation;
-
-  // Sum rotations of frame
-  glm::vec3 sumRots() const;
+  glm::vec3              value() const;
 };
 
 class Motion {
+
 public:
+  using mixMap =
+      std::unordered_map<uint, std::pair<int, std::shared_ptr<Motion>>>;
+
   static std::shared_ptr<Motion> create(const std::string& name,
                                         const std::string& filepath,
                                         loopMode           lm,
                                         uint               steps = 0u);
 
-  std::string                         name; // If contains _ is a mix
+  std::string                         name;
   std::vector<std::shared_ptr<Joint>> joints;
   std::vector<Frame>                  frames;
   float                               timeStep;
 
-  // Only for mixes
-  uint frameA = 0u;
-  uint frameB = 0u;
-
   // If its name contains _ is a mix
-  bool        isMix();
-  static bool isMix(const std::string& str);
+  bool isMix();
 
   // Clean any motion to get a smoother loop
   void clean(loopMode lm, uint steps = 0u);
 
   // Mix any motion with other and get a new animation
   // that conect both smoothly
-  std::shared_ptr<Motion> mix(const std::shared_ptr<Motion>& m);
+  mixMap mix(const std::shared_ptr<Motion>& m);
 };
 
 } // namespace brave

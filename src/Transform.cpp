@@ -37,9 +37,12 @@ glm::mat4 Transform::asMatrix() const {
   if (overrideMatrix != glm::mat4(0.f)) { return overrideMatrix; }
 
   glm::mat4 aux(1.f);
-  Math::translate(aux, pos);
-  (rotAxis != glm::vec3(0.f)) ? Math::rotate(aux, rotAngle, rotAxis)
-                              : Math::rotateXYZ(aux, rot);
+  Math::translate(aux, allowedTrans * pos);
+
+  (rotAxis != glm::vec3(0.f))
+      ? Math::rotate(aux, rotAngle, allowedRots * rotAxis)
+      : Math::rotateXYZ(aux, allowedRots * rot);
+
   Math::scale(aux, scl);
   return aux;
 }
