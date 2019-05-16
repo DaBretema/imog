@@ -185,6 +185,9 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
   heatmap.open("./2plot/" + this->name + "_" + m2->name + "__heatmap.txt");
   std::ofstream refFrames;
   refFrames.open("./2plot/" + this->name + "_" + m2->name + "__refFrames.txt");
+  std::ofstream diffPerFrame;
+  diffPerFrame.open("./2plot/" + this->name + "_" + m2->name +
+                    "__diffPerFrame.txt");
   //
 
 
@@ -193,6 +196,7 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
   float  _diff = std::numeric_limits<float>::infinity();
 
   for (auto f1 = 0u; f1 < this->frames.size(); f1++) {
+    _diff             = std::numeric_limits<float>::infinity(); // ! reset
     glm::vec3 f1Value = this->frames.at(f1).value();
 
     for (auto f2 = 0u; f2 < m2->frames.size(); f2++) {
@@ -204,7 +208,7 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
       (f2 < m2->frames.size() - 1) ? heatmap << diff << " "
                                    : heatmap << diff << "\n";
     }
-    refFrames << _diff << " ";
+    refFrames << f1 << " " << _f2 << "\n";
 
     auto tMo = createTransitionMotion(f1, _f2);
     mm.insert({f1, {_f2, tMo}});
