@@ -2,6 +2,8 @@
 
 #include <tuple>
 #include <numeric>
+#include <fstream>
+#include <iostream>
 
 #include "Logger.hpp"
 #include "Loader.hpp"
@@ -65,15 +67,15 @@ std::vector<Frame>
 glm::vec3 Frame::value() const {
 
   // * V1 all joints weighs the same
-  // glm::vec3 sum{0.0f};
-  // for (const auto& r : this->rotations) { sum += r; }
-  // return sum;
+  glm::vec3 sum{0.0f};
+  for (const auto& r : this->rotations) { sum += r; }
+  return sum;
 
   // * V2 root joint weigh the double that the rest of joints
-  auto sum = this->rotations.at(0) * 2.0f;
-  for (auto i = 1u; i < this->rotations.size(); i++) {
-    sum += this->rotations.at(i);
-  }
+  // auto sum = this->rotations.at(0) * 2.0f;
+  // for (auto i = 1u; i < this->rotations.size(); i++) {
+  //   sum += this->rotations.at(i);
+  // }
 
   // * V3 root joint height substracts value
   // glm::vec3 sum{0.f};
@@ -178,6 +180,14 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
 
   //---
 
+  // for heat map visualization
+  std::ofstream heatmap;
+  heatmap.open("./2plot/" + this->name + "_" + m2->name + "__heatmap.txt");
+  std::ofstream refFrames;
+  refFrames.open("./2plot/" + this->name + "_" + m2->name + "__refFrames.txt");
+  //
+
+
   mixMap mm;
   uint   _f2   = 0;
   float  _diff = std::numeric_limits<float>::infinity();
@@ -190,7 +200,11 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
 
       float diff = glm::compAdd(glm::abs(f1Value - f2Value));
       if (diff < _diff) { std::tie(_diff, _f2) = {diff, f2}; }
+
+      (f2 < m2->frames.size() - 1) ? heatmap << diff << " "
+                                   : heatmap << diff << "\n";
     }
+    refFrames << _diff << " ";
 
     auto tMo = createTransitionMotion(f1, _f2);
     mm.insert({f1, {_f2, tMo}});

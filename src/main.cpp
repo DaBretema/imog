@@ -6,6 +6,7 @@
 #include "Renderable.hpp"
 #include "helpers/Consts.hpp"
 #include "helpers/Colors.hpp"
+#include "helpers/Debug.hpp"
 using namespace brave;
 
 int main(int argc, char const* argv[]) {
@@ -28,14 +29,17 @@ int main(int argc, char const* argv[]) {
   // --- Skeleton --------------------------------------------
   auto sk         = Skeleton(camera, 0.3f, 1.f);
   sk.allowedTrans = Math::nullVec;
+  sk.allowedRots  = Math::unitVecY;
 
   auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 25u);
   sk.onKey(GLFW_KEY_SPACE,
            [&]() {
              sk.setMotion("jump");
              sk.allowedTrans = Math::unitVecY;
+             sk.allowedRots  = Math::nullVec;
            },
            [&]() {
+             //sk.loadPrevMotion();
              sk.setMotion("walk");
              sk.allowedTrans = Math::nullVec;
            });
@@ -46,7 +50,7 @@ int main(int argc, char const* argv[]) {
   auto startWalk = [&]() {
     sk.setMotion("walk");
     walking        = true;
-    sk.allowedRots = Math::unitVec;
+    sk.allowedRots = Math::unitVecY;
   };
   auto stopWalk = [&]() {
     sk.setMotion("idle");
@@ -75,15 +79,19 @@ int main(int argc, char const* argv[]) {
     // auto step = [&]() { return sk.transform.front() * sk.step(); };
 
     auto angle = [&](float rotAngle) {
-      sk.transform.pos +=
-          sk.transform.front() * sk.step() * 2.f; // Just 'd.r.y.'
-
-      auto sF = sk.transform.front();
-      auto cF = glm::rotateY(camera->pivot.front(), glm::radians(rotAngle));
+      auto sF = sk.transform.front() * Math::vecXZ;
+      auto cF = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
+      cF      = glm::rotateY(cF * Math::vecXZ, glm::radians(rotAngle));
 
       auto angle = glm::angle(sF, cF) * 2.f;
       auto cross = glm::cross(sF, cF);
       auto dot   = glm::dot(cross, Math::unitVecY);
+
+      // if (abs(angle) >= 0.f && abs(angle) < 0.1f) {
+      if (true) {
+        sk.transform.pos +=
+            sk.transform.front() * sk.step() * 3.f * Math::vecXZ;
+      }
 
       return Math::unitVecY * ((dot < 0) ? -angle : angle);
     };
@@ -130,18 +138,23 @@ int main(int argc, char const* argv[]) {
   // ---------------------------------------------------------
   // --- Loop ------------------------------------------------
 
+  auto toggleCamera = [&]() {
+    if (!sk.camera->target)
+      sk.camera->target = std::shared_ptr<Transform>(&sk.transform);
+    else if (sk.camera->target)
+      sk.camera->target = nullptr;
+  };
+  sk.onKey(GLFW_KEY_F, toggleCamera);
+
   auto updateFn = [&]() { camera->speed(Settings::mainCameraSpeed); };
 
   auto renderFn = [&]() {
-    camera->frame();
-
     sk.draw();
-
-    // DBG_POINT(camera, glm::vec3(0.f), Colors::teal);
-    // DBG_POINT(camera, glm::vec3(0.2f, 0.f, 0.2f), Colors::red);
-
-    Renderable::poolDraw(camera);
+    camera->frame();
     Shader::poolUpdate(camera);
+    Renderable::poolDraw(camera);
+
+    if (sk.transform.pos.y < 0.f) sk.transform.pos.y = 0.f;
 
 
     // if (glfwGetKey())
