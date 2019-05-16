@@ -1,22 +1,49 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import numpy as np
-import matplotlib.colors as cl
 import matplotlib.pyplot as plt
+from matplotlib import interactive
 
-filePrefix = sys.argv[1]
-dataFile = filePrefix+"__heatmap.txt"
-markFile = filePrefix+"__refFrames.txt"
-
-data = np.loadtxt(dataFile, unpack=False)
-axisDataMax =  len(data) if (len(data) > len(data[0])) else len(data[0])
-print(axisDataMax)
-
-mark = np.loadtxt(markFile, unpack=True)
+from os import listdir
+from os.path import isfile, join
 
 
-plt.scatter(mark[0], mark[1], s=50, cmap="hot")
-plt.imshow(data, origin='lower', extent=[0, axisDataMax, 0, axisDataMax])
-plt.colorbar()
-plt.show()
+def plot_diff(folder,filePrefix):
+    """Plots heatmap and winning frames from gived pair of motions"""
+
+    dataFile = folder+filePrefix+"__heatmap.txt"
+    markFile = folder+filePrefix+"__refFrames.txt"
+
+    data = np.loadtxt(dataFile, unpack=True)
+    mark = np.loadtxt(markFile, unpack=True)
+
+    moNames = str(filePrefix).split(os.sep)[-1].split("_")
+    f = plt.figure("From "+moNames[0].upper()+" to "+moNames[1].upper())
+
+    plt.xlabel(moNames[0])
+    plt.ylabel(moNames[1])
+
+    plt.scatter(mark[0], mark[1], s=1, c="cyan", alpha=1, marker="D")
+    plt.imshow(data, origin='lower', cmap="magma", interpolation="gaussian")
+    plt.colorbar()
+
+    f.show()
+
+
+
+if __name__== "__main__":
+    try:
+        path = "./assets/plotdata/"
+        files = [f for f in listdir(path) if isfile(join(path, f))]
+        files = [f.split("__")[0] for f in files]
+        files = list(dict.fromkeys(files))
+
+        for f in files:
+            plot_diff(path,f)
+
+        input("Press any key to exit.")
+
+    except FileNotFoundError:
+        print("Don't found any plot at gived path, maybe don't exists!")

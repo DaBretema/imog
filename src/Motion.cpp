@@ -181,13 +181,11 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
   //---
 
   // for heat map visualization
-  std::ofstream heatmap;
-  heatmap.open("./2plot/" + this->name + "_" + m2->name + "__heatmap.txt");
-  std::ofstream refFrames;
-  refFrames.open("./2plot/" + this->name + "_" + m2->name + "__refFrames.txt");
-  std::ofstream diffPerFrame;
-  diffPerFrame.open("./2plot/" + this->name + "_" + m2->name +
-                    "__diffPerFrame.txt");
+  auto _folder = "./assets/plotdata/";
+  mkdir(_folder);
+  auto          _prefix = _folder + this->name + "_" + m2->name;
+  std::ofstream heatmap(_prefix + "__heatmap.txt");
+  std::ofstream refFrames(_prefix + "__refFrames.txt");
   //
 
 

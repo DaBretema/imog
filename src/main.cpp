@@ -153,14 +153,16 @@ int main(int argc, char const* argv[]) {
     camera->frame();
     Shader::poolUpdate(camera);
     Renderable::poolDraw(camera);
-
     if (sk.transform.pos.y < 0.f) sk.transform.pos.y = 0.f;
 
 
     // if (glfwGetKey())
   };
 
+  // std::thread([]() { system("python plotter.py"); }).detach();
+
   IO::windowLoop(renderFn, updateFn);
+
 
   // ---------------------------------------------- / Loop ---
   // ---------------------------------------------------------
