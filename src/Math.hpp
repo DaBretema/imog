@@ -21,7 +21,7 @@ namespace brave {
 
 class Math {
 public:
-  static float     dirAngle(glm::vec3 from, glm::vec3 to);
+  static float     dirAngle(glm::vec3 from, glm::vec3 to, glm::vec3 refAxis);
   static glm::vec3 rotToVec(glm::vec3 xyzRot);
 
   // Unit vectors
@@ -45,11 +45,11 @@ public:
   static glm::mat4 scale(glm::mat4& mat, const glm::vec3& S);
   static glm::mat4 scale(glm::mat4& mat, float x, float y, float z);
 
-  // Numeric string vector of size 3(-1) to glm::vec3
+  // Numeric string vector of size 3(-1) to glm::vec2
   static glm::vec2 glmVec2FromStr(const std::vector<std::string>& strVec);
   // Numeric string vector of size 4(-1) to glm::vec3
   static glm::vec3 glmVec3FromStr(const std::vector<std::string>& strVec);
-  // Numeric string vector of size 5(-1) to glm::vec3
+  // Numeric string vector of size 5(-1) to glm::vec4
   static glm::vec4 glmVec4FromStr(const std::vector<std::string>& strVec);
 };
 

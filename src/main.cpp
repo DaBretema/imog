@@ -27,21 +27,18 @@ int main(int argc, char const* argv[]) {
 
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
-  auto sk         = Skeleton(camera, 0.3f, 1.f);
-  sk.allowedTrans = Math::nullVec;
-  sk.allowedRots  = Math::unitVecY;
+  auto sk = Skeleton(camera, 0.6f, 1.f);
 
-  auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 25u);
+  auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
   sk.onKey(GLFW_KEY_SPACE,
            [&]() {
              sk.setMotion("jump");
-             sk.allowedTrans = Math::unitVecY;
-             sk.allowedRots  = Math::nullVec;
+             sk.allowedTrans = Math::unitVecY; // Allow jump
            },
            [&]() {
              //sk.loadPrevMotion();
              sk.setMotion("walk");
-             sk.allowedTrans = Math::nullVec;
+             sk.allowedTrans = Math::nullVec; // Block jump
            });
   sk.addMotion(jump);
 
@@ -49,13 +46,11 @@ int main(int argc, char const* argv[]) {
   bool walking   = false;
   auto startWalk = [&]() {
     sk.setMotion("walk");
-    walking        = true;
-    sk.allowedRots = Math::unitVecY;
+    walking = true;
   };
   auto stopWalk = [&]() {
     sk.setMotion("idle");
-    walking        = false;
-    sk.allowedRots = Math::unitVecY;
+    walking = false;
   };
   sk.addMotion(walk);
 
@@ -68,7 +63,7 @@ int main(int argc, char const* argv[]) {
   // });
   // sk.addMotion(run);
 
-  auto idle = Motion::create("idle", Motions::idle, loopMode::loop, 25u);
+  auto idle = Motion::create("idle", Motions::tPose, loopMode::loop, 25u);
   sk.addMotion(idle);
 
 
@@ -76,9 +71,13 @@ int main(int argc, char const* argv[]) {
   sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
 
   {
-    // auto step = [&]() { return sk.transform.front() * sk.step(); };
+    auto step = [&]() {
+      sk.transform.pos += sk.transform.front() * sk.step() * Math::vecXZ;
+    };
 
     auto angle = [&](float rotAngle) {
+      step();
+
       auto sF = sk.transform.front() * Math::vecXZ;
       auto cF = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
       cF      = glm::rotateY(cF * Math::vecXZ, glm::radians(rotAngle));
@@ -87,11 +86,6 @@ int main(int argc, char const* argv[]) {
       auto cross = glm::cross(sF, cF);
       auto dot   = glm::dot(cross, Math::unitVecY);
 
-      // if (abs(angle) >= 0.f && abs(angle) < 0.1f) {
-      if (true) {
-        sk.transform.pos +=
-            sk.transform.front() * sk.step() * 3.f * Math::vecXZ;
-      }
 
       return Math::unitVecY * ((dot < 0) ? -angle : angle);
     };
@@ -153,8 +147,9 @@ int main(int argc, char const* argv[]) {
     camera->frame();
     Shader::poolUpdate(camera);
     Renderable::poolDraw(camera);
-    if (sk.transform.pos.y < 0.f) sk.transform.pos.y = 0.f;
 
+    // if (sk.transform.pos.y < 0.f) sk.transform.pos.y = 0.f;
+    // if (sk.transform.pos.y > 1.f) sk.transform.pos.y = 1.f;
 
     // if (glfwGetKey())
   };

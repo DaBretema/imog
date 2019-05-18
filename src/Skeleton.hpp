@@ -74,8 +74,8 @@ public:
   float                   speed;
   std::shared_ptr<Camera> camera;
   Transform               transform;
-  glm::vec3               allowedRots{1.f};
-  glm::vec3               allowedTrans{1.f};
+  glm::vec3               allowedRots;
+  glm::vec3               allowedTrans;
 
   // Compute displacement to apply on next user input
   float step();

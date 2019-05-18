@@ -30,21 +30,25 @@ std::vector<Frame>
     steps = 2;
   float alphaStep = 1.0f / (float)steps;
 
-  glm::vec3 rootRot{0.f};
-  {
-    auto fv1 = Math::rotToVec(F1.rotations[0]);
-    auto fv2 = Math::rotToVec(F2.rotations[0]);
-    rootRot  = Math::dirAngle(fv1, fv2) * Math::unitVecY;
-  }
+  // glm::vec3 rootRot{0.f};
+  // {
+  //   auto fv1 = Math::rotToVec(F1.rotations[0]);
+  //   auto fv2 = Math::rotToVec(F2.rotations[0]);
+  //   rootRot  = Math::dirAngle(fv1, fv2, Math::unitVecY) * Math::unitVecY;
+  // }
 
   for (auto alpha = 0.1f; alpha <= 1.0f; alpha += alphaStep) {
     Frame frame;
 
     auto newTrans     = glm::mix(F1.translation, F2.translation, alpha);
-    frame.translation = (lerpT) ? newTrans : F1.translation;
+    frame.translation = newTrans;
+    if (!lerpT) {
+      frame.translation.x = F1.translation.x;
+      frame.translation.z = F1.translation.z;
+    }
 
-    frame.rotations.push_back(F1.rotations[0] + alpha * rootRot);
-    for (auto i = 1u; i < F1.rotations.size(); ++i) {
+    // frame.rotations.push_back(F1.rotations[0] + alpha * rootRot);
+    for (auto i = 0u; i < F1.rotations.size(); ++i) {
       auto newRot = glm::mix(F1.rotations[i], F2.rotations[i], alpha);
       frame.rotations.push_back(newRot);
     }
@@ -65,26 +69,19 @@ std::vector<Frame>
 // ====================================================================== //
 
 glm::vec3 Frame::value() const {
+  glm::vec3 wJR{0.4f};
+  glm::vec3 wRT{0.2f, -0.6f, 0.2f}; // ???????????
+  glm::vec3 wRR{0.2f, 0.6f, 0.2f};
 
-  // * V1 all joints weighs the same
-  glm::vec3 sum{0.0f};
-  for (const auto& r : this->rotations) { sum += r; }
-  return sum;
+  glm::vec3 RT = this->translation;
+  glm::vec3 RR = this->rotations.at(0);
 
-  // * V2 root joint weigh the double that the rest of joints
-  // auto sum = this->rotations.at(0) * 2.0f;
-  // for (auto i = 1u; i < this->rotations.size(); i++) {
-  //   sum += this->rotations.at(i);
-  // }
+  glm::vec3 JR{0.f};
+  for (auto i = 1u; i < this->rotations.size(); i++) {
+    JR += this->rotations.at(i);
+  }
 
-  // * V3 root joint height substracts value
-  // glm::vec3 sum{0.f};
-  // for (auto i = 1u; i < this->rotations.size(); i++) {
-  //   sum += this->rotations.at(i);
-  // }
-  // sum -= glm::abs(this->translation * Math::unitVecY); // ?
-
-  return sum;
+  return wRT * RT + wRR * RR + wJR * JR;
 }
 
 
@@ -103,6 +100,44 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
   auto m = loader::BVH(filepath);
   m->clean(lm, steps);
   m->name = name;
+
+  // Get all data from Zero.
+
+  float _inf = std::numeric_limits<float>::max();
+  float minRX, minRY, minRZ, minTX, minTY, minTZ;
+  minRX = minRY = minRZ = minTX = minTY = minTZ = _inf;
+
+  // Get data
+  for (const auto& f : m->frames) {
+    // T
+    if (f.translation.x < minTX) minTX = f.translation.x;
+    if (f.translation.y < minTY) minTY = f.translation.y;
+    if (f.translation.z < minTZ) minTZ = f.translation.z;
+    // R
+    if (f.rotations.at(0).x < minRX) minRX = f.rotations.at(0).x;
+    if (f.rotations.at(0).y < minRY) minRY = f.rotations.at(0).y;
+    if (f.rotations.at(0).z < minRZ) minRZ = f.rotations.at(0).z;
+  }
+
+  // Set data
+  for (auto& f : m->frames) {
+    // T
+    f.translation.x -= minTX;
+    f.translation.y -= minTY;
+    f.translation.z -= minTZ;
+    // R back to 0
+    f.rotations.at(0).x -= minRX;
+    f.rotations.at(0).y -= minRY;
+    f.rotations.at(0).z -= minRZ;
+    // R set between [0,360]
+    // f.rotations.at(0).x = glm::mod(f.rotations.at(0).x, 360.f);
+    // f.rotations.at(0).y = glm::mod(f.rotations.at(0).y, 360.f);
+    // f.rotations.at(0).z = glm::mod(f.rotations.at(0).z, 360.f);
+    // if (f.rotations.at(0).x < 0.f) f.rotations.at(0).x += 360.f;
+    // if (f.rotations.at(0).y < 0.f) f.rotations.at(0).y += 360.f;
+    // if (f.rotations.at(0).z < 0.f) f.rotations.at(0).z += 360.f;
+  }
+
   return m;
 }
 
@@ -173,7 +208,7 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
 
     auto f1 = this->frames.at(idxF1);
     auto f2 = m2->frames.at(idxF2);
-    for (const auto& nF : lerp(f1, f2, 50u, true)) { mo->frames.push_back(nF); }
+    for (const auto& nF : lerp(f1, f2, 10u, true)) { mo->frames.push_back(nF); }
 
     return mo;
   };
@@ -190,26 +225,28 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
 
 
   mixMap mm;
-  uint   _f2   = 0;
-  float  _diff = std::numeric_limits<float>::infinity();
+  uint   auxF2   = 0;
+  float  auxDiff = std::numeric_limits<float>::infinity();
 
   for (auto f1 = 0u; f1 < this->frames.size(); f1++) {
-    _diff             = std::numeric_limits<float>::infinity(); // ! reset
+    auxF2   = 0;
+    auxDiff = std::numeric_limits<float>::infinity();
+
     glm::vec3 f1Value = this->frames.at(f1).value();
 
     for (auto f2 = 0u; f2 < m2->frames.size(); f2++) {
       glm::vec3 f2Value = m2->frames.at(f2).value();
 
       float diff = glm::compAdd(glm::abs(f1Value - f2Value));
-      if (diff < _diff) { std::tie(_diff, _f2) = {diff, f2}; }
+      if (diff < auxDiff) { std::tie(auxDiff, auxF2) = {diff, f2}; }
 
       (f2 < m2->frames.size() - 1) ? heatmap << diff << " "
                                    : heatmap << diff << "\n";
     }
-    refFrames << f1 << " " << _f2 << "\n";
+    refFrames << f1 << " " << auxF2 << "\n";
 
-    auto tMo = createTransitionMotion(f1, _f2);
-    mm.insert({f1, {_f2, tMo}});
+    auto tMo = createTransitionMotion(f1, auxF2);
+    mm.insert({f1, {auxF2, tMo}});
   }
 
   return mm;

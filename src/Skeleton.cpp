@@ -28,8 +28,8 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
       play(true),
       speed(speed),
       camera(camera),
-      allowedRots(1.f),
-      allowedTrans(1.f) {
+      allowedRots(0.f, 1.f, 0.f),
+      allowedTrans(0.f) {
   if (camera) camera->target = std::shared_ptr<Transform>(&transform);
 }
 
@@ -65,13 +65,21 @@ void Skeleton::frameCounter() {
 
 void Skeleton::hierarchy() {
   auto joints    = m_currMotion->joints;
-  auto currFrame = m_currMotion->frames.at(m_currFrame);
+  auto currRots  = m_currMotion->frames.at(m_currFrame).rotations;
+  auto currTrans = m_currMotion->frames.at(m_currFrame).translation;
 
   // Root joint
-  auto rtm = &joints[0]->transformAsMatrix;
   transform.rot += this->rStep3() * allowedRots;
-  transform.pos += this->tStep3() * allowedTrans;
-  *rtm = transform.asMatrix();
+  transform.pos.y = currTrans.y;
+  // transform.pos += this->tStep3() * Math::unitVecY; //* allowedTrans;
+
+  auto rtm = &joints[0]->transformAsMatrix;
+  *rtm     = transform.asMatrix();
+
+  // LOG(currTrans.y)
+
+  // Math::translate(*rtm, currTrans * Math::unitVecY);
+
 
   // Rest of joints
   for (auto idx = 1u; idx < joints.size(); ++idx) {
@@ -81,7 +89,7 @@ void Skeleton::hierarchy() {
 
     // Process current joint
     Math::translate(*jtm, joint->offset * m_scale);
-    Math::rotateXYZ(*jtm, currFrame.rotations.at(idx));
+    Math::rotateXYZ(*jtm, currRots.at(idx));
 
     // Process joint end-site (if exists)
     if (auto je = joint->endsite) {
@@ -99,25 +107,30 @@ void Skeleton::hierarchy() {
 
 // Distance
 float Skeleton::step() {
-  auto p1 = m_currMotion->frames.at(m_currFrame).translation;
-  auto p2 = m_currMotion->frames.at(m_currFrame + 1).translation;
-  return glm::distance2(p2, p1);
+  auto t1 = m_currMotion->frames.at(m_currFrame).translation;
+  auto t2 = m_currMotion->frames.at(m_currFrame + 1).translation;
+  return glm::distance(t2, t1);
 }
 
 // 3-axes displacement
 glm::vec3 Skeleton::tStep3() {
-  auto cmFrames = m_currMotion->frames;
-  auto p1       = cmFrames.at(m_currFrame).translation;
-  auto p2       = cmFrames.at(m_currFrame + 1).translation;
-  return p2 - p1;
+  auto t1 = m_currMotion->frames.at(m_currFrame).translation;
+  auto t2 = m_currMotion->frames.at(m_currFrame + 1).translation;
+  return t2 - t1;
 }
 
 // 3-axes rotation
 glm::vec3 Skeleton::rStep3() {
-  auto cmFrames = m_currMotion->frames;
-  auto p1       = cmFrames.at(m_currFrame).rotations.at(0);
-  auto p2       = cmFrames.at(m_currFrame + 1).rotations.at(0);
-  return p2 - p1;
+  // Transform tr;
+  // tr.rot = m_currMotion->frames.at(m_currFrame).rotations.at(0);
+  // auto x = glm::orientedAngle(Math::unitVecY, tr.up(), Math::unitVecX);
+  // auto y = glm::orientedAngle(Math::unitVecZ, tr.front(), Math::unitVecY);
+  // auto z = glm::orientedAngle(Math::unitVecX, tr.right(), Math::unitVecZ);
+  // auto out = glm::degrees(glm::vec3{x, y, z});
+  //
+  auto r1 = m_currMotion->frames.at(m_currFrame).rotations.at(0);
+  auto r2 = m_currMotion->frames.at(m_currFrame + 1).rotations.at(0);
+  return r2 - r1;
 }
 
 // ====================================================================== //
@@ -154,7 +167,7 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
   auto scale = glm::distance(P1, P2) * 0.5f;
   auto bone  = Renderable::cylBetween2p(P1, P2, scale);
 
-  bone->transform.scl *= glm::vec3(1.25f, 1.f, 1.25f);
+  bone->transform.scl *= glm::vec3(2.5f, 1.f, 2.5f);
   bone->draw(camera);
   if (J->endsite) drawBone(J->endsite);
 }
@@ -252,11 +265,11 @@ void Skeleton::draw() {
     if (!J->parent) continue;
 
     if (J->name == "Head" and J->endsite) {
-      auto headRE = Renderable::getByName("Ball");
+      auto headRE = Renderable::getByName("Monkey");
 
       auto aux = J->endsite->transformAsMatrix;
-      aux      = glm::translate(aux, glm::vec3{0.f, 0.25f, 0.f});
-      aux      = glm::scale(aux, glm::vec3{1.5f});
+      aux      = glm::translate(aux, glm::vec3{0.f, 0.5f, 0.f});
+      aux      = glm::scale(aux, glm::vec3{2.f});
 
       headRE->transform.overrideMatrix = aux;
       headRE->draw(camera);

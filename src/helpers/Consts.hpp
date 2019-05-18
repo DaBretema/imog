@@ -41,6 +41,7 @@ namespace Motions {
   const std::string idle_static = Paths::motions + "idle_static.bvh";
   const std::string dance       = Paths::motions + "dance.bvh";
   const std::string backflip    = Paths::motions + "backflip.bvh";
+  const std::string tPose       = Paths::motions + "tPose.bvh";
 } // namespace Motions
 
 

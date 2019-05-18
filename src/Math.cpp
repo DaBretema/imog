@@ -3,10 +3,10 @@
 
 namespace brave {
 
-float Math::dirAngle(glm::vec3 from, glm::vec3 to) {
+float Math::dirAngle(glm::vec3 from, glm::vec3 to, glm::vec3 refAxis) {
   auto angle = glm::angle(from, to);
   auto cross = glm::cross(from, to);
-  auto dot   = glm::dot(cross, Math::unitVecY);
+  auto dot   = glm::dot(cross, refAxis);
   return glm::degrees((dot < 0.f) ? -angle : angle);
 }
 
