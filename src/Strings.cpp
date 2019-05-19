@@ -45,7 +45,7 @@ std::vector<std::string> Strings::split(const std::string& str,
 
 // ====================================================================== //
 // ====================================================================== //
-// Split gives a vector with splitted strings
+// Transform all string chars to lowercase
 // ====================================================================== //
 
 std::string Strings::toLower(const std::string& str) {
@@ -57,5 +57,13 @@ std::string Strings::toLower(const std::string& str) {
   return out;
 }
 
+// ====================================================================== //
+// ====================================================================== //
+// Contains ?
+// ====================================================================== //
+
+bool Strings::contains(const std::string& str, const std::string& substr) {
+  return str.find(substr) != std::string::npos;
+}
 
 } // namespace brave

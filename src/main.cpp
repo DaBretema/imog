@@ -27,103 +27,77 @@ int main(int argc, char const* argv[]) {
 
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
+
   auto sk = Skeleton(camera, 0.6f, 1.f);
 
+  // Load motions
   auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
-  sk.onKey(GLFW_KEY_SPACE,
-           [&]() {
-             sk.setMotion("jump");
-             sk.allowedTrans = Math::unitVecY; // Allow jump
-           },
-           [&]() {
-             //sk.loadPrevMotion();
-             sk.setMotion("walk");
-             sk.allowedTrans = Math::nullVec; // Block jump
-           });
-  sk.addMotion(jump);
-
-  auto walk      = Motion::create("walk", Motions::walk, loopMode::shortLoop);
-  bool walking   = false;
-  auto startWalk = [&]() {
-    sk.setMotion("walk");
-    walking = true;
-  };
-  auto stopWalk = [&]() {
-    sk.setMotion("idle");
-    walking = false;
-  };
-  sk.addMotion(walk);
-
-  // auto run       = Motion::create("run", Motions::run, loopMode::shortLoop);
-  // bool toggleRun = false;
-  // sk.onKey(GLFW_KEY_R, [&]() {
-  //   toggleRun = !toggleRun;
-  //   (toggleRun) ? sk.setMotion("run")
-  //               : (walking) ? sk.setMotion("walk") : sk.setMotion("idle");
-  // });
-  // sk.addMotion(run);
-
+  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop);
+  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop);
   auto idle = Motion::create("idle", Motions::tPose, loopMode::loop, 25u);
+  LOG("RUN F = {}", run->frames.size());
+  // Motion addition
+  sk.addMotion(jump);
+  sk.addMotion(walk);
   sk.addMotion(idle);
 
+  // Input setup
+  bool         moving = false;
+  unsigned int moves  = 0u;
 
+  auto step = [&]() { return sk.transform.front() * sk.step() * Math::vecXZ; };
 
+  auto angle = [&](float dir) {
+    auto sF = sk.transform.front() * Math::vecXZ;
+    auto cF = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
+    cF      = glm::rotateY(cF * Math::vecXZ, glm::radians(dir));
+    return glm::orientedAngle(sF, cF, Math::unitVecY) * Math::unitVecY;
+  };
+
+  auto jumpIn = [&]() {
+    sk.setMotion("jump");
+    sk.allowedTrans = Math::unitVecY; // Allow jump
+  };
+
+  auto jumpOut = [&]() {
+    (moving) ? sk.setMotion("walk") : sk.setMotion("idle");
+    sk.allowedTrans = Math::nullVec; // Disallow jump
+  };
+
+  auto moveRep = [&](float dir) {
+    sk.transform.pos += step();
+    sk.transform.rot += angle(dir);
+  };
+
+  auto moveIn = [&](float dir) {
+    moveRep(dir);
+    if ((moves++) > 0) return;
+    sk.setMotion("walk");
+    moving = true;
+  };
+
+  auto moveOut = [&]() {
+    if ((--moves) > 0) return;
+    sk.setMotion("idle");
+    moving = false;
+  };
+
+  auto F = [&](const auto& fn) { return [&]() { fn(0.f); }; };
+  auto R = [&](const auto& fn) { return [&]() { fn(-90.f); }; };
+  auto B = [&](const auto& fn) { return [&]() { fn(180.f); }; };
+  auto L = [&](const auto& fn) { return [&]() { fn(90.f); }; };
+
+  sk.onKey(GLFW_KEY_SPACE, jumpIn, jumpOut);
+  sk.onKey(GLFW_KEY_W, F(moveIn), moveOut, F(moveRep));
+  sk.onKey(GLFW_KEY_D, R(moveIn), moveOut, R(moveRep));
+  sk.onKey(GLFW_KEY_S, B(moveIn), moveOut, B(moveRep));
+  sk.onKey(GLFW_KEY_A, L(moveIn), moveOut, L(moveRep));
   sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
+  sk.onKey(GLFW_KEY_8, [&]() { sk.lerpAtFlyAlpha -= 0.1f; });
+  sk.onKey(GLFW_KEY_9, [&]() { sk.lerpAtFlyAlpha += 0.1f; });
+  sk.onKey(GLFW_KEY_1,
+           [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
-  {
-    auto step = [&]() {
-      sk.transform.pos += sk.transform.front() * sk.step() * Math::vecXZ;
-    };
-
-    auto angle = [&](float rotAngle) {
-      step();
-
-      auto sF = sk.transform.front() * Math::vecXZ;
-      auto cF = glm::rotateY(camera->pivot.right(), glm::radians(90.f));
-      cF      = glm::rotateY(cF * Math::vecXZ, glm::radians(rotAngle));
-
-      auto angle = glm::angle(sF, cF) * 2.f;
-      auto cross = glm::cross(sF, cF);
-      auto dot   = glm::dot(cross, Math::unitVecY);
-
-
-      return Math::unitVecY * ((dot < 0) ? -angle : angle);
-    };
-
-    auto goF = [&]() { sk.transform.rot += angle(0.f); };
-    auto goR = [&]() { sk.transform.rot += angle(-90.f); };
-    auto goB = [&]() { sk.transform.rot += angle(180.f); };
-    auto goL = [&]() { sk.transform.rot += angle(90.f); };
-
-    sk.onKey(GLFW_KEY_W,
-             [&]() {
-               goF();
-               startWalk();
-             },
-             stopWalk,
-             goF);
-    sk.onKey(GLFW_KEY_D,
-             [&]() {
-               goR();
-               startWalk();
-             },
-             stopWalk,
-             goR);
-    sk.onKey(GLFW_KEY_S,
-             [&]() {
-               goB();
-               startWalk();
-             },
-             stopWalk,
-             goB);
-    sk.onKey(GLFW_KEY_A,
-             [&]() {
-               goL();
-               startWalk();
-             },
-             stopWalk,
-             goL);
-  }
   sk.animate();
 
   // ------------------------------------------ / Skeleton ---

@@ -7,6 +7,7 @@
 
 #include "Logger.hpp"
 #include "Loader.hpp"
+#include "Strings.hpp"
 #include "Settings.hpp"
 
 
@@ -42,10 +43,10 @@ std::vector<Frame>
 
     auto newTrans     = glm::mix(F1.translation, F2.translation, alpha);
     frame.translation = newTrans;
-    if (!lerpT) {
-      frame.translation.x = F1.translation.x;
-      frame.translation.z = F1.translation.z;
-    }
+    // if (!lerpT) { //!!!! TEMP REMOVED
+    //   frame.translation.x = F1.translation.x;
+    //   frame.translation.z = F1.translation.z;
+    // }
 
     // frame.rotations.push_back(F1.rotations[0] + alpha * rootRot);
     for (auto i = 0u; i < F1.rotations.size(); ++i) {
@@ -70,8 +71,10 @@ std::vector<Frame>
 
 glm::vec3 Frame::value() const {
   glm::vec3 wJR{0.4f};
-  glm::vec3 wRT{0.2f, -0.6f, 0.2f}; // ???????????
-  glm::vec3 wRR{0.2f, 0.6f, 0.2f};
+  // glm::vec3 wRT{0.2f, 0.6f, 0.2f}; // ???????????
+  // glm::vec3 wRR{0.2f, 0.6f, 0.2f};
+  glm::vec3 wRT{0.f}; // ???????????
+  glm::vec3 wRR{0.f};
 
   glm::vec3 RT = this->translation;
   glm::vec3 RR = this->rotations.at(0);
@@ -130,12 +133,12 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
     f.rotations.at(0).y -= minRY;
     f.rotations.at(0).z -= minRZ;
     // R set between [0,360]
-    // f.rotations.at(0).x = glm::mod(f.rotations.at(0).x, 360.f);
-    // f.rotations.at(0).y = glm::mod(f.rotations.at(0).y, 360.f);
-    // f.rotations.at(0).z = glm::mod(f.rotations.at(0).z, 360.f);
-    // if (f.rotations.at(0).x < 0.f) f.rotations.at(0).x += 360.f;
-    // if (f.rotations.at(0).y < 0.f) f.rotations.at(0).y += 360.f;
-    // if (f.rotations.at(0).z < 0.f) f.rotations.at(0).z += 360.f;
+    f.rotations.at(0).x = glm::mod(f.rotations.at(0).x, 360.f);
+    f.rotations.at(0).y = glm::mod(f.rotations.at(0).y, 360.f);
+    f.rotations.at(0).z = glm::mod(f.rotations.at(0).z, 360.f);
+    if (f.rotations.at(0).x < 0.f) f.rotations.at(0).x += 360.f;
+    if (f.rotations.at(0).y < 0.f) f.rotations.at(0).y += 360.f;
+    if (f.rotations.at(0).z < 0.f) f.rotations.at(0).z += 360.f;
   }
 
   return m;
@@ -143,10 +146,10 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
 
 // ====================================================================== //
 // ====================================================================== //
-// If its name contains _ is a mix
+// Is ?
 // ====================================================================== //
 
-bool Motion::isMix() { return this->name.find("_") != std::string::npos; }
+bool Motion::isMix() { return Strings::contains(this->name, "_"); }
 
 // ====================================================================== //
 // ====================================================================== //

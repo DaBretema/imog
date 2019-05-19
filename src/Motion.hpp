@@ -44,7 +44,9 @@ public:
   std::vector<Frame>                  frames;
   float                               timeStep;
 
-  // If its name contains _ is a mix
+  std::shared_ptr<Motion> linked = nullptr;
+
+  // Type
   bool isMix();
 
   // Clean any motion to get a smoother loop
@@ -52,7 +54,7 @@ public:
 
   // Mix any motion with other and get a new animation
   // that conect both smoothly
-  mixMap mix(const std::shared_ptr<Motion>& m);
+  mixMap mix(const std::shared_ptr<Motion>& m2);
 };
 
 } // namespace brave

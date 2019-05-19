@@ -77,6 +77,9 @@ public:
   glm::vec3               allowedRots;
   glm::vec3               allowedTrans;
 
+  float                                        lerpAtFlyAlpha;
+  std::unordered_map<std::string, std::string> lerpAtFly;
+
   // Compute displacement to apply on next user input
   float step();
 

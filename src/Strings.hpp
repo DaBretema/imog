@@ -12,10 +12,13 @@ public:
 
   // Split gives a vector with splitted strings
   static std::vector<std::string> split(const std::string& str,
-                                        const std::string& delimeter);
+                                        const std::string& sep);
 
   // To lower
   static std::string toLower(const std::string& str);
+
+  // Contains
+  static bool contains(const std::string& str, const std::string& substr);
 };
 
 } // namespace brave

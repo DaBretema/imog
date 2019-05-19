@@ -29,7 +29,8 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
       speed(speed),
       camera(camera),
       allowedRots(0.f, 1.f, 0.f),
-      allowedTrans(0.f) {
+      allowedTrans(0.f),
+      lerpAtFlyAlpha(0.f) {
   if (camera) camera->target = std::shared_ptr<Transform>(&transform);
 }
 
@@ -54,7 +55,8 @@ Skeleton::~Skeleton() {
 // ====================================================================== //
 
 void Skeleton::frameCounter() {
-  bool limitReached = m_currFrame >= m_currMotion->frames.size() - 2;
+  auto add          = (m_currMotion->linked) ? 10u : 0u;
+  bool limitReached = m_currFrame >= m_currMotion->frames.size() - 2u + add;
   (limitReached) ? loadNextMotion() : (void)++m_currFrame;
 }
 
@@ -64,22 +66,86 @@ void Skeleton::frameCounter() {
 // ====================================================================== //
 
 void Skeleton::hierarchy() {
-  auto joints    = m_currMotion->joints;
-  auto currRots  = m_currMotion->frames.at(m_currFrame).rotations;
-  auto currTrans = m_currMotion->frames.at(m_currFrame).translation;
+  auto                   joints = m_currMotion->joints;
+  std::vector<glm::vec3> currRots;
+  glm::vec3              currTrans;
+
+  // lerp at fly
+  if (m_currMotion->linked) {
+    auto m1     = m_currMotion->frames;
+    auto m2     = m_currMotion->linked->frames;
+    auto factor = (float)m2.size() / (float)m1.size();
+
+    if (m_currFrame >= m1.size() - 2u) {
+      LOG("hereeeeee");
+      float _alpha = (m_currFrame - m1.size() - 2u) * 0.1;
+      LOG(_alpha);
+
+      auto m1R1 = m1.at(m1.size() - 2u).rotations;
+      auto m1T1 = m1.at(m1.size() - 2u).translation;
+      auto m2R1 = m2.at(m2.size() - 2u).rotations;
+      auto m2T1 = m2.at(m2.size() - 2u).translation;
+
+      Frame f1;
+      for (auto i = 0u; i < m1R1.size(); ++i) {
+        auto newRot = glm::mix(m1R1[i], m2R1[i], lerpAtFlyAlpha);
+        f1.rotations.push_back(newRot);
+      }
+      f1.translation = glm::mix(m1T1, m2T1, lerpAtFlyAlpha);
+
+      auto m1R2 = m1.at(0u).rotations;
+      auto m2R2 = m1.at(0u).rotations;
+      auto m1T2 = m1.at(0u).translation;
+      auto m2T2 = m2.at(0u).translation;
+
+      Frame f2;
+      for (auto i = 0u; i < m1R2.size(); ++i) {
+        auto newRot = glm::mix(m1R2[i], m2R2[i], lerpAtFlyAlpha);
+        f2.rotations.push_back(newRot);
+      }
+      f2.translation = glm::mix(m1T2, m2T2, lerpAtFlyAlpha);
+
+      // Aqui interpolar entre F1 y F2
+      Frame frame;
+      frame.translation = glm::mix(f1.translation, f2.translation, _alpha);
+      for (auto i = 0u; i < f1.rotations.size(); ++i) {
+        auto newRot = glm::mix(f1.rotations[i], f2.rotations[i], _alpha);
+        frame.rotations.push_back(newRot);
+      }
+      currRots  = frame.rotations;
+      currTrans = frame.translation;
+
+    } else {
+      auto currFrame = ceilf(m_currFrame * factor);
+      auto m1R       = m1.at(currFrame).rotations;
+      auto m1T       = m1.at(currFrame).translation;
+      auto m2R       = m2.at(currFrame).rotations;
+      auto m2T       = m2.at(currFrame).translation;
+
+      Frame f;
+      for (auto i = 0u; i < m1R.size(); ++i) {
+        auto newRot = glm::mix(m1R[i], m2R[i], lerpAtFlyAlpha);
+        f.rotations.push_back(newRot);
+      }
+      currRots  = f.rotations;
+      currTrans = glm::mix(m1T, m2T, lerpAtFlyAlpha);
+    }
+  } else {
+    currRots  = m_currMotion->frames.at(m_currFrame).rotations;
+    currTrans = m_currMotion->frames.at(m_currFrame).translation;
+  }
 
   // Root joint
+  //
+  // if(userInput){
   transform.rot += this->rStep3() * allowedRots;
   transform.pos.y = currTrans.y;
-  // transform.pos += this->tStep3() * Math::unitVecY; //* allowedTrans;
+  //} else {
+  // transform.rot = currRot;
+  // transform.pos = currTrans;
+  //}
 
-  auto rtm = &joints[0]->transformAsMatrix;
-  *rtm     = transform.asMatrix();
-
-  // LOG(currTrans.y)
-
-  // Math::translate(*rtm, currTrans * Math::unitVecY);
-
+  joints[0]->transformAsMatrix = transform.asMatrix();
 
   // Rest of joints
   for (auto idx = 1u; idx < joints.size(); ++idx) {
@@ -121,13 +187,6 @@ glm::vec3 Skeleton::tStep3() {
 
 // 3-axes rotation
 glm::vec3 Skeleton::rStep3() {
-  // Transform tr;
-  // tr.rot = m_currMotion->frames.at(m_currFrame).rotations.at(0);
-  // auto x = glm::orientedAngle(Math::unitVecY, tr.up(), Math::unitVecX);
-  // auto y = glm::orientedAngle(Math::unitVecZ, tr.front(), Math::unitVecY);
-  // auto z = glm::orientedAngle(Math::unitVecX, tr.right(), Math::unitVecZ);
-  // auto out = glm::degrees(glm::vec3{x, y, z});
-  //
   auto r1 = m_currMotion->frames.at(m_currFrame).rotations.at(0);
   auto r2 = m_currMotion->frames.at(m_currFrame + 1).rotations.at(0);
   return r2 - r1;
@@ -193,35 +252,6 @@ void Skeleton::loadNextMotion() {
   m_nextMotion = nullptr;
 }
 
-// ====================================================================== //
-// ====================================================================== //
-// Modify current motion (intern call)
-// ====================================================================== //
-
-// void Skeleton::_setMotion(const std::string& dest) {
-//   auto _dest = Strings::toLower(dest);
-//   if (!motionExists(_dest)) return;
-
-//   // Mix motion completed
-//   if (Motion::isMix(_dest)) {
-//     m_lastFrame  = -1;
-//     m_currMotion = m_motions.at(_dest);
-//     m_currFrame  = 0;
-//     // Puts next simple motion in 'queue'
-//     m_nextMotion = Strings::split(_dest, "_")[1];
-//   }
-
-//   // From mix to dest motion
-//   else if (m_currMotion->isMix()) {
-//     m_currFrame  = m_currMotion->frameB;
-//     m_currMotion = m_motions.at(_dest);
-//   }
-
-//   // Never...
-//   else {
-//     LOGE("SHOULD NOT BE HERE!!!");
-//   }
-// }
 
 // * --- Public --------------------------------------------------------- //
 
@@ -289,8 +319,8 @@ void Skeleton::setMotion(const std::string& dest) {
   auto        _dest = Strings::toLower(dest);
   std::string key   = m_currMotion->name + "_" + _dest;
 
-  if (!m_currMotion || !motionExists(_dest) || m_currMotion->isMix() ||
-      !(mixMotionExists(key) && m_currMotion->name != _dest))
+  if (m_currMotion->name == _dest || m_currMotion->isMix() || !m_currMotion ||
+      !motionExists(_dest) || !mixMotionExists(key))
     return;
 
   auto t = m_motionMap.at(key).at(m_currFrame);
