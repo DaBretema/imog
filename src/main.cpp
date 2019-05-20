@@ -35,9 +35,9 @@ int main(int argc, char const* argv[]) {
   auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop);
   auto run  = Motion::create("run", Motions::run, loopMode::shortLoop);
   auto idle = Motion::create("idle", Motions::tPose, loopMode::loop, 25u);
-  LOG("RUN F = {}", run->frames.size());
   // Motion addition
   sk.addMotion(jump);
+  walk->linked = run;
   sk.addMotion(walk);
   sk.addMotion(idle);
 

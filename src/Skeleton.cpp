@@ -55,7 +55,7 @@ Skeleton::~Skeleton() {
 // ====================================================================== //
 
 void Skeleton::frameCounter() {
-  auto add          = (m_currMotion->linked) ? 10u : 0u;
+  auto add          = (m_currMotion->linked) ? 29u : 0u;
   bool limitReached = m_currFrame >= m_currMotion->frames.size() - 2u + add;
   (limitReached) ? loadNextMotion() : (void)++m_currFrame;
 }
@@ -76,15 +76,14 @@ void Skeleton::hierarchy() {
     auto m2     = m_currMotion->linked->frames;
     auto factor = (float)m2.size() / (float)m1.size();
 
-    if (m_currFrame >= m1.size() - 2u) {
-      LOG("hereeeeee");
-      float _alpha = (m_currFrame - m1.size() - 2u) * 0.1;
-      LOG(_alpha);
+    auto cfMax = m1.size() - 2u;
+    if (m_currFrame >= cfMax) {
+      LOG("CASE 2 = {}", m_currFrame);
 
-      auto m1R1 = m1.at(m1.size() - 2u).rotations;
-      auto m1T1 = m1.at(m1.size() - 2u).translation;
-      auto m2R1 = m2.at(m2.size() - 2u).rotations;
-      auto m2T1 = m2.at(m2.size() - 2u).translation;
+      auto m1R1 = m1.at(cfMax * factor).rotations;
+      auto m1T1 = m1.at(cfMax * factor).translation;
+      auto m2R1 = m2.at(cfMax * factor).rotations;
+      auto m2T1 = m2.at(cfMax * factor).translation;
 
       Frame f1;
       for (auto i = 0u; i < m1R1.size(); ++i) {
@@ -93,9 +92,11 @@ void Skeleton::hierarchy() {
       }
       f1.translation = glm::mix(m1T1, m2T1, lerpAtFlyAlpha);
 
+
       auto m1R2 = m1.at(0u).rotations;
-      auto m2R2 = m1.at(0u).rotations;
       auto m1T2 = m1.at(0u).translation;
+
+      auto m2R2 = m2.at(0u).rotations;
       auto m2T2 = m2.at(0u).translation;
 
       Frame f2;
@@ -107,6 +108,8 @@ void Skeleton::hierarchy() {
 
       // Aqui interpolar entre F1 y F2
       Frame frame;
+      float _alphastep = 1.f / 30.f;
+      float _alpha     = _alphastep + (float)(m_currFrame - cfMax) * _alphastep;
       frame.translation = glm::mix(f1.translation, f2.translation, _alpha);
       for (auto i = 0u; i < f1.rotations.size(); ++i) {
         auto newRot = glm::mix(f1.rotations[i], f2.rotations[i], _alpha);
@@ -116,6 +119,7 @@ void Skeleton::hierarchy() {
       currTrans = frame.translation;
 
     } else {
+
       auto currFrame = ceilf(m_currFrame * factor);
       auto m1R       = m1.at(currFrame).rotations;
       auto m1T       = m1.at(currFrame).translation;
@@ -138,7 +142,7 @@ void Skeleton::hierarchy() {
   // Root joint
   //
   // if(userInput){
-  transform.rot += this->rStep3() * allowedRots;
+  // transform.rot += this->rStep3() * allowedRots;
   transform.pos.y = currTrans.y;
   //} else {
   // transform.rot = currRot;
@@ -173,22 +177,43 @@ void Skeleton::hierarchy() {
 
 // Distance
 float Skeleton::step() {
-  auto t1 = m_currMotion->frames.at(m_currFrame).translation;
-  auto t2 = m_currMotion->frames.at(m_currFrame + 1).translation;
+  glm::vec3 t1, t2;
+  auto      cf    = m_currMotion->frames;
+  auto      cfMax = cf.size() - 2u;
+
+  if (m_currFrame >= cfMax) {
+    t1 = cf.at(cfMax).translation;
+    t2 = cf.at(cfMax + 1).translation;
+  } else {
+    t1 = cf.at(m_currFrame).translation;
+    t2 = cf.at(m_currFrame + 1).translation;
+  }
+
   return glm::distance(t2, t1);
 }
 
 // 3-axes displacement
-glm::vec3 Skeleton::tStep3() {
-  auto t1 = m_currMotion->frames.at(m_currFrame).translation;
-  auto t2 = m_currMotion->frames.at(m_currFrame + 1).translation;
-  return t2 - t1;
-}
+// glm::vec3 Skeleton::tStep3() {
+//   auto t1 = m_currMotion->frames.at(m_currFrame).translation;
+//   auto t2 = m_currMotion->frames.at(m_currFrame + 1).translation;
+//   return t2 - t1;
+// }
 
 // 3-axes rotation
 glm::vec3 Skeleton::rStep3() {
-  auto r1 = m_currMotion->frames.at(m_currFrame).rotations.at(0);
-  auto r2 = m_currMotion->frames.at(m_currFrame + 1).rotations.at(0);
+  glm::vec3 r1, r2;
+  auto      cf    = m_currMotion->frames;
+  auto      cfMax = cf.size() - 2u;
+
+  if (m_currFrame >= cfMax) {
+    r1 = cf.at(cfMax).rotations.at(0);
+    r2 = cf.at(cfMax + 1).rotations.at(0);
+  } else {
+    r1 = cf.at(m_currFrame).rotations.at(0);
+    r2 = cf.at(m_currFrame + 1).rotations.at(0);
+  }
+  // auto r1 = m_currMotion->frames.at(m_currFrame).rotations.at(0);
+  // auto r2 = m_currMotion->frames.at(m_currFrame + 1).rotations.at(0);
   return r2 - r1;
 }
 
@@ -323,8 +348,11 @@ void Skeleton::setMotion(const std::string& dest) {
       !motionExists(_dest) || !mixMotionExists(key))
     return;
 
-  auto t = m_motionMap.at(key).at(m_currFrame);
+  auto cf    = m_currMotion->frames;
+  auto cfMax = cf.size() - 2u;
 
+  auto t = (m_currFrame >= cfMax) ? m_motionMap.at(key).at(cfMax)
+                                  : m_motionMap.at(key).at(m_currFrame);
   m_nextFrame  = t.first;
   m_nextMotion = m_motions.at(_dest);
 
