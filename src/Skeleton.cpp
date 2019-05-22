@@ -218,6 +218,9 @@ float Skeleton::step() {
 
 void Skeleton::animate() {
   auto timestepFn = [&]() {
+    // !!!!! PD: clean jump animation to make it short: just the jump.
+    // TODO 1: make speed work.
+    // TODO 2: if currMotion has linked motion, lerp time based en m_linkedAlpha
     // return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
     return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
   };
