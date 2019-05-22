@@ -25,12 +25,13 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
       m_nextFrame(0u),
       m_currMotion(nullptr),
       m_nextMotion(nullptr),
+      m_linkedAlpha(0.f),
       play(true),
       speed(speed),
       camera(camera),
       allowedRots(0.f, 1.f, 0.f),
       allowedTrans(0.f),
-      lerpAtFlyAlpha(0.f) {
+      linkedSteps(10u) {
   if (camera) camera->target = std::shared_ptr<Transform>(&transform);
 }
 
@@ -51,12 +52,28 @@ Skeleton::~Skeleton() {
 
 // ====================================================================== //
 // ====================================================================== //
-// Frame counter
+// Counters
 // ====================================================================== //
 
+float Skeleton::alphaStep() const {
+  return 1.f / glm::clamp((float)linkedSteps, 0.f, 100.f);
+}
+
+Frame Skeleton::transitionedLinkedFrame() const {
+  auto  F1    = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha);
+  auto  F2    = m_currMotion->linkedFrame(0u, m_linkedAlpha);
+  float step  = alphaStep();
+  float alpha = step + (float)(m_currFrame - lastFrame()) * step;
+  return F1.lerpOne(F2, alpha);
+};
+
+unsigned int Skeleton::lastFrame() const {
+  return m_currMotion->frames.size() - 2u;
+}
+
 void Skeleton::frameCounter() {
-  auto add          = (m_currMotion->linked) ? 29u : 0u;
-  bool limitReached = m_currFrame >= m_currMotion->frames.size() - 2u + add;
+  auto offsetForNewFrames = (m_currMotion->linked) ? (linkedSteps - 1u) : 0u;
+  bool limitReached       = m_currFrame >= lastFrame() + offsetForNewFrames;
   (limitReached) ? loadNextMotion() : (void)++m_currFrame;
 }
 
@@ -66,92 +83,24 @@ void Skeleton::frameCounter() {
 // ====================================================================== //
 
 void Skeleton::hierarchy() {
-  auto                   joints = m_currMotion->joints;
-  std::vector<glm::vec3> currRots;
-  glm::vec3              currTrans;
+  auto joints = m_currMotion->joints;
 
-  // lerp at fly
-  if (m_currMotion->linked) {
-    auto m1     = m_currMotion->frames;
-    auto m2     = m_currMotion->linked->frames;
-    auto factor = (float)m2.size() / (float)m1.size();
+  Frame F = (m_currMotion->linked)
+                ? (m_currFrame >= lastFrame())
+                      ? transitionedLinkedFrame()
+                      : m_currMotion->linkedFrame(m_currFrame, m_linkedAlpha)
+                : m_currMotion->frames.at(m_currFrame);
 
-    auto cfMax = m1.size() - 2u;
-    if (m_currFrame >= cfMax) {
-      LOG("CASE 2 = {}", m_currFrame);
-
-      auto m1R1 = m1.at(cfMax * factor).rotations;
-      auto m1T1 = m1.at(cfMax * factor).translation;
-      auto m2R1 = m2.at(cfMax * factor).rotations;
-      auto m2T1 = m2.at(cfMax * factor).translation;
-
-      Frame f1;
-      for (auto i = 0u; i < m1R1.size(); ++i) {
-        auto newRot = glm::mix(m1R1[i], m2R1[i], lerpAtFlyAlpha);
-        f1.rotations.push_back(newRot);
-      }
-      f1.translation = glm::mix(m1T1, m2T1, lerpAtFlyAlpha);
-
-
-      auto m1R2 = m1.at(0u).rotations;
-      auto m1T2 = m1.at(0u).translation;
-
-      auto m2R2 = m2.at(0u).rotations;
-      auto m2T2 = m2.at(0u).translation;
-
-      Frame f2;
-      for (auto i = 0u; i < m1R2.size(); ++i) {
-        auto newRot = glm::mix(m1R2[i], m2R2[i], lerpAtFlyAlpha);
-        f2.rotations.push_back(newRot);
-      }
-      f2.translation = glm::mix(m1T2, m2T2, lerpAtFlyAlpha);
-
-      // Aqui interpolar entre F1 y F2
-      Frame frame;
-      float _alphastep = 1.f / 30.f;
-      float _alpha     = _alphastep + (float)(m_currFrame - cfMax) * _alphastep;
-      frame.translation = glm::mix(f1.translation, f2.translation, _alpha);
-      for (auto i = 0u; i < f1.rotations.size(); ++i) {
-        auto newRot = glm::mix(f1.rotations[i], f2.rotations[i], _alpha);
-        frame.rotations.push_back(newRot);
-      }
-      currRots  = frame.rotations;
-      currTrans = frame.translation;
-
-    } else {
-
-      auto currFrame = ceilf(m_currFrame * factor);
-      auto m1R       = m1.at(currFrame).rotations;
-      auto m1T       = m1.at(currFrame).translation;
-      auto m2R       = m2.at(currFrame).rotations;
-      auto m2T       = m2.at(currFrame).translation;
-
-      Frame f;
-      for (auto i = 0u; i < m1R.size(); ++i) {
-        auto newRot = glm::mix(m1R[i], m2R[i], lerpAtFlyAlpha);
-        f.rotations.push_back(newRot);
-      }
-      currRots  = f.rotations;
-      currTrans = glm::mix(m1T, m2T, lerpAtFlyAlpha);
-    }
-  } else {
-    currRots  = m_currMotion->frames.at(m_currFrame).rotations;
-    currTrans = m_currMotion->frames.at(m_currFrame).translation;
-  }
-
-  // Root joint
-  //
-  // if(userInput){
-  // transform.rot += this->rStep3() * allowedRots;
-  transform.pos.y = currTrans.y;
-  //} else {
-  // transform.rot = currRot;
-  // transform.pos = currTrans;
-  //}
-
+  // === ROOT ===
+  // if (this->userInput) {
+  transform.pos.y = F.translation.y;
+  // } else {
+  //   transform.rot = F.rotations.at(0);
+  //   transform.pos = F.translation;
+  // }
   joints[0]->transformAsMatrix = transform.asMatrix();
 
-  // Rest of joints
+  // === JOINTS ===
   for (auto idx = 1u; idx < joints.size(); ++idx) {
     auto joint = joints.at(idx);
     auto jtm   = &joint->transformAsMatrix;
@@ -159,7 +108,7 @@ void Skeleton::hierarchy() {
 
     // Process current joint
     Math::translate(*jtm, joint->offset * m_scale);
-    Math::rotateXYZ(*jtm, currRots.at(idx));
+    Math::rotateXYZ(*jtm, F.rotations.at(idx));
 
     // Process joint end-site (if exists)
     if (auto je = joint->endsite) {
@@ -167,54 +116,6 @@ void Skeleton::hierarchy() {
       Math::translate(je->transformAsMatrix, je->offset * m_scale);
     }
   }
-}
-
-
-// ====================================================================== //
-// ====================================================================== //
-// Steps
-// ====================================================================== //
-
-// Distance
-float Skeleton::step() {
-  glm::vec3 t1, t2;
-  auto      cf    = m_currMotion->frames;
-  auto      cfMax = cf.size() - 2u;
-
-  if (m_currFrame >= cfMax) {
-    t1 = cf.at(cfMax).translation;
-    t2 = cf.at(cfMax + 1).translation;
-  } else {
-    t1 = cf.at(m_currFrame).translation;
-    t2 = cf.at(m_currFrame + 1).translation;
-  }
-
-  return glm::distance(t2, t1);
-}
-
-// 3-axes displacement
-// glm::vec3 Skeleton::tStep3() {
-//   auto t1 = m_currMotion->frames.at(m_currFrame).translation;
-//   auto t2 = m_currMotion->frames.at(m_currFrame + 1).translation;
-//   return t2 - t1;
-// }
-
-// 3-axes rotation
-glm::vec3 Skeleton::rStep3() {
-  glm::vec3 r1, r2;
-  auto      cf    = m_currMotion->frames;
-  auto      cfMax = cf.size() - 2u;
-
-  if (m_currFrame >= cfMax) {
-    r1 = cf.at(cfMax).rotations.at(0);
-    r2 = cf.at(cfMax + 1).rotations.at(0);
-  } else {
-    r1 = cf.at(m_currFrame).rotations.at(0);
-    r2 = cf.at(m_currFrame + 1).rotations.at(0);
-  }
-  // auto r1 = m_currMotion->frames.at(m_currFrame).rotations.at(0);
-  // auto r2 = m_currMotion->frames.at(m_currFrame + 1).rotations.at(0);
-  return r2 - r1;
 }
 
 // ====================================================================== //
@@ -279,6 +180,36 @@ void Skeleton::loadNextMotion() {
 
 
 // * --- Public --------------------------------------------------------- //
+
+void Skeleton::incLinkedAlpha() {
+  m_linkedAlpha += alphaStep();
+  m_linkedAlpha = glm::clamp(m_linkedAlpha, 0.f, 1.f);
+}
+void Skeleton::decLinkedAlpha() {
+  m_linkedAlpha -= alphaStep();
+  m_linkedAlpha = glm::clamp(m_linkedAlpha, 0.f, 1.f);
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Steps
+// ====================================================================== //
+
+float Skeleton::step() {
+  glm::vec3 t1, t2;
+  auto      cf = m_currMotion->frames;
+
+  if (m_currFrame >= lastFrame()) {
+    t1 = cf.at(lastFrame()).translation;
+    t2 = cf.at(lastFrame() + 1).translation;
+  } else {
+    t1 = cf.at(m_currFrame).translation;
+    t2 = cf.at(m_currFrame + 1).translation;
+  }
+
+  auto step = glm::distance(t2, t1);
+  return glm::clamp(step, 0.f, m_currMotion->maxStep());
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -348,11 +279,8 @@ void Skeleton::setMotion(const std::string& dest) {
       !motionExists(_dest) || !mixMotionExists(key))
     return;
 
-  auto cf    = m_currMotion->frames;
-  auto cfMax = cf.size() - 2u;
-
-  auto t = (m_currFrame >= cfMax) ? m_motionMap.at(key).at(cfMax)
-                                  : m_motionMap.at(key).at(m_currFrame);
+  auto t = (m_currFrame >= lastFrame()) ? m_motionMap.at(key).at(lastFrame())
+                                        : m_motionMap.at(key).at(m_currFrame);
   m_nextFrame  = t.first;
   m_nextMotion = m_motions.at(_dest);
 

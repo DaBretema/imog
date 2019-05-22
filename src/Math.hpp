@@ -11,6 +11,7 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/component_wise.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 #include <vector>
 #include <string>

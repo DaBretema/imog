@@ -31,13 +31,19 @@ int main(int argc, char const* argv[]) {
   auto sk = Skeleton(camera, 0.6f, 1.f);
 
   // Load motions
+  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 5u);
+  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 5u);
   auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
-  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop);
-  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop);
   auto idle = Motion::create("idle", Motions::tPose, loopMode::loop, 25u);
+
+  // To avoid diferent skeletons per motion
+  run->joints  = walk->joints;
+  jump->joints = walk->joints;
+  idle->joints = walk->joints;
+
   // Motion addition
   sk.addMotion(jump);
-  walk->linked = run;
+  // walk->linked = run;
   sk.addMotion(walk);
   sk.addMotion(idle);
 
@@ -93,8 +99,8 @@ int main(int argc, char const* argv[]) {
   sk.onKey(GLFW_KEY_S, B(moveIn), moveOut, B(moveRep));
   sk.onKey(GLFW_KEY_A, L(moveIn), moveOut, L(moveRep));
   sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
-  sk.onKey(GLFW_KEY_8, [&]() { sk.lerpAtFlyAlpha -= 0.1f; });
-  sk.onKey(GLFW_KEY_9, [&]() { sk.lerpAtFlyAlpha += 0.1f; });
+  sk.onKey(GLFW_KEY_8, [&]() { sk.decLinkedAlpha(); });
+  sk.onKey(GLFW_KEY_9, [&]() { sk.incLinkedAlpha(); });
   sk.onKey(GLFW_KEY_1,
            [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
@@ -121,9 +127,6 @@ int main(int argc, char const* argv[]) {
     camera->frame();
     Shader::poolUpdate(camera);
     Renderable::poolDraw(camera);
-
-    // if (sk.transform.pos.y < 0.f) sk.transform.pos.y = 0.f;
-    // if (sk.transform.pos.y > 1.f) sk.transform.pos.y = 1.f;
 
     // if (glfwGetKey())
   };

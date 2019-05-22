@@ -29,6 +29,13 @@ private:
   std::unordered_map<std::string, std::shared_ptr<Motion>> m_motions;
   std::unordered_map<std::string, Motion::mixMap>          m_motionMap;
 
+  // Alpha value for linked motions
+  float m_linkedAlpha;
+  float alphaStep() const;
+  Frame transitionedLinkedFrame() const;
+
+  // Last frame taking into count displacement offset
+  unsigned int lastFrame() const;
 
   // Frame step
   void frameCounter();
@@ -58,10 +65,6 @@ private:
   // the value of the current frame
   void loadNextMotion();
 
-  // Modify current motion (intern call)
-  void _setMotion(const std::string& dest);
-
-
 
 public:
   Skeleton(const std::shared_ptr<brave::Camera>& camera,
@@ -70,6 +73,7 @@ public:
 
   ~Skeleton();
 
+  bool                    userInput{true};
   bool                    play;
   float                   speed;
   std::shared_ptr<Camera> camera;
@@ -77,8 +81,10 @@ public:
   glm::vec3               allowedRots;
   glm::vec3               allowedTrans;
 
-  float                                        lerpAtFlyAlpha;
-  std::unordered_map<std::string, std::string> lerpAtFly;
+  // manage linked motion alpha and steps to lerp
+  unsigned int linkedSteps;
+  void         incLinkedAlpha();
+  void         decLinkedAlpha();
 
   // Compute displacement to apply on next user input
   float step();
