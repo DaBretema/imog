@@ -249,18 +249,22 @@ glm::vec3 Skeleton::rotSteps() const {
 
 void Skeleton::animate() {
   auto timestepFn = [&]() {
-    // !!!!! PD: clean jump animation to make it short: just the jump.
-    // TODO 1: make speed work.
-    // TODO 2: if currMotion has linked motion, lerp time based en m_linkedAlpha
+    if (!m_currMotion) return 0.5f / speed;
 
-    return ((m_currMotion) ? m_currMotion->timeStep : 0.5f) / speed;
-    // return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
+    if (m_currMotion->linked) {
+      return glm::lerp(m_currMotion->timeStep,
+                       m_currMotion->linked->timeStep,
+                       m_linkedAlpha);
+    } else {
+      return m_currMotion->timeStep / speed;
+    }
   };
 
   auto animationFn = [&]() {
     if (!this->play or !m_currMotion) return;
     hierarchy();
     frameCounter();
+    userFn();
     if (!Settings::pollEvents) { glfwPostEmptyEvent(); }
   };
 

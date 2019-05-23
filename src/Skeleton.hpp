@@ -74,6 +74,7 @@ public:
   Transform               transform;
   glm::vec3               allowedRots;
   glm::vec3               allowedTrans;
+  _IO_FUNC                userFn;
 
   // Get current motion
   float footHeight() const {

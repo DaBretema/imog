@@ -48,9 +48,15 @@ int main(int argc, char const* argv[]) {
   sk.addMotion(walk);
   sk.addMotion(idle);
 
+
   // Input setup
-  bool         moving = false;
-  unsigned int moves  = 0u;
+  std::once_flag _setKeysFlag;
+
+  unsigned int moves    = 0u;
+  bool         moving   = false;
+  float        dirAngle = 0.f;
+
+  bool jumpIn, jumpOut, moveIn, moveOut, moveRep;
 
   auto step = [&]() { return sk.transform.front() * sk.step() * Math::vecXZ; };
 
@@ -61,45 +67,73 @@ int main(int argc, char const* argv[]) {
     return glm::orientedAngle(sF, cF, Math::unitVecY) * Math::unitVecY;
   };
 
-  auto jumpIn = [&]() {
-    step();
-    sk.setMotion("jump");
-    sk.allowedTrans = Math::unitVecY; // Allow jump
+  sk.userFn = [&]() {
+    if (jumpIn) {
+      jumpIn = false;
+      step();
+      sk.setMotion("jump");
+      sk.allowedTrans = Math::unitVecY;
+      jumpOut         = true;
+    }
+
+    if (jumpOut) {
+      jumpOut = false;
+      (moving) ? sk.setMotion("walk") : sk.setMotion("idle");
+      sk.allowedTrans = Math::nullVec; // Disallow jump
+    }
+
+    if (moveRep || moveIn) {
+      sk.transform.rot += angle(dirAngle) * 10.f;
+      sk.transform.pos += step();
+    }
+
+    if (moveIn) {
+      moveIn = false;
+      if ((moves++) > 0) return;
+      sk.setMotion("walk");
+      moving  = true;
+      moveRep = true;
+    }
+
+    if (moveOut) {
+      moveOut = false;
+      if ((--moves) > 0) return;
+      sk.setMotion("idle");
+      moving = false;
+    }
   };
 
-  auto jumpOut = [&]() {
-    (moving) ? sk.setMotion("walk") : sk.setMotion("idle");
-    sk.allowedTrans = Math::nullVec; // Disallow jump
-  };
+  // auto F = [&](const auto& fn) { return [&]() { fn(0.f); }; };
+  // auto R = [&](const auto& fn) { return [&]() { fn(-90.f); }; };
+  // auto B = [&](const auto& fn) { return [&]() { fn(180.f); }; };
+  // auto L = [&](const auto& fn) { return [&]() { fn(90.f); }; };
 
-  auto moveRep = [&](float dir) {
-    sk.transform.rot += angle(dir) * 10.f;
-    sk.transform.pos += step();
-  };
-
-  auto moveIn = [&](float dir) {
-    moveRep(dir);
-    if ((moves++) > 0) return;
-    sk.setMotion("walk");
-    moving = true;
-  };
-
-  auto moveOut = [&]() {
-    if ((--moves) > 0) return;
-    sk.setMotion("idle");
-    moving = false;
-  };
-
-  auto F = [&](const auto& fn) { return [&]() { fn(0.f); }; };
-  auto R = [&](const auto& fn) { return [&]() { fn(-90.f); }; };
-  auto B = [&](const auto& fn) { return [&]() { fn(180.f); }; };
-  auto L = [&](const auto& fn) { return [&]() { fn(90.f); }; };
-
-  sk.onKey(GLFW_KEY_SPACE, jumpIn, jumpOut);
-  sk.onKey(GLFW_KEY_W, F(moveIn), moveOut, F(moveRep));
-  sk.onKey(GLFW_KEY_D, R(moveIn), moveOut, R(moveRep));
-  sk.onKey(GLFW_KEY_S, B(moveIn), moveOut, B(moveRep));
-  sk.onKey(GLFW_KEY_A, L(moveIn), moveOut, L(moveRep));
+  auto moveOutFn = [&]() { moveOut = true; };
+  sk.onKey(GLFW_KEY_SPACE, [&]() { jumpIn = true; });
+  sk.onKey(GLFW_KEY_W,
+           [&]() {
+             moveIn   = true;
+             dirAngle = 0.f;
+           },
+           moveOutFn);
+  sk.onKey(GLFW_KEY_D,
+           [&]() {
+             moveIn   = true;
+             dirAngle = -90.f;
+           },
+           moveOutFn);
+  sk.onKey(GLFW_KEY_S,
+           [&]() {
+             moveIn   = true;
+             dirAngle = 180.f;
+           },
+           moveOutFn);
+  sk.onKey(GLFW_KEY_A,
+           [&]() {
+             moveIn   = true;
+             dirAngle = 90.f;
+           },
+           moveOutFn);
   sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
   sk.onKey(GLFW_KEY_6,
            [&]() { sk.speed = glm::clamp(sk.speed - 0.1f, 1.f, 10.f); });
