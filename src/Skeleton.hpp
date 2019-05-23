@@ -43,23 +43,17 @@ private:
   // Compute hierarchy of the skeleton based on current frame and motion
   void hierarchy();
 
-  // Compute translation displacement per component to apply on next user input
-  glm::vec3 tStep3();
-
-  // Compute rotation displacement per component to apply on next user input
-  glm::vec3 rStep3();
-
   // Verify if motion exist on motion map
   template <typename T>
   bool motionExistsOnMap(const std::unordered_map<std::string, T>& map,
-                         const std::string&                        name);
+                         const std::string&                        name) const;
   // Check for motion in mix map
-  bool mixMotionExists(const std::string& name);
+  bool mixMotionExists(const std::string& name) const;
   // Check for motion in regular map
-  bool motionExists(const std::string& name);
+  bool motionExists(const std::string& name) const;
 
   // Compute and draw a bone of a gived joint and its parent
-  void drawBone(const std::shared_ptr<Joint>& J);
+  void drawBone(const std::shared_ptr<Joint>& J) const;
 
   // Jump from current motion to next motion modifying also
   // the value of the current frame
@@ -81,19 +75,26 @@ public:
   glm::vec3               allowedRots;
   glm::vec3               allowedTrans;
 
+  // Get current motion
+  float footHeight() const {
+    return m_currMotion->joints.at(5)->transformAsMatrix[3].y;
+  }
+
   // manage linked motion alpha and steps to lerp
   unsigned int linkedSteps;
   void         incLinkedAlpha();
   void         decLinkedAlpha();
 
   // Compute displacement to apply on next user input
-  float step();
+  float step() const;
+  // Compute rotation displacement per component to apply on next user input
+  glm::vec3 rotSteps() const;
 
   // Run a detached thread for animation process
   void animate();
 
   // Compute joints models and draw its renderable bone
-  void draw();
+  void draw() const;
 
   // Modify current motion (user call)
   //-> Always lowercase
@@ -107,7 +108,7 @@ public:
   void onKey(int      key,
              _IO_FUNC press   = []() {},
              _IO_FUNC release = []() {},
-             _IO_FUNC repeat  = []() {});
+             _IO_FUNC repeat  = []() {}) const;
 };
 
 } // namespace brave

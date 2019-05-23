@@ -32,7 +32,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
       allowedRots(0.f, 1.f, 0.f),
       allowedTrans(0.f),
       linkedSteps(10u) {
-  if (camera) camera->target = std::shared_ptr<Transform>(&transform);
+  // if (camera) camera->target = std::shared_ptr<Transform>(&transform);
 }
 
 
@@ -94,6 +94,7 @@ void Skeleton::hierarchy() {
   // === ROOT ===
   // if (this->userInput) {
   transform.pos.y = F.translation.y;
+  // transform.rot += rotSteps() * Math::vecXZ;
 
   // transform.rot *= speed;
   // transform.pos *= speed;
@@ -129,7 +130,7 @@ void Skeleton::hierarchy() {
 
 template <typename T>
 bool Skeleton::motionExistsOnMap(const std::unordered_map<std::string, T>& map,
-                                 const std::string& name) {
+                                 const std::string& name) const {
   if (map.count(name) < 1) {
     if (!Settings::quiet) LOGE("Zero motions with name {}.", name);
     return false;
@@ -137,11 +138,11 @@ bool Skeleton::motionExistsOnMap(const std::unordered_map<std::string, T>& map,
   return true;
 }
 // Check for motion in mix map
-bool Skeleton::mixMotionExists(const std::string& name) {
+bool Skeleton::mixMotionExists(const std::string& name) const {
   return motionExistsOnMap(m_motionMap, name);
 }
 // Check for motion in regular map
-bool Skeleton::motionExists(const std::string& name) {
+bool Skeleton::motionExists(const std::string& name) const {
   return motionExistsOnMap(m_motions, name);
 }
 
@@ -150,13 +151,13 @@ bool Skeleton::motionExists(const std::string& name) {
 // Compute and draw a bone of a gived joint and its parent
 // ====================================================================== //
 
-void Skeleton::drawBone(const std::shared_ptr<Joint>& J) {
+void Skeleton::drawBone(const std::shared_ptr<Joint>& J) const {
   auto P1    = J->transformAsMatrix[3].xyz();
   auto P2    = J->parent->transformAsMatrix[3].xyz();
   auto scale = glm::distance(P1, P2) * 0.5f;
   auto bone  = Renderable::cylBetween2p(P1, P2, scale);
 
-  bone->transform.scl *= glm::vec3(2.5f, 1.f, 2.5f);
+  bone->transform.scl *= glm::vec3(3.5f, 1.f, 3.5f);
   bone->draw(camera);
   if (J->endsite) drawBone(J->endsite);
 }
@@ -196,25 +197,49 @@ void Skeleton::decLinkedAlpha() {
 
 // ====================================================================== //
 // ====================================================================== //
-// Steps
+// Translation step
 // ====================================================================== //
 
-float Skeleton::step() {
+float Skeleton::step() const {
   glm::vec3 t1, t2;
-  auto      cf = m_currMotion->frames;
+  auto      cf      = m_currMotion->frames;
+  float     maxStep = m_currMotion->maxStep();
 
-  if (m_currFrame >= lastFrame()) {
-    t1 = cf.at(lastFrame()).translation;
-    t2 = cf.at(lastFrame() + 1).translation;
+  if (m_currMotion->linked and m_currFrame >= lastFrame()) {
+    t1 = m_currMotion->linkedFrame(lastFrame() - 1u, m_linkedAlpha).translation;
+    t2 = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha).translation;
+    auto lMaxStep = m_currMotion->linked->maxStep();
+    maxStep       = glm::lerp(maxStep, lMaxStep, m_linkedAlpha);
   } else {
     t1 = cf.at(m_currFrame).translation;
     t2 = cf.at(m_currFrame + 1).translation;
   }
 
   auto step = glm::distance(t2, t1);
-  step      = glm::clamp(step, 0.f, m_currMotion->maxStep());
+  step      = glm::clamp(step, 0.f, maxStep);
 
-  return step;
+  return step * speed;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Compute rotation displacement per component to apply on next user input
+// ====================================================================== //
+
+glm::vec3 Skeleton::rotSteps() const {
+  glm::vec3 r1, r2;
+  float     maxStep = m_currMotion->maxStep();
+
+  if (m_currMotion->linked and m_currFrame >= lastFrame()) {
+    r1 = m_currMotion->linkedFrame(lastFrame() - 1u, m_linkedAlpha)
+             .rotations.at(0);
+    r2 = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha).rotations.at(0);
+  } else {
+    r1 = m_currMotion->frames.at(m_currFrame).translation;
+    r2 = m_currMotion->frames.at(m_currFrame + 1).translation;
+  }
+
+  return r2 - r1;
 }
 
 // ====================================================================== //
@@ -228,8 +253,8 @@ void Skeleton::animate() {
     // TODO 1: make speed work.
     // TODO 2: if currMotion has linked motion, lerp time based en m_linkedAlpha
 
-    // return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
-    return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
+    return ((m_currMotion) ? m_currMotion->timeStep : 0.5f) / speed;
+    // return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
   };
 
   auto animationFn = [&]() {
@@ -251,7 +276,7 @@ void Skeleton::animate() {
 // Compute joints models and draw its renderable bone
 // ====================================================================== //
 
-void Skeleton::draw() {
+void Skeleton::draw() const {
   if (!m_currMotion) return;
   auto joints = m_currMotion->joints;
 
@@ -264,12 +289,19 @@ void Skeleton::draw() {
       auto headRE = Renderable::getByName("Monkey");
 
       auto aux = J->endsite->transformAsMatrix;
-      aux      = glm::translate(aux, glm::vec3{0.f, 0.5f, 0.f});
-      aux      = glm::scale(aux, glm::vec3{2.f});
+      aux      = glm::translate(aux, glm::vec3{0.f, 1.f, 0.f});
+      aux      = glm::scale(aux, glm::vec3{3.f});
 
       headRE->transform.overrideMatrix = aux;
       headRE->draw(camera);
     }
+
+    auto jointRE                      = Renderable::getByName("Ball");
+    auto aux                          = J->transformAsMatrix;
+    aux                               = glm::scale(aux, glm::vec3{1.f});
+    jointRE->transform.overrideMatrix = aux;
+    jointRE->draw(camera);
+
 
     drawBone(J);
   }
@@ -341,7 +373,7 @@ void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
 void Skeleton::onKey(int      key,
                      _IO_FUNC press,
                      _IO_FUNC release,
-                     _IO_FUNC repeat) {
+                     _IO_FUNC repeat) const {
   IO::keyboardAddAction(key, IO::kbState::press, press);
   IO::keyboardAddAction(key, IO::kbState::release, release);
   IO::keyboardAddAction(key, IO::kbState::repeat, repeat);

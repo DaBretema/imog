@@ -23,18 +23,19 @@ int main(int argc, char const* argv[]) {
   // ------------------------------------ / Initialization ---
   // ---------------------------------------------------------
 
-
+  //!! OK ALL it's working as desired
+  //!! Just inject skeleton code here in skeleton class for be fluid :D
 
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
 
-  auto sk = Skeleton(camera, 0.6f, 4.f);
+  auto sk = Skeleton(camera, 1.f, 1.f);
 
   // Load motions
   auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 3u);
   auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 3u);
   auto jump = Motion::create("jump", Motions::jump, loopMode::loop, 10u);
-  auto idle = Motion::create("idle", Motions::dance, loopMode::shortLoop, 25u);
+  auto idle = Motion::create("idle", Motions::dance, loopMode::loop, 10u);
 
   // To avoid diferent skeletons per motion
   run->joints  = walk->joints;
@@ -43,7 +44,7 @@ int main(int argc, char const* argv[]) {
 
   // Motion addition
   sk.addMotion(jump);
-  // walk->linked = run;
+  walk->linked = run;
   sk.addMotion(walk);
   sk.addMotion(idle);
 
@@ -61,6 +62,7 @@ int main(int argc, char const* argv[]) {
   };
 
   auto jumpIn = [&]() {
+    step();
     sk.setMotion("jump");
     sk.allowedTrans = Math::unitVecY; // Allow jump
   };
@@ -71,8 +73,8 @@ int main(int argc, char const* argv[]) {
   };
 
   auto moveRep = [&](float dir) {
+    sk.transform.rot += angle(dir) * 10.f;
     sk.transform.pos += step();
-    sk.transform.rot += angle(dir);
   };
 
   auto moveIn = [&](float dir) {
@@ -99,6 +101,10 @@ int main(int argc, char const* argv[]) {
   sk.onKey(GLFW_KEY_S, B(moveIn), moveOut, B(moveRep));
   sk.onKey(GLFW_KEY_A, L(moveIn), moveOut, L(moveRep));
   sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
+  sk.onKey(GLFW_KEY_6,
+           [&]() { sk.speed = glm::clamp(sk.speed - 0.1f, 1.f, 10.f); });
+  sk.onKey(GLFW_KEY_7,
+           [&]() { sk.speed = glm::clamp(sk.speed + 0.1f, 1.f, 10.f); });
   sk.onKey(GLFW_KEY_8, [&]() { sk.decLinkedAlpha(); });
   sk.onKey(GLFW_KEY_9, [&]() { sk.incLinkedAlpha(); });
   sk.onKey(GLFW_KEY_1,
@@ -113,20 +119,30 @@ int main(int argc, char const* argv[]) {
   // --- Loop ------------------------------------------------
 
   auto toggleCamera = [&]() {
-    if (!sk.camera->target)
-      sk.camera->target = std::shared_ptr<Transform>(&sk.transform);
-    else if (sk.camera->target)
-      sk.camera->target = nullptr;
+    if (!camera->target)
+      camera->target = std::shared_ptr<Transform>(&sk.transform);
+    else if (camera->target)
+      camera->target = nullptr;
   };
   sk.onKey(GLFW_KEY_F, toggleCamera);
 
+  auto initFn = [&]() {
+    Renderable::getByName("Floor")->transform.pos.y =
+        sk.footHeight() - sk.transform.pos.y;
+  };
+
   auto updateFn = [&]() { camera->speed(Settings::mainCameraSpeed); };
 
+  // auto rfoot = walk->joints.at(5);
+  // LOG(rfoot->name);
   auto renderFn = [&]() {
     sk.draw();
     camera->frame();
     Shader::poolUpdate(camera);
     Renderable::poolDraw(camera);
+
+    static std::once_flag initFlag;
+    std::call_once(initFlag, initFn);
 
     // if (glfwGetKey())
   };
