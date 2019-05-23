@@ -94,6 +94,10 @@ void Skeleton::hierarchy() {
   // === ROOT ===
   // if (this->userInput) {
   transform.pos.y = F.translation.y;
+
+  // transform.rot *= speed;
+  // transform.pos *= speed;
+
   // } else {
   //   transform.rot = F.rotations.at(0);
   //   transform.pos = F.translation;
@@ -208,7 +212,9 @@ float Skeleton::step() {
   }
 
   auto step = glm::distance(t2, t1);
-  return glm::clamp(step, 0.f, m_currMotion->maxStep());
+  step      = glm::clamp(step, 0.f, m_currMotion->maxStep());
+
+  return step;
 }
 
 // ====================================================================== //
@@ -221,6 +227,7 @@ void Skeleton::animate() {
     // !!!!! PD: clean jump animation to make it short: just the jump.
     // TODO 1: make speed work.
     // TODO 2: if currMotion has linked motion, lerp time based en m_linkedAlpha
+
     // return speed * ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
     return ((m_currMotion) ? m_currMotion->timeStep : 0.5f);
   };

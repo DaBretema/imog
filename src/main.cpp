@@ -28,13 +28,13 @@ int main(int argc, char const* argv[]) {
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
 
-  auto sk = Skeleton(camera, 0.6f, 1.f);
+  auto sk = Skeleton(camera, 0.6f, 4.f);
 
   // Load motions
-  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 5u);
-  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 5u);
-  auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
-  auto idle = Motion::create("idle", Motions::tPose, loopMode::loop, 25u);
+  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 3u);
+  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 3u);
+  auto jump = Motion::create("jump", Motions::jump, loopMode::loop, 10u);
+  auto idle = Motion::create("idle", Motions::dance, loopMode::shortLoop, 25u);
 
   // To avoid diferent skeletons per motion
   run->joints  = walk->joints;
