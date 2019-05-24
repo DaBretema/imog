@@ -203,7 +203,8 @@ Frame Motion::linkedFrame(uint frameIdx, float alpha) const {
   Frame f;
   if (!this->linked) return f;
   auto factor = (float)linked->frames.size() / (float)frames.size();
-  auto cf     = ceilf(frameIdx * factor);
+  // Get errors with 'ceil' (get out-of-range values). Using 'floor' instead.
+  auto cf = floorf(frameIdx * factor);
   return frames.at(cf).lerpOne(linked->frames.at(cf), alpha);
 }
 

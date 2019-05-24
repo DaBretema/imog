@@ -60,11 +60,17 @@ float Skeleton::alphaStep() const {
 }
 
 Frame Skeleton::transitionedLinkedFrame() const {
-  auto  F1    = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha);
-  auto  F2    = m_currMotion->linkedFrame(0u, m_linkedAlpha);
-  float step  = alphaStep();
-  float alpha = step + (float)(m_currFrame - lastFrame()) * step;
-  return F1.lerpOne(F2, alpha);
+  try {
+    auto  F1    = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha);
+    auto  F2    = m_currMotion->linkedFrame(0u, m_linkedAlpha);
+    float step  = alphaStep();
+    float alpha = step + (float)(m_currFrame - lastFrame()) * step;
+    return F1.lerpOne(F2, alpha);
+  } catch (std::exception& e) {
+    LOG("tlf={}", e.what());
+    Frame f;
+    return f;
+  }
 };
 
 unsigned int Skeleton::lastFrame() const {
@@ -73,7 +79,7 @@ unsigned int Skeleton::lastFrame() const {
 
 void Skeleton::frameCounter() {
   auto offsetForNewFrames = (m_currMotion->linked) ? (linkedSteps - 1u) : 0u;
-  bool limitReached       = m_currFrame >= lastFrame() + offsetForNewFrames;
+  bool limitReached = m_currFrame >= lastFrame() + offsetForNewFrames - 1u;
   (limitReached) ? loadNextMotion() : (void)++m_currFrame;
 }
 
@@ -94,7 +100,7 @@ void Skeleton::hierarchy() {
   // === ROOT ===
   // if (this->userInput) {
   transform.pos.y = F.translation.y;
-  // transform.rot += rotSteps() * Math::vecXZ;
+  // transform.rot += rotSteps(); //* Math::vecXZ;
 
   // transform.rot *= speed;
   // transform.pos *= speed;
@@ -202,17 +208,21 @@ void Skeleton::decLinkedAlpha() {
 
 float Skeleton::step() const {
   glm::vec3 t1, t2;
-  auto      cf      = m_currMotion->frames;
   float     maxStep = m_currMotion->maxStep();
+  auto      cf      = glm::clamp(m_currFrame, 0u, lastFrame());
+
 
   if (m_currMotion->linked and m_currFrame >= lastFrame()) {
-    t1 = m_currMotion->linkedFrame(lastFrame() - 1u, m_linkedAlpha).translation;
-    t2 = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha).translation;
+    t1 = m_currMotion->linkedFrame(cf, m_linkedAlpha).translation;
+    t2 = m_currMotion->linkedFrame(cf + 1u, m_linkedAlpha).translation;
+
     auto lMaxStep = m_currMotion->linked->maxStep();
     maxStep       = glm::lerp(maxStep, lMaxStep, m_linkedAlpha);
-  } else {
-    t1 = cf.at(m_currFrame).translation;
-    t2 = cf.at(m_currFrame + 1).translation;
+  }
+
+  else {
+    t1 = m_currMotion->frames.at(cf).translation;
+    t2 = m_currMotion->frames.at(cf + 1u).translation;
   }
 
   auto step = glm::distance(t2, t1);
@@ -228,15 +238,16 @@ float Skeleton::step() const {
 
 glm::vec3 Skeleton::rotSteps() const {
   glm::vec3 r1, r2;
-  float     maxStep = m_currMotion->maxStep();
+  auto      cf = glm::clamp(m_currFrame, 0u, lastFrame());
 
   if (m_currMotion->linked and m_currFrame >= lastFrame()) {
-    r1 = m_currMotion->linkedFrame(lastFrame() - 1u, m_linkedAlpha)
-             .rotations.at(0);
-    r2 = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha).rotations.at(0);
-  } else {
-    r1 = m_currMotion->frames.at(m_currFrame).translation;
-    r2 = m_currMotion->frames.at(m_currFrame + 1).translation;
+    r1 = m_currMotion->linkedFrame(cf, m_linkedAlpha).rotations.at(0);
+    r2 = m_currMotion->linkedFrame(cf + 1u, m_linkedAlpha).rotations.at(0);
+  }
+
+  else {
+    r1 = m_currMotion->frames.at(cf).rotations.at(0);
+    r2 = m_currMotion->frames.at(cf + 1u).rotations.at(0);
   }
 
   return r2 - r1;

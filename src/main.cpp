@@ -72,14 +72,12 @@ int main(int argc, char const* argv[]) {
       jumpIn = false;
       step();
       sk.setMotion("jump");
-      sk.allowedTrans = Math::unitVecY;
-      jumpOut         = true;
+      jumpOut = true;
     }
 
     if (jumpOut) {
       jumpOut = false;
       (moving) ? sk.setMotion("walk") : sk.setMotion("idle");
-      sk.allowedTrans = Math::nullVec; // Disallow jump
     }
 
     if (moveRep || moveIn) {
@@ -102,11 +100,6 @@ int main(int argc, char const* argv[]) {
       moving = false;
     }
   };
-
-  // auto F = [&](const auto& fn) { return [&]() { fn(0.f); }; };
-  // auto R = [&](const auto& fn) { return [&]() { fn(-90.f); }; };
-  // auto B = [&](const auto& fn) { return [&]() { fn(180.f); }; };
-  // auto L = [&](const auto& fn) { return [&]() { fn(90.f); }; };
 
   auto moveOutFn = [&]() { moveOut = true; };
   sk.onKey(GLFW_KEY_SPACE, [&]() { jumpIn = true; });
@@ -139,8 +132,14 @@ int main(int argc, char const* argv[]) {
            [&]() { sk.speed = glm::clamp(sk.speed - 0.1f, 1.f, 10.f); });
   sk.onKey(GLFW_KEY_7,
            [&]() { sk.speed = glm::clamp(sk.speed + 0.1f, 1.f, 10.f); });
-  sk.onKey(GLFW_KEY_8, [&]() { sk.decLinkedAlpha(); });
-  sk.onKey(GLFW_KEY_9, [&]() { sk.incLinkedAlpha(); });
+  sk.onKey(GLFW_KEY_8, [&]() {
+    sk.decLinkedAlpha();
+    sk.speed = glm::clamp(sk.speed - 0.1f, 1.f, 10.f);
+  });
+  sk.onKey(GLFW_KEY_9, [&]() {
+    sk.incLinkedAlpha();
+    sk.speed = glm::clamp(sk.speed + 0.1f, 1.f, 10.f);
+  });
   sk.onKey(GLFW_KEY_1,
            [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
