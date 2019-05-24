@@ -56,7 +56,7 @@ int main(int argc, char const* argv[]) {
   bool         moving   = false;
   float        dirAngle = 0.f;
 
-  bool jumpIn, jumpOut, moveIn, moveOut, moveRep;
+  bool jumpIn, jumpOut, moveIn, moveOut, moveRep, mustToggleCamera;
 
   auto step = [&]() { return sk.transform.front() * sk.step() * Math::vecXZ; };
 
@@ -66,6 +66,10 @@ int main(int argc, char const* argv[]) {
     cF      = glm::rotateY(cF * Math::vecXZ, glm::radians(dir));
     return glm::orientedAngle(sF, cF, Math::unitVecY) * Math::unitVecY;
   };
+
+  //
+
+  auto skT = std::shared_ptr<Transform>(&sk.transform);
 
   sk.userFn = [&]() {
     if (jumpIn) {
@@ -99,9 +103,16 @@ int main(int argc, char const* argv[]) {
       sk.setMotion("idle");
       moving = false;
     }
+
+    if (mustToggleCamera) {
+      mustToggleCamera  = false;
+      sk.camera->target = (!sk.camera->target) ? skT : nullptr;
+    }
   };
 
   auto moveOutFn = [&]() { moveOut = true; };
+  sk.onKey(GLFW_KEY_F, [&]() { mustToggleCamera = true; });
+
   sk.onKey(GLFW_KEY_SPACE, [&]() { jumpIn = true; });
   sk.onKey(GLFW_KEY_W,
            [&]() {
@@ -151,14 +162,6 @@ int main(int argc, char const* argv[]) {
   // ---------------------------------------------------------
   // --- Loop ------------------------------------------------
 
-  auto toggleCamera = [&]() {
-    if (!camera->target)
-      camera->target = std::shared_ptr<Transform>(&sk.transform);
-    else if (camera->target)
-      camera->target = nullptr;
-  };
-  sk.onKey(GLFW_KEY_F, toggleCamera);
-
   auto initFn = [&]() {
     Renderable::getByName("Floor")->transform.pos.y =
         sk.footHeight() - sk.transform.pos.y;
@@ -166,8 +169,6 @@ int main(int argc, char const* argv[]) {
 
   auto updateFn = [&]() { camera->speed(Settings::mainCameraSpeed); };
 
-  // auto rfoot = walk->joints.at(5);
-  // LOG(rfoot->name);
   auto renderFn = [&]() {
     sk.draw();
     camera->frame();
