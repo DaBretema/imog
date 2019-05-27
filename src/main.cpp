@@ -10,7 +10,7 @@
 using namespace brave;
 
 int main(int argc, char const* argv[]) {
-
+  auto getarg = [&](unsigned int i) { return (argc > i) ? argv[i] : ""; };
 
   // ---------------------------------------------------------
   // --- Initialization --------------------------------------
@@ -181,8 +181,12 @@ int main(int argc, char const* argv[]) {
     // if (glfwGetKey())
   };
 
-  // std::thread([]() { system("python plotter.py"); }).detach();
+  // This could be improved creating a Python C++ extension
+  if (getarg(1) == "plot")
+    std::thread([]() { system("python plotter.py"); }).detach();
 
+  // Init winow loop
+  IO::windowVisibility(true); // ! Do not remove !
   IO::windowLoop(renderFn, updateFn);
 
 

@@ -100,7 +100,8 @@ void Skeleton::hierarchy() {
   // === ROOT ===
   // if (this->userInput) {
   transform.pos.y = F.translation.y;
-  // transform.rot += rotSteps(); //* Math::vecXZ;
+  // transform.rot   = F.rotations.at(0) * Math::vecXZ;
+  //rotSteps(); //* Math::vecXZ;
 
   // transform.rot *= speed;
   // transform.pos *= speed;
@@ -110,6 +111,8 @@ void Skeleton::hierarchy() {
   //   transform.pos = F.translation;
   // }
   joints[0]->transformAsMatrix = transform.asMatrix();
+  // auto _r                      = F.rotations.at(0) * Math::vecXZ;
+  // Math::rotateXYZ(joints[0]->transformAsMatrix, _r);
 
   // === JOINTS ===
   for (auto idx = 1u; idx < joints.size(); ++idx) {

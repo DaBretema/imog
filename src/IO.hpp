@@ -37,6 +37,7 @@ public:
   static float windowAspectRatio();
   static void  windowOnScaleChange(GLFWwindow* w, int width, int height);
   static void  windowOnClose(GLFWwindow* w);
+  static void  windowVisibility(bool value);
 
 
 

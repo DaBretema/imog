@@ -86,7 +86,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Settings::openglMinorV);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-  glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
   GLFWwindow* o_WINDOW = glfwCreateWindow(
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
@@ -244,6 +244,9 @@ void IO::windowOnClose(GLFWwindow* w) {
   glfwSetWindowShouldClose(w, GL_TRUE);
 }
 
+void IO::windowVisibility(bool value) {
+  (value) ? glfwShowWindow(m_windowPtr) : glfwHideWindow(m_windowPtr);
+}
 
 
 // * --- MOUSE --- * //
