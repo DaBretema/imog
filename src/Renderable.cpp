@@ -245,8 +245,9 @@ void Renderable::draw(const std::shared_ptr<Camera>& camera) {
   this->bind();
   m_shader->bind();
 
+  // if (m_texture) m_shader->uInt1("u_texture", m_texture->bind());
   (m_texture) ? m_shader->uInt1("u_texture", m_texture->bind())
-              : m_shader->uInt1("u_texture", 99); // "Disable" texture
+              : glBindTexture(GL_TEXTURE_2D, 0); // "Disable" texture
 
   m_shader->uFloat3("u_color", m_color);
 
@@ -260,6 +261,7 @@ void Renderable::draw(const std::shared_ptr<Camera>& camera) {
   m_shader->uMat4("u_matMVP", camera->viewproj() * currModel);
 
   if (!m_culling) { glDisable(GL_CULL_FACE); }
+  // LOG(m_name);
   GL_ASSERT(glDrawElements(GL_TRIANGLES, m_eboSize, GL_UNSIGNED_INT, 0));
   if (!m_culling) { glEnable(GL_CULL_FACE); }
 

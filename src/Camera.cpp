@@ -57,8 +57,14 @@ void Camera::zoom(float variation) { m_fov += glm::radians(variation); }
 
 void Camera::frame() {
   if (target) {
-    auto yOffset = (Math::unitVecY * Settings::mainCameraPos);
-    pivot.pos    = target->pos + yOffset;
+    static glm::vec3      _yOffset;
+    static std::once_flag _yCameraPos;
+
+    std::call_once(_yCameraPos, [&]() {
+      _yOffset = (Math::unitVecY * Settings::mainCameraPos) + target->pos;
+    });
+
+    pivot.pos = (target->pos * Math::vecXZ) + _yOffset;
   }
 
   auto modZ = pivot.front() * Settings::mainCameraPos.z;

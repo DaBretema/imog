@@ -40,13 +40,15 @@ PROJECT_NAME = Brave
 
 # --- MAKE SETTINGS --------------------------------------------------------- #
 
-SHELL = powershell.exe
+ifeq ($(OS),Windows_NT)
+    SHELL = powershell.exe
+endif
 
 # --- CPP SETTINGS ---------------------------------------------------------- #
 
 CXX            = g++
 CXX_VERSION    = 17
-CXX_FLAGS      = -std='c++$(CXX_VERSION)'
+CXX_FLAGS      = -std='c++$(CXX_VERSION)' -Wno-unused-command-line-argument
 
 DEBUG_FLAGS    = -DDEBUG -g -Wall -O0
 RELEASE_FLAGS  = -DNDEBUG -O3 -static -static-libgcc -static-libstdc++
@@ -63,9 +65,19 @@ LIB_DIR       = $(SOURCE_DIR)/submodules
 
 INCLUDES      = $(patsubst %,-I%,$(INCL_DIR))
 LIBS          = $(patsubst %,-L%,$(LIB_DIR))
-LIBS += -lglad
-LIBS += -lglfw3
-LIBS += -lopengl32 -lgdi32
+
+ifeq ($(OS),Windows_NT)
+    LIBS += -lglfw3_win
+    LIBS += -lopengl32 -lgdi32
+else
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Darwin)
+        CXX = clang++
+        INCLUDES += -I/usr/local/include
+        LIBS += -L/usr/local/lib
+        LIBS += -lglfw3_mac -framework Cocoa -framework OpenGL -framework IOKit -framework CoreFoundation -framework CoreVideo
+    endif
+endif
 
 SOURCES       = $(wildcard $(SOURCE_DIR)/*.cpp)
 OBJECTS       = $(patsubst $(SOURCE_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
@@ -99,12 +111,12 @@ release: $(PROJECT_NAME)
 # 	@cp -r ./$(INCL_DIR)/* ./$(DIST_DIR)/$@
 
 #! EXECUTABLE
-$(PROJECT_NAME): $(OBJECTS) $(BUILD_DIR)/icon.o
+$(PROJECT_NAME): $(OBJECTS) #$(BUILD_DIR)/icon.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDES) $(LIBS)
 
 #* ICON COMPILATION
-$(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc
-	windres $^ $@
+# $(BUILD_DIR)/icon.o: $(ICON_DIR)/icon.rc
+# 	windres $^ $@
 
 # SOURCES COMPILATION : Called on $(OBJECTS)
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp

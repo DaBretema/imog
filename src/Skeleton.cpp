@@ -314,13 +314,6 @@ void Skeleton::draw() const {
       headRE->draw(camera);
     }
 
-    auto jointRE                      = Renderable::getByName("Ball");
-    auto aux                          = J->transformAsMatrix;
-    aux                               = glm::scale(aux, glm::vec3{1.f});
-    jointRE->transform.overrideMatrix = aux;
-    jointRE->draw(camera);
-
-
     drawBone(J);
   }
 }

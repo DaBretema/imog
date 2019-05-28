@@ -277,8 +277,10 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
   //---
 
   // for heat map visualization
-  auto _folder = "./assets/plotdata/";
-  mkdir(_folder);
+  auto _folder    = "./assets/plotdata/";
+  bool goodFolder = system("mkdir -p ./assets/plotdata/") != -1;
+  if (!goodFolder) { LOGE("Error creating directory for plot data!n"); }
+  // mkdir(_folder);
   auto          _prefix = _folder + this->name + "_" + m2->name;
   std::ofstream heatmap(_prefix + "__heatmap.txt");
   std::ofstream refFrames(_prefix + "__refFrames.txt");
@@ -303,11 +305,12 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
         if (diff < auxDiff) { std::tie(auxDiff, auxF2) = {diff, f2}; }
 
         // Write to heatmap
-        (f2 < m2->frames.size() - 1) ? heatmap << diff << " "
-                                     : heatmap << diff << "\n";
+        if (goodFolder)
+          (f2 < m2->frames.size() - 1) ? heatmap << diff << " "
+                                       : heatmap << diff << "\n";
       }
       // Write to ref frames. For mark winner frames on heatmap
-      refFrames << f1 << " " << auxF2 << "\n";
+      if (goodFolder) refFrames << f1 << " " << auxF2 << "\n";
 
       // Insert winner frames and its transition on the map
       auto tMo = createTransitionMotion(f1, auxF2);

@@ -9,8 +9,8 @@ out vec3 v_norm;
 out vec2 v_texUV;
 
 uniform mat4 u_matMV;
-uniform mat4 u_matV;
 uniform mat4 u_matN;
+uniform mat4 u_matV;
 
 void main() {
 	v_norm = (u_matN * vec4(norm,0)).xyz;

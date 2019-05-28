@@ -84,6 +84,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Settings::openglMajorV);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Settings::openglMinorV);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -151,20 +152,20 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   // Create default Shaders
   Shader::createByName("base", true);
-  Shader::createByName("light");
   auto sks = Shader::createByName("sk", true);
 
   // Create default Renderables
   Renderable::create(false, "Cube", Figures::cube, "", Colors::orange, sks);
   Renderable::create(false, "Ball", Figures::sphere, "", Colors::orange, sks);
-  Renderable::create(false, "Cyl", Figures::cylinder, "", Colors::orange, sks);
+  Renderable::create(false, "Cyl", Figures::bone, "", Colors::orange, sks);
   Renderable::create(false, "Monkey", Figures::monkey, "", Colors::orange, sks);
 
   // Create floor
   auto floor = Renderable::create(
-      true, "Floor", Figures::plane, Textures::chess, Colors::white);
+      true, "Floor", Figures::plane, Textures::chess, Colors::green);
   floor->transform.pos -= glm::vec3(0, 10.f, 0);
-  floor->transform.scl = glm::vec3(500.f, 1.f, 500.f);
+  auto _maxfloat       = 500.f;
+  floor->transform.scl = glm::vec3(_maxfloat, 1.f, _maxfloat);
 
   // ------------------------------------------ / Defaults ---
   // ---------------------------------------------------------

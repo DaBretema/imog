@@ -1,15 +1,15 @@
 {
   "quiet": true,
-  "openglMajorV": 4,
-  "openglMinorV": 5,
-  "pollEvents": true,
+  "openglMajorV": 3,
+  "openglMinorV": 3,
+  "pollEvents": false,
   "clearColor": [
     0.75,
     0.75,
     0.75
   ],
-  "windowWidth": 800,
-  "windowHeight": 600,
+  "windowWidth": 400,
+  "windowHeight": 400,
   "windowTitle": "Brave Engine",
   "mouseSensitivity": 0.1,
   "mainCameraPos": [
@@ -22,16 +22,5 @@
     0.0
   ],
   "mainCameraSpeed": 0.1,
-  "mainCameraFov": 0.5,
-  "mainLightPos": [
-    0,
-    5.0,
-    0
-  ],
-  "mainLightColor": [
-    1.0,
-    1.0,
-    1.0
-  ],
-  "mainLightIntensity": 100.0
+  "mainCameraFov": 0.5
 }
