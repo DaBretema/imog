@@ -31,8 +31,9 @@ public:
   static glm::vec2   mainCameraRot;
   static float       mainCameraSpeed;
   static float       mainCameraFov;
-  static std::string       plotDir;
-  static bool showPlots;
+  static std::string plotDir;
+  static bool        showPlots;
+  static float       floorSize;
 
   // Initializer
   static void init(const std::string& filePath);

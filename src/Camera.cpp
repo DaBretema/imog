@@ -2,7 +2,9 @@
 
 #include "IO.hpp"
 #include "Settings.hpp"
+#include "Logger.hpp"
 #include <mutex>
+#include <cstdlib>
 
 namespace brave {
 
@@ -12,19 +14,12 @@ namespace brave {
 // ====================================================================== //
 
 Camera::Camera(float speed, float fov)
-    : m_fov(fov),
-      m_speed(speed),
-      m_yaw(-90.0f),
-      m_pitch(0.0f),
-      m_multSpeed(1.0f),
-      m_following(false),
-      m_centeredOnTarget(false) {
+    : m_fov(fov), m_centeredOnTarget(false), speed(speed), cinemaLike(false) {
 
   pivot.rot = glm::vec3(Settings::mainCameraRot, 0.0f);
 }
 
-Camera::~Camera() { /* this->target.reset(); */
-}
+Camera::~Camera() { this->target.reset(); }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -34,15 +29,6 @@ Camera::~Camera() { /* this->target.reset(); */
 glm::mat4 Camera::view() const { return m_view; }
 glm::mat4 Camera::proj() const { return m_proj; }
 glm::mat4 Camera::viewproj() const { return m_viewproj; }
-
-// ====================================================================== //
-// ====================================================================== //
-// G/Setter for speed
-// ====================================================================== //
-
-float Camera::speed() const { return m_speed * m_multSpeed; }
-void  Camera::speed(float newSpeed) { m_speed = newSpeed; }
-void  Camera::multSpeed(float factor) { m_multSpeed = factor; }
 
 // ====================================================================== //
 // ====================================================================== //
@@ -57,23 +43,35 @@ void Camera::zoom(float variation) { m_fov += glm::radians(variation); }
 // ====================================================================== //
 
 void Camera::frame() {
-  if (target) {
-    static glm::vec3      _yOffset;
-    static std::once_flag _yCameraPos;
+  static glm::vec3 modY;
 
-    std::call_once(_yCameraPos, [&]() {
-      _yOffset = (Math::unitVecY * Settings::mainCameraPos) + target->pos.y;
-    });
+  if (this->target) {
+    // Get center of the skeleton
+    if (!m_centeredOnTarget) {
+      m_centeredOnTarget = true;
+      modY               = Math::unitVecY * this->target->pos.y;
+    }
+    // Follow on XZ
+    pivot.pos = (this->target->pos * Math::vecXZ) + modY;
 
-    pivot.pos = (target->pos * Math::vecXZ) + _yOffset;
+    // Cinema
+    if (this->cinemaLike) { pivot.rot.y += 0.35f; }
+
+  } else {
+    m_centeredOnTarget = false;
   }
 
   auto modZ = pivot.front() * Settings::mainCameraPos.z;
   auto eye  = pivot.pos - modZ;
 
+  auto modX = (this->cinemaLike && this->target)
+                  ? pivot.right() * Settings::mainCameraPos.x
+                  : Math::nullVec;
+
   m_proj     = glm::perspective(m_fov, IO::windowAspectRatio(), m_near, m_far);
-  m_view     = glm::lookAt(eye, pivot.pos, Math::unitVecY);
+  m_view     = glm::lookAt(eye, pivot.pos + modX, Math::unitVecY);
   m_viewproj = m_proj * m_view;
-}
+
+} // namespace brave
 
 } // namespace brave

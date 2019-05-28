@@ -22,9 +22,6 @@ int main(int argc, char const* argv[]) {
   // ------------------------------------ / Initialization ---
   // ---------------------------------------------------------
 
-  //!! OK ALL it's working as desired
-  //!! Just inject skeleton code here in skeleton class for be fluid :D
-
   // ---------------------------------------------------------
   // --- Skeleton --------------------------------------------
 
@@ -69,29 +66,38 @@ int main(int argc, char const* argv[]) {
 
   //
   sk.userFn = [&]() {
-    // if (_jump) {
-    //   sk.setMotion("jump");
-    //   if (changeSpeed) {
-    //     changeSpeed = false;
-    //     sk.speed *= 0.5f;
-    //   }
-    // } else {
-    //   (isMoving()) ? sk.setMotion("walk") : sk.setMotion("idle");
-    //   if (!changeSpeed) {
-    //     changeSpeed = true;
-    //     sk.speed *= 2.f;
-    //   }
-    // }
-    (_jump) ? [&](){sk.setMotion("jump"); if (changeSpeed) {sk.speed *= 0.5f; changeSpeed = false;} }()
-              : [&](){(isMoving()) ? sk.setMotion("walk") : sk.setMotion("idle"); if (!changeSpeed) {sk.speed *= 2.0f; changeSpeed = true;}}();
-    // (_jump) ? sk.setMotion("jump")
-    //         : (isMoving()) ? sk.setMotion("walk") : sk.setMotion("idle");
+    if (_jump) {
+      sk.setMotion("jump");
+      if (changeSpeed) {
+        sk.speed *= 0.5f;
+        changeSpeed = false;
+      }
+    }
+
+    else {
+      (isMoving()) ? sk.setMotion("walk") : sk.setMotion("idle");
+      if (!changeSpeed) {
+        sk.speed *= 2.0f;
+        changeSpeed = true;
+      }
+    }
 
     if (front) sk.transform.rot += angle(0.f) * rotSpeed;
     if (right) sk.transform.rot += angle(270.f) * rotSpeed;
     if (back) sk.transform.rot += angle(180.f) * rotSpeed;
     if (left) sk.transform.rot += angle(90.f) * rotSpeed;
-    if (isMoving() || _jump) sk.transform.pos += step();
+
+    if (isMoving() || _jump) {
+      sk.transform.pos += step();
+      auto afs = abs(Settings::floorSize) * 0.95f;
+
+      if (bool teleport = Settings::floorSize >= 500.f) {
+        afs = abs(Settings::floorSize) * 0.35f;
+        if (abs(sk.transform.pos.x) > afs) sk.transform.pos.x *= -1.f;
+        if (abs(sk.transform.pos.z) > afs) sk.transform.pos.z *= -1.f;
+      }
+      sk.transform.pos = glm::clamp(sk.transform.pos, -afs, afs);
+    }
 
     if (mustToggleCamera) {
       mustToggleCamera  = false;
@@ -121,6 +127,9 @@ int main(int argc, char const* argv[]) {
   sk.onKey(GLFW_KEY_1,
            [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
+  sk.onKey(GLFW_KEY_C,
+           [&]() { sk.camera->cinemaLike = !sk.camera->cinemaLike; });
+
   sk.animate();
 
   // ------------------------------------------ / Skeleton ---
@@ -130,11 +139,15 @@ int main(int argc, char const* argv[]) {
   // --- Loop ------------------------------------------------
 
   auto initFn = [&]() {
-    Renderable::getByName("Floor")->transform.pos.y =
-        sk.footHeight() - sk.transform.pos.y;
+    auto _floor = Renderable::getByName("Floor");
+    _floor->transform.pos.y = sk.footHeight() - sk.transform.pos.y;
   };
 
-  auto updateFn = [&]() { camera->speed(Settings::mainCameraSpeed); };
+  auto updateFn = [&]() {
+    auto _floor             = Renderable::getByName("Floor");
+    _floor->transform.scl.x = Settings::floorSize;
+    _floor->transform.scl.z = Settings::floorSize;
+  };
 
   auto renderFn = [&]() {
     sk.draw();
@@ -164,8 +177,9 @@ int main(int argc, char const* argv[]) {
   // So if we don't remove skeleton object before remove pools' content and
   // let that OS' memory manager remove unfree data. May ocur
 
-  // sk.~Skeleton();
+  // sk.~Skeleton(); // TODO a good destructor...
   // delete &sk;
+  //
   return 0;
 }
 

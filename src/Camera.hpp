@@ -18,19 +18,14 @@ private:
   glm::mat4 m_viewproj;
 
   float m_fov;
-  float m_speed;
-
-  float m_yaw;
-  float m_pitch;
-  float m_multSpeed;
-
-  bool m_following;
-  bool m_centeredOnTarget;
+  bool  m_centeredOnTarget;
 
 public:
+  float                      speed;
   Transform                  pivot;
   std::shared_ptr<Transform> target;
   Transform                  transform;
+  bool                       cinemaLike;
 
   Camera(float speed = 1.f, float fov = 0.5f);
   ~Camera();
@@ -41,12 +36,6 @@ public:
   glm::mat4 proj() const;
   // Getter for viewproj
   glm::mat4 viewproj() const;
-
-  // G/Setter for speed
-  float speed() const;
-  void  speed(float newSpeed);
-  // MultSpeed multiply m_speed by passed factor
-  void multSpeed(float factor);
 
   // Modify camera fov (a.k.a. zoom)
   void zoom(float variation);

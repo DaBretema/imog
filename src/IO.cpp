@@ -9,6 +9,8 @@
 #include "helpers/Consts.hpp"
 #include "helpers/GLAssert.hpp"
 
+#include <stb_image.h>
+
 
 namespace brave {
 
@@ -82,12 +84,13 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
     glfwTerminate();
   }
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Settings::openglMajorV);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Settings::openglMinorV);
+  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+  glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, Settings::openglMajorV);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, Settings::openglMinorV);
 
   GLFWwindow* o_WINDOW = glfwCreateWindow(
       m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
@@ -97,7 +100,17 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
     glfwTerminate();
   }
 
-  glfwMakeContextCurrent(o_WINDOW); // Set as active window
+  // Set as active window
+  glfwMakeContextCurrent(o_WINDOW);
+
+  // Set icon
+  int       icoW, icoH;
+  auto      ico = stbi_load("./assets/icon/icon.png", &icoW, &icoH, 0, 4);
+  GLFWimage icons[1];
+  icons[0].height = icoH;
+  icons[0].width  = icoW;
+  icons[0].pixels = ico;
+  glfwSetWindowIcon(o_WINDOW, 1, icons);
 
   // ----------------------------------- / Window creation ---
   // ---------------------------------------------------------
@@ -164,8 +177,8 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
   auto floor = Renderable::create(
       true, "Floor", Figures::plane, Textures::chess, Colors::green);
   floor->transform.pos -= glm::vec3(0, 10.f, 0);
-  auto _maxfloat       = 500.f;
-  floor->transform.scl = glm::vec3(_maxfloat, 1.f, _maxfloat);
+  floor->transform.scl =
+      glm::vec3(Settings::floorSize, 1.f, Settings::floorSize);
 
   // ------------------------------------------ / Defaults ---
   // ---------------------------------------------------------
