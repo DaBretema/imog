@@ -10,7 +10,6 @@
 using namespace brave;
 
 int main(int argc, char const* argv[]) {
-  auto getarg = [&](unsigned int i) { return (argc > i) ? argv[i] : ""; };
 
   // ---------------------------------------------------------
   // --- Initialization --------------------------------------
@@ -43,7 +42,7 @@ int main(int argc, char const* argv[]) {
 
   // Motion addition
   sk.addMotion(jump);
-  // walk->linked = run;
+  walk->linked = run;
   sk.addMotion(walk);
   sk.addMotion(idle);
 
@@ -148,11 +147,14 @@ int main(int argc, char const* argv[]) {
   };
 
   // This could be improved creating a Python C++ extension
-  if (std::string(getarg(1)) == std::string("plot"))
-    std::thread([]() { system("python plotter.py"); }).detach();
+  // Plot the data generated during motions interpolation
+  if (Settings::showPlots) {
+    std::string pyCmd = "python plotter.py " + Motion::plotFolder();
+    std::thread([&pyCmd]() { system(pyCmd.c_str()); }).detach();
+  }
 
   // Init winow loop
-  IO::windowVisibility(true); // ! Do not remove !
+  IO::windowVisibility(true); //! Do not remove. Avoid white screen on loading.
   IO::windowLoop(renderFn, updateFn);
 
   // ---------------------------------------------- / Loop ---

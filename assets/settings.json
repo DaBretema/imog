@@ -1,17 +1,17 @@
 {
+  "windowTitle": "Brave Engine",
   "quiet": true,
   "openglMajorV": 3,
   "openglMinorV": 3,
+  "windowWidth": 1440,
+  "windowHeight": 900,
   "pollEvents": false,
+  "mouseSensitivity": 0.1,
   "clearColor": [
     0.75,
     0.75,
     0.75
   ],
-  "windowWidth": 400,
-  "windowHeight": 400,
-  "windowTitle": "Brave Engine",
-  "mouseSensitivity": 0.1,
   "mainCameraPos": [
     10.0,
     0.0,
@@ -22,5 +22,7 @@
     0.0
   ],
   "mainCameraSpeed": 0.1,
-  "mainCameraFov": 0.5
+  "mainCameraFov": 0.5,
+  "plotDir": "./assets/plotdata/",
+  "showPlots": false
 }

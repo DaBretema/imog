@@ -61,6 +61,8 @@ glm::vec3   Settings::mainCameraPos{0.0f, 25.0f, 27.5f};
 glm::vec2   Settings::mainCameraRot{45.0f, 0.0f};
 float       Settings::mainCameraSpeed{0.1f};
 float       Settings::mainCameraFov{0.75f};
+std::string Settings::plotDir{"./assets/plotdata/"};
+bool        Settings::showPlots{true};
 
 
 // ====================================================================== //
@@ -93,6 +95,8 @@ void Settings::init(const std::string& filePath) {
         glmParse(mainCameraRot, glm::vec2(0.f));
         stdParse(mainCameraSpeed, 0.1f);
         stdParse(mainCameraFov, 0.75f);
+        stdParse(plotDir, "./assets/plotdata/");
+        stdParse(showPlots, true);
 
         m_corrupted = false;
       }

@@ -9,48 +9,38 @@
 #include "Loader.hpp"
 #include "Strings.hpp"
 #include "Settings.hpp"
+#include "Files.hpp"
+
+#include <direct.h>
+#include <sys/stat.h>
 
 
 namespace brave {
 
 // * Helpers
 
-// // ====================================================================== //
-// // ====================================================================== //
-// // Interpolate between two frames
-// // ====================================================================== //
+// Determine the folder for plots and create if not exists
+std::string Motion::plotFolder() {
+  std::string _folder = Settings::plotDir;
 
-// std::vector<Frame> lerp(Frame F1, Frame F2, uint steps = 0u) {
-//   assert(F1.rotations.size() == F2.rotations.size());
-//   std::vector<Frame> lerpFrames;
+  if (!Files::pathExists(_folder)) {
+#if _WIN64
+    auto winPath = Files::pathToWin(_folder);
+    auto winCmd  = std::string("mkdir" + winPath + ">nul 2>&1");
+    system(winCmd.c_str());
+#else
+    auto nixCmd = std::string("mkdir -p" + _folder);
+    system(nixCmd.c_str());
+#endif
+  }
 
-//   if (steps < 1)
-//     return lerpFrames;
-//   else if (steps < 2)
-//     steps = 2;
-//   float alphaStep = 1.0f / (float)steps;
+  if (!Files::pathExists(_folder)) {
+    _folder = "";
+    LOGE("Couldn't use gived path to store plot data.");
+  }
 
-//   glm::vec3 rootRot{0.f};
-//   {
-//     auto fv1 = Math::rotToVec(F1.rotations[0]);
-//     auto fv2 = Math::rotToVec(F2.rotations[0]);
-//     rootRot  = Math::dirAngle(fv1, fv2, Math::unitVecY) * Math::unitVecY;
-//   }
-
-//   for (auto alpha = 0.1f; alpha <= 1.0f; alpha += alphaStep) {
-//     Frame frame;
-//     frame.translation = glm::mix(F1.translation, F2.translation, alpha);
-
-//     frame.rotations.push_back(F1.rotations[0] + alpha * rootRot);
-//     for (auto i = 1u; i < F1.rotations.size(); ++i) {
-//       auto newRot = glm::mix(F1.rotations[i], F2.rotations[i], alpha);
-//       frame.rotations.push_back(newRot);
-//     }
-//     lerpFrames.push_back(frame);
-//   }
-
-//   return lerpFrames;
-// }
+  return _folder;
+}
 
 
 
@@ -277,11 +267,7 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
   //---
 
   // for heat map visualization
-  auto _folder    = "./assets/plotdata/";
-  bool goodFolder = system("mkdir -p ./assets/plotdata/") != -1;
-  if (!goodFolder) { LOGE("Error creating directory for plot data!n"); }
-  // mkdir(_folder);
-  auto          _prefix = _folder + this->name + "_" + m2->name;
+  auto          _prefix = plotFolder() + this->name + "_" + m2->name;
   std::ofstream heatmap(_prefix + "__heatmap.txt");
   std::ofstream refFrames(_prefix + "__refFrames.txt");
 
@@ -305,12 +291,11 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
         if (diff < auxDiff) { std::tie(auxDiff, auxF2) = {diff, f2}; }
 
         // Write to heatmap
-        if (goodFolder)
-          (f2 < m2->frames.size() - 1) ? heatmap << diff << " "
-                                       : heatmap << diff << "\n";
+        (f2 < m2->frames.size() - 1) ? heatmap << diff << " "
+                                     : heatmap << diff << "\n";
       }
       // Write to ref frames. For mark winner frames on heatmap
-      if (goodFolder) refFrames << f1 << " " << auxF2 << "\n";
+      refFrames << f1 << " " << auxF2 << "\n";
 
       // Insert winner frames and its transition on the map
       auto tMo = createTransitionMotion(f1, auxF2);

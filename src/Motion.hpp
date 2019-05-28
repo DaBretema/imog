@@ -37,6 +37,8 @@ class Motion {
   float m_maxStep;
 
 public:
+  static std::string plotFolder();
+
   using mixMap =
       std::unordered_map<uint, std::pair<int, std::shared_ptr<Motion>>>;
 

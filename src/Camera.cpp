@@ -2,6 +2,7 @@
 
 #include "IO.hpp"
 #include "Settings.hpp"
+#include <mutex>
 
 namespace brave {
 
@@ -61,7 +62,7 @@ void Camera::frame() {
     static std::once_flag _yCameraPos;
 
     std::call_once(_yCameraPos, [&]() {
-      _yOffset = (Math::unitVecY * Settings::mainCameraPos) + target->pos;
+      _yOffset = (Math::unitVecY * Settings::mainCameraPos) + target->pos.y;
     });
 
     pivot.pos = (target->pos * Math::vecXZ) + _yOffset;
