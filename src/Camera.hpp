@@ -18,6 +18,7 @@ private:
   glm::mat4 m_viewproj;
 
   float m_fov;
+  glm::vec3 m_offset;
   bool  m_centeredOnTarget;
 
 public:

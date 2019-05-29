@@ -26,9 +26,10 @@ int main(int argc, char const* argv[]) {
   // --- Skeleton --------------------------------------------
 
   auto sk = Skeleton(camera, 1.f, 1.f);
+
   // Load motions
-  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 3u);
-  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 3u);
+  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 0u);
+  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 0u);
   auto jump = Motion::create("jump", Motions::jump, loopMode::loop, 10u);
   auto idle = Motion::create("idle", Motions::dance, loopMode::loop, 10u);
 
@@ -51,6 +52,7 @@ int main(int argc, char const* argv[]) {
   bool  changeSpeed = true;
   auto  skt         = std::shared_ptr<Transform>(&sk.transform);
   bool  _jump, mustToggleCamera, front, right, back, left;
+  _jump = mustToggleCamera = front = right = back = left = false;
 
   auto movesCount = [&]() { return front + right + back + left; };
   auto isMoving   = [&]() { return front || right || back || left; };
@@ -67,18 +69,27 @@ int main(int argc, char const* argv[]) {
   //
   sk.userFn = [&]() {
     if (_jump) {
-      sk.setMotion("jump");
       if (changeSpeed) {
         sk.speed *= 0.5f;
         changeSpeed = false;
       }
+
+      sk.setMotion("jump");
+      sk.allowedRots = Math::unitVec;
     }
 
     else {
-      (isMoving()) ? sk.setMotion("walk") : sk.setMotion("idle");
       if (!changeSpeed) {
         sk.speed *= 2.0f;
         changeSpeed = true;
+      }
+
+      if (isMoving()) {
+        sk.setMotion("walk");
+        sk.allowedRots = Math::nullVec;
+      } else {
+        sk.setMotion("idle");
+        sk.allowedRots = Math::nullVec;
       }
     }
 
@@ -139,7 +150,7 @@ int main(int argc, char const* argv[]) {
   // --- Loop ------------------------------------------------
 
   auto initFn = [&]() {
-    auto _floor = Renderable::getByName("Floor");
+    auto _floor             = Renderable::getByName("Floor");
     _floor->transform.pos.y = sk.footHeight() - sk.transform.pos.y;
   };
 

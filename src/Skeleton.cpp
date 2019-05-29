@@ -60,17 +60,11 @@ float Skeleton::alphaStep() const {
 }
 
 Frame Skeleton::transitionedLinkedFrame() const {
-  try {
-    auto  F1    = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha);
-    auto  F2    = m_currMotion->linkedFrame(0u, m_linkedAlpha);
-    float step  = alphaStep();
-    float alpha = step + (float)(m_currFrame - lastFrame()) * step;
-    return F1.lerpOne(F2, alpha);
-  } catch (std::exception& e) {
-    LOG("tlf={}", e.what());
-    Frame f;
-    return f;
-  }
+  auto  F1    = m_currMotion->linkedFrame(lastFrame(), m_linkedAlpha);
+  auto  F2    = m_currMotion->linkedFrame(0u, m_linkedAlpha);
+  float step  = alphaStep();
+  float alpha = step + (float)(m_currFrame - lastFrame()) * step;
+  return F1.lerpOne(F2, alpha);
 };
 
 unsigned int Skeleton::lastFrame() const {
@@ -98,21 +92,14 @@ void Skeleton::hierarchy() {
                 : m_currMotion->frames.at(m_currFrame);
 
   // === ROOT ===
-  // if (this->userInput) {
   transform.pos.y = F.translation.y;
-  // transform.rot   = F.rotations.at(0) * Math::vecXZ;
-  //rotSteps(); //* Math::vecXZ;
-
-  // transform.rot *= speed;
-  // transform.pos *= speed;
-
-  // } else {
-  //   transform.rot = F.rotations.at(0);
-  //   transform.pos = F.translation;
-  // }
+  LOGD(rotSteps().x);
+  transform.rot.x += glm::clamp(rotSteps().x, -3.f, 3.f) * allowedRots.x;
   joints[0]->transformAsMatrix = transform.asMatrix();
-  // auto _r                      = F.rotations.at(0) * Math::vecXZ;
-  // Math::rotateXYZ(joints[0]->transformAsMatrix, _r);
+
+  // auto rX   = glm::clamp(F.rotations.at(0).x, 0.f, 25.f);
+  // auto rots = glm::vec3{rX, 0.f, 0.f};
+  // Math::rotateXYZ(joints[0]->transformAsMatrix, rots * allowedRots);
 
   // === JOINTS ===
   for (auto idx = 1u; idx < joints.size(); ++idx) {
@@ -253,7 +240,7 @@ glm::vec3 Skeleton::rotSteps() const {
     r2 = m_currMotion->frames.at(cf + 1u).rotations.at(0);
   }
 
-  return r2 - r1;
+  return r1 - r2;
 }
 
 // ====================================================================== //

@@ -3,8 +3,8 @@
   "quiet": true,
   "openglMajorV": 3,
   "openglMinorV": 3,
-  "windowWidth": 1440,
-  "windowHeight": 900,
+  "windowWidth": 700,
+  "windowHeight": 700,
   "pollEvents": false,
   "mouseSensitivity": 0.1,
   "clearColor": [

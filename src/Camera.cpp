@@ -14,7 +14,11 @@ namespace brave {
 // ====================================================================== //
 
 Camera::Camera(float speed, float fov)
-    : m_fov(fov), m_centeredOnTarget(false), speed(speed), cinemaLike(false) {
+    : m_fov(fov),
+      m_offset(0.f),
+      m_centeredOnTarget(false),
+      speed(speed),
+      cinemaLike(false) {
 
   pivot.rot = glm::vec3(Settings::mainCameraRot, 0.0f);
 }
@@ -35,7 +39,17 @@ glm::mat4 Camera::viewproj() const { return m_viewproj; }
 // Radian based zoom == fov variation
 // ====================================================================== //
 
-void Camera::zoom(float variation) { m_fov += glm::radians(variation); }
+void Camera::zoom(float variation) {
+  if (glfwGetKey(IO::window(), GLFW_KEY_Z) == GLFW_PRESS) {
+    m_offset.z += variation;
+  } else if (glfwGetKey(IO::window(), GLFW_KEY_X) == GLFW_PRESS) {
+    m_offset.x += variation;
+  } else if (glfwGetKey(IO::window(), GLFW_KEY_Y) == GLFW_PRESS) {
+    m_offset.y += variation;
+  } else {
+    m_fov += glm::radians(variation);
+  }
+}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -49,17 +63,18 @@ void Camera::frame() {
     // Get center of the skeleton
     if (!m_centeredOnTarget) {
       m_centeredOnTarget = true;
-      modY               = Math::unitVecY * this->target->pos.y;
+      modY               = pivot.up() * this->target->pos.y;
     }
     // Follow on XZ
     pivot.pos = (this->target->pos * Math::vecXZ) + modY;
-
-    // Cinema
-    if (this->cinemaLike) { pivot.rot.y += 0.35f; }
-
   } else {
     m_centeredOnTarget = false;
   }
+
+  auto offX = pivot.right() * m_offset.x;
+  auto offY = pivot.up() * m_offset.y;
+  auto offZ = pivot.front() * m_offset.z;
+  pivot.pos += offX + offY + offZ;
 
   auto modZ = pivot.front() * Settings::mainCameraPos.z;
   auto eye  = pivot.pos - modZ;
@@ -71,7 +86,6 @@ void Camera::frame() {
   m_proj     = glm::perspective(m_fov, IO::windowAspectRatio(), m_near, m_far);
   m_view     = glm::lookAt(eye, pivot.pos + modX, Math::unitVecY);
   m_viewproj = m_proj * m_view;
-
-} // namespace brave
+}
 
 } // namespace brave

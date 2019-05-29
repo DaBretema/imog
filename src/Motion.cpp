@@ -53,8 +53,8 @@ std::string Motion::plotFolder() {
 
 glm::vec3 Frame::value() const {
   glm::vec3 wJR{1.f};
-  glm::vec3 wRT{0.f}; // !
-  glm::vec3 wRR{0.f}; // !
+  glm::vec3 wRT{0.f, 0.5f, 0.f}; // !
+  glm::vec3 wRR{0.5f};           // !
 
   glm::vec3 JR{0.f};
   glm::vec3 RT = this->translation;
@@ -134,14 +134,6 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
     }
   }
 
-
-  // === CLEAN ===
-  //
-  m->clean(lm, steps);
-
-
-  // === AFTER CLEAN ===
-
   //
   float _inf = std::numeric_limits<float>::max();
   float minRX, minRY, minRZ, minTX, minTY, minTZ;
@@ -176,6 +168,9 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
     f.rotations.at(0).y -= minRY;
     f.rotations.at(0).z -= minRZ;
   }
+
+  // === CLEAN ===
+  m->clean(lm, steps);
 
   return m;
 }
