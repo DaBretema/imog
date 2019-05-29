@@ -11,9 +11,6 @@
 #include "Settings.hpp"
 #include "Files.hpp"
 
-#include <direct.h>
-#include <sys/stat.h>
-
 
 namespace brave {
 
