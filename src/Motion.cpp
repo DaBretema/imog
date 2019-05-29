@@ -49,16 +49,13 @@ std::string Motion::plotFolder() {
 // ====================================================================== //
 
 glm::vec3 Frame::value() const {
-  glm::vec3 wJR{1.f};
-  glm::vec3 wRT{0.f, 2.f, 0.f}; // !
-  glm::vec3 wRR{0.5f};          // !
+  glm::vec3 RT = this->translation * glm::vec3{0.f, 2.f, 0.f};
+  glm::vec3 RR = this->rotations.at(0) * glm::vec3{2.f, 0.f, 2.f};
 
   glm::vec3 JR{0.f};
-  glm::vec3 RT = this->translation;
-  glm::vec3 RR = this->rotations.at(0);
   for (const auto& rot : this->rotations) JR += rot;
 
-  return (wRT * RT) + (wRR * RR) + (wJR * (JR - RR));
+  return RT + RR + (JR - this->rotations.at(0));
 }
 
 // ====================================================================== //
@@ -67,20 +64,16 @@ glm::vec3 Frame::value() const {
 // ====================================================================== //
 
 Frame Frame::lerpOne(const Frame& f2, float alpha) const {
-  auto tf1 = this->translation;
-  auto rf1 = this->rotations;
-  auto tf2 = f2.translation;
-  auto rf2 = f2.rotations;
-
   Frame f;
-  f.translation = glm::mix(tf1, tf2, alpha);
+  f.translation = glm::mix(this->translation, f2.translation, alpha);
+
   try {
-    auto rootFront = Math::rotToVec(rf1[0]);
+    auto rootFront = Math::rotToVec(this->rotations[0]);
     auto rootY = glm::orientedAngle(Math::unitVecZ, rootFront, Math::unitVecY);
 
-    for (auto i = 0u; i < rf1.size(); ++i) {
-      auto newRot = glm::mix(rf1[i], rf2[i], alpha);
-      if (i == 0u) { newRot = rootY * Math::unitVecY; }
+    for (auto i = 0u; i < this->rotations.size(); ++i) {
+      auto newRot = glm::mix(this->rotations[i], f2.rotations[i], alpha);
+      if (i == 0u) { newRot = rootY * Math::unitVecY; } // Avoid flip over self
 
       f.rotations.push_back(newRot);
     }
@@ -113,7 +106,7 @@ std::vector<Frame> Frame::lerpTransition(const Frame& f2, uint steps) const {
 
 // ====================================================================== //
 // ====================================================================== //
-// Constructor
+// 'Constructor'
 // ====================================================================== //
 
 std::shared_ptr<Motion> Motion::create(const std::string& name,
@@ -121,15 +114,17 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
                                        loopMode           lm,
                                        uint               steps) {
   auto m       = loader::BVH(filepath);
-  m->m_maxStep = 0u;
   m->name      = name;
+  m->m_maxStep = 0u;
 
   //
   float minTX, minTY, minTZ;
   minTX = minTY = minTZ = std::numeric_limits<float>::max();
   //
 
-  // Get data
+
+  // === Iter 1 : Get data and Set undependent ===
+
   for (auto i = 1u; i < m->frames.size(); ++i) {
     auto ft = m->frames.at(i).translation;
     auto fr = &m->frames.at(i).rotations.at(0);
@@ -144,21 +139,13 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
     if (ft.x < minTX) minTX = ft.x;
     if (ft.y < minTY) minTY = ft.y;
     if (ft.z < minTZ) minTZ = ft.z;
-
-    // R set between [0,360]
-    // *fr = glm::mod(*fr, 360.f);
-    // if (fr->x < 0.f) fr->x += 360.f;
-    // if (fr->y < 0.f) fr->y += 360.f;
-    // if (fr->z < 0.f) fr->z += 360.f;
-
-    // Force to look forward
-    glm::vec3 currFront = Math::rotToVec(*fr);
-    fr->y = glm::orientedAngle(Math::unitVecZ, currFront, Math::unitVecY);
-    // *fr     = glm::rotateY(*fr, _y);
   }
 
-  // T back to 0
+
+  // === Iter 2 : Set dependent data ===
+
   for (auto i = 1u; i < m->frames.size(); ++i) {
+    // T back to 0
     m->frames.at(i).translation.x -= minTX;
     m->frames.at(i).translation.y -= minTY;
     m->frames.at(i).translation.z -= minTZ;
@@ -194,7 +181,7 @@ Frame Motion::linkedFrame(uint frameIdx, float alpha) const {
 // ====================================================================== //
 
 void Motion::clean(loopMode lm, uint steps) {
-  this->frames.erase(this->frames.begin());
+  this->frames.erase(this->frames.begin()); // Remove T-Pose
   if (lm == loopMode::none) return;
 
   // Get low errror frames of animation to generate a loop
@@ -225,11 +212,40 @@ void Motion::clean(loopMode lm, uint steps) {
     this->frames = auxFrames; // Store
   }
 
+  // Befor lerp modify the N first frames of motion setting rots to zero, avoiding abrupt changes
+  unsigned int nFrame = 15u;
+  // float        alphastep = 1.f / (float)nFrame;
+  // auto         fnR       = this->frames.at(nFrame).rotations.at(0);
+
+  for (auto i = 0u; i < nFrame; ++i) {
+    // auto alpha                         = i * alphastep;
+    // auto newRot                        = glm::lerp(glm::vec3{0.f}, fnR, alpha);
+    this->frames.at(i).rotations.at(0) = glm::vec3{0.f};
+  }
+
   // Lerp
+  // this->frames.at(0).rotations.at(0) =
+  //     glm::vec3(0.f); // Avoid bad accum xz rots
+
   auto first = this->frames.front();
   auto last  = this->frames.back();
   for (const auto& nF : last.lerpTransition(first, steps)) {
     this->frames.push_back(nF);
+  }
+
+  // Force look forward
+  for (auto& f : this->frames) {
+    auto currFront = Math::rotToVec(f.rotations.at(0));
+    auto newY = glm::orientedAngle(currFront, Math::unitVecZ, Math::unitVecY);
+
+    Transform t;
+    t.rot = f.rotations.at(0);
+    Transform t2;
+    t2.rot = glm::degrees(newY) * Math::unitVecY;
+    float x, y, z;
+    glm::extractEulerAngleXYZ(t2.asMatrix() * t.asMatrix(), x, y, z);
+
+    f.rotations.at(0) = glm::vec3{x, y, z};
   }
 }
 

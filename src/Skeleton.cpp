@@ -92,26 +92,18 @@ void Skeleton::hierarchy() {
                 : m_currMotion->frames.at(m_currFrame);
 
   // === ROOT ===
+  // XZ trans is by user, only apply Y
   transform.pos.y = F.translation.y;
-  // auto cx                      = glm::clamp(F.rotations.at(0).x, -10.f, 10.f);
-  // transform.rot.x              = cx * allowedRots.x;
-  // transform.rot = F.rotations.at(0);
-  auto _rotSteps = rotSteps();
-  transform.rot.x += _rotSteps.x;
-  transform.rot.z += _rotSteps.z;
-  // transform.rot.x = F.rotations.at(0).x;
-  // transform.rot.z = F.rotations.at(0).z;
-  // transform.rot.x = glm::clamp(F.rotations.at(0).x, -9.f, 9.f);
-  // transform.rot.z = glm::clamp(F.rotations.at(0).z, -9.f, 9.f);
-  transform.rot *= allowedRots;
-  // transform.rot += rotSteps();
+  // Y rot is by user, only apply XZ
+  transform.rot.x = F.rotations.at(0).x;
+  transform.rot.y += F.rotations.at(0).y;
+  transform.rot.z = F.rotations.at(0).z;
 
+  // Store
   joints[0]->transformAsMatrix = transform.asMatrix();
+  transform.rot.y -= F.rotations.at(0).y;
 
 
-  // auto rX   = glm::clamp(F.rotations.at(0).x, 0.f, 25.f);
-  // auto rots = glm::vec3{rX, 0.f, 0.f};
-  // Math::rotateXYZ(joints[0]->transformAsMatrix, rots * allowedRots);
 
   // === JOINTS ===
   for (auto idx = 1u; idx < joints.size(); ++idx) {
@@ -180,8 +172,8 @@ void Skeleton::loadNextMotion() {
   if (!m_currMotion) return;
 
   // TODO, still working here :D
-  this->transform.rot.x = 0.f;
-  this->transform.rot.z = 0.f;
+  // this->transform.rot.x = 0.f;
+  // this->transform.rot.z = 0.f;
 
   if (!m_nextMotion) {
     m_currFrame = 0u;

@@ -46,7 +46,6 @@ int main(int argc, char const* argv[]) {
 
 
   // Input setup
-
   float dirAngle    = 0.f;
   float rotSpeed    = 5.f;
   bool  changeSpeed = true;
@@ -122,11 +121,16 @@ int main(int argc, char const* argv[]) {
   sk.onKey(GLFW_KEY_D, [&]() { right = true; }, [&]() { right = false; });
   sk.onKey(GLFW_KEY_S, [&]() { back = true; }, [&]() { back = false; });
   sk.onKey(GLFW_KEY_A, [&]() { left = true; }, [&]() { left = false; });
+  sk.onKey(GLFW_KEY_C, [&]() { sk.camera->resetOffset(); });
   sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
+
+  // speed-control
   sk.onKey(GLFW_KEY_6,
            [&]() { sk.speed = glm::clamp(sk.speed - 0.1f, 1.f, 3.f); });
   sk.onKey(GLFW_KEY_7,
            [&]() { sk.speed = glm::clamp(sk.speed + 0.1f, 1.f, 3.f); });
+
+  // linkalpha-control
   sk.onKey(GLFW_KEY_8, [&]() {
     sk.decLinkedAlpha();
     sk.speed = glm::clamp(sk.speed - 0.1f, 1.f, 2.f);
@@ -135,12 +139,12 @@ int main(int argc, char const* argv[]) {
     sk.incLinkedAlpha();
     sk.speed = glm::clamp(sk.speed + 0.1f, 1.f, 2.f);
   });
-  // sk.onKey(GLFW_KEY_1,
-  //          [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
-  sk.onKey(GLFW_KEY_C,
-           [&]() { sk.camera->cinemaLike = !sk.camera->cinemaLike; });
+  // un/link run motion to walk motion
+  sk.onKey(GLFW_KEY_1,
+           [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
+  // === ANIMATE ===
   sk.animate();
 
   // ------------------------------------------ / Skeleton ---

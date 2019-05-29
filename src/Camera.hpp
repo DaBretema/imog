@@ -17,9 +17,9 @@ private:
   glm::mat4 m_proj;
   glm::mat4 m_viewproj;
 
-  float m_fov;
+  float     m_fov;
   glm::vec3 m_offset;
-  bool  m_centeredOnTarget;
+  bool      m_centeredOnTarget;
 
 public:
   float                      speed;
@@ -30,6 +30,9 @@ public:
 
   Camera(float speed = 1.f, float fov = 0.5f);
   ~Camera();
+
+  // Set offset to zero
+  void resetOffset();
 
   // Getter for view
   glm::mat4 view() const;

@@ -14,16 +14,19 @@ namespace brave {
 // ====================================================================== //
 
 Camera::Camera(float speed, float fov)
-    : m_fov(fov),
-      m_offset(0.f),
-      m_centeredOnTarget(false),
-      speed(speed),
-      cinemaLike(false) {
+    : m_fov(fov), m_offset(0.f), m_centeredOnTarget(false), speed(speed) {
 
   pivot.rot = glm::vec3(Settings::mainCameraRot, 0.0f);
 }
 
 Camera::~Camera() { this->target.reset(); }
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Set offset to zero
+// ====================================================================== //
+void Camera::resetOffset() { m_offset = glm::vec3{0.f}; }
 
 // ====================================================================== //
 // ====================================================================== //
