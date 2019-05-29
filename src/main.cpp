@@ -28,8 +28,8 @@ int main(int argc, char const* argv[]) {
   auto sk = Skeleton(camera, 1.f, 1.f);
 
   // Load motions
-  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 0u);
-  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 0u);
+  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 10u);
+  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 2u);
   auto jump = Motion::create("jump", Motions::jump, loopMode::loop, 10u);
   auto idle = Motion::create("idle", Motions::dance, loopMode::loop, 10u);
 
@@ -74,8 +74,8 @@ int main(int argc, char const* argv[]) {
         changeSpeed = false;
       }
 
-      sk.setMotion("jump");
       sk.allowedRots = Math::unitVec;
+      sk.setMotion("jump");
     }
 
     else {
@@ -85,11 +85,11 @@ int main(int argc, char const* argv[]) {
       }
 
       if (isMoving()) {
+        sk.allowedRots = glm::vec3{1.f, 1.f, 0.f};
         sk.setMotion("walk");
-        sk.allowedRots = Math::nullVec;
       } else {
+        sk.allowedRots = Math::unitVec;
         sk.setMotion("idle");
-        sk.allowedRots = Math::nullVec;
       }
     }
 
@@ -135,8 +135,8 @@ int main(int argc, char const* argv[]) {
     sk.incLinkedAlpha();
     sk.speed = glm::clamp(sk.speed + 0.1f, 1.f, 2.f);
   });
-  sk.onKey(GLFW_KEY_1,
-           [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
+  // sk.onKey(GLFW_KEY_1,
+  //          [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
   sk.onKey(GLFW_KEY_C,
            [&]() { sk.camera->cinemaLike = !sk.camera->cinemaLike; });

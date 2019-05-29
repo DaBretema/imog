@@ -93,9 +93,21 @@ void Skeleton::hierarchy() {
 
   // === ROOT ===
   transform.pos.y = F.translation.y;
-  LOGD(rotSteps().x);
-  transform.rot.x += glm::clamp(rotSteps().x, -3.f, 3.f) * allowedRots.x;
+  // auto cx                      = glm::clamp(F.rotations.at(0).x, -10.f, 10.f);
+  // transform.rot.x              = cx * allowedRots.x;
+  // transform.rot = F.rotations.at(0);
+  auto _rotSteps = rotSteps();
+  transform.rot.x += _rotSteps.x;
+  transform.rot.z += _rotSteps.z;
+  // transform.rot.x = F.rotations.at(0).x;
+  // transform.rot.z = F.rotations.at(0).z;
+  // transform.rot.x = glm::clamp(F.rotations.at(0).x, -9.f, 9.f);
+  // transform.rot.z = glm::clamp(F.rotations.at(0).z, -9.f, 9.f);
+  transform.rot *= allowedRots;
+  // transform.rot += rotSteps();
+
   joints[0]->transformAsMatrix = transform.asMatrix();
+
 
   // auto rX   = glm::clamp(F.rotations.at(0).x, 0.f, 25.f);
   // auto rots = glm::vec3{rX, 0.f, 0.f};
@@ -166,6 +178,10 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) const {
 
 void Skeleton::loadNextMotion() {
   if (!m_currMotion) return;
+
+  // TODO, still working here :D
+  this->transform.rot.x = 0.f;
+  this->transform.rot.z = 0.f;
 
   if (!m_nextMotion) {
     m_currFrame = 0u;

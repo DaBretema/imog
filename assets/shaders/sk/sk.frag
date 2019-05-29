@@ -78,7 +78,7 @@ void main() {
   color *= lightCoeff * lightColor;
 
   // Aesthetic
-  vec3 cMod = vec3(0.25);
+  vec3 cMod = vec3(0.2);
   color = clamp(color, u_color-cMod, u_color+cMod);
 
   // Output gamma corrected color

@@ -9,8 +9,9 @@ from matplotlib import interactive
 from os import listdir
 from os.path import isfile, join
 
+_msgPrefix = "[PLOTTER] - "
 
-def plot_diff(folder,filePrefix):
+def plotHM(folder,filePrefix):
     """Plots heatmap and winning frames from gived pair of motions"""
 
     dataFile = folder+filePrefix+"__heatmap.txt"
@@ -32,18 +33,21 @@ def plot_diff(folder,filePrefix):
     f.show()
 
 
-
 if __name__== "__main__":
     try:
-        path = "./assets/plotdata/"
+        if len(sys.argv) < 2:
+            print("{}Usage: python ./plotter.py <folder_with_plotdata>".format(_msgPrefix))
+            exit(2)
+
+        path  = sys.argv[1]
         files = [f for f in listdir(path) if isfile(join(path, f))]
         files = [f.split("__")[0] for f in files]
         files = list(dict.fromkeys(files))
 
         for f in files:
-            plot_diff(path,f)
+            plotHM(path,f)
 
-        input("Press any key to exit.")
+        input("{}Press any key to close plots.".format(_msgPrefix))
 
     except FileNotFoundError:
-        print("Don't found any plot at gived path, maybe don't exists!")
+        print("{}Couldn't found plot data in '{}'".format(_msgPrefix,path))

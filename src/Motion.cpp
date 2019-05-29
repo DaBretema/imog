@@ -53,8 +53,8 @@ std::string Motion::plotFolder() {
 
 glm::vec3 Frame::value() const {
   glm::vec3 wJR{1.f};
-  glm::vec3 wRT{0.f, 0.5f, 0.f}; // !
-  glm::vec3 wRR{0.5f};           // !
+  glm::vec3 wRT{0.f, 2.f, 0.f}; // !
+  glm::vec3 wRR{0.5f};          // !
 
   glm::vec3 JR{0.f};
   glm::vec3 RT = this->translation;
@@ -78,8 +78,14 @@ Frame Frame::lerpOne(const Frame& f2, float alpha) const {
   Frame f;
   f.translation = glm::mix(tf1, tf2, alpha);
   try {
+    auto rootFront = Math::rotToVec(rf1[0]);
+    auto rootY = glm::orientedAngle(Math::unitVecZ, rootFront, Math::unitVecY);
+
     for (auto i = 0u; i < rf1.size(); ++i) {
-      f.rotations.push_back(glm::mix(rf1[i], rf2[i], alpha));
+      auto newRot = glm::mix(rf1[i], rf2[i], alpha);
+      if (i == 0u) { newRot = rootY * Math::unitVecY; }
+
+      f.rotations.push_back(newRot);
     }
   } catch (std::exception&) {
     LOGE("F1 and F2 doesn't have the same number of Joints?")
@@ -117,56 +123,48 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
                                        const std::string& filepath,
                                        loopMode           lm,
                                        uint               steps) {
-  auto m  = loader::BVH(filepath);
-  m->name = name;
-
-  // === BEFORE CLEAN ===
+  auto m       = loader::BVH(filepath);
   m->m_maxStep = 0u;
-
-  for (auto i = 0u; i < m->frames.size(); ++i) {
-    auto f = m->frames.at(i);
-
-    // Get Max distance
-    if (i < m->frames.size() - 2u) {
-      auto f2   = m->frames.at(i + 1u);
-      auto step = glm::distance(f2.translation, f.translation);
-      if (step > m->m_maxStep) m->m_maxStep = step;
-    }
-  }
+  m->name      = name;
 
   //
-  float _inf = std::numeric_limits<float>::max();
-  float minRX, minRY, minRZ, minTX, minTY, minTZ;
-  minRX = minRY = minRZ = minTX = minTY = minTZ = _inf;
+  float minTX, minTY, minTZ;
+  minTX = minTY = minTZ = std::numeric_limits<float>::max();
   //
 
   // Get data
-  for (const auto& f : m->frames) {
-    // T
-    if (f.translation.x < minTX) minTX = f.translation.x;
-    if (f.translation.y < minTY) minTY = f.translation.y;
-    if (f.translation.z < minTZ) minTZ = f.translation.z;
-    // R
-    if (f.rotations.at(0).x < minRX) minRX = f.rotations.at(0).x;
-    if (f.rotations.at(0).y < minRY) minRY = f.rotations.at(0).y;
-    if (f.rotations.at(0).z < minRZ) minRZ = f.rotations.at(0).z;
+  for (auto i = 1u; i < m->frames.size(); ++i) {
+    auto ft = m->frames.at(i).translation;
+    auto fr = &m->frames.at(i).rotations.at(0);
+
+    // Get Max distance
+    if (i < m->frames.size() - 2u) {
+      auto step = glm::distance(m->frames.at(i + 1u).translation, ft);
+      if (step > m->m_maxStep) m->m_maxStep = step;
+    }
+
+    // Get mins positions
+    if (ft.x < minTX) minTX = ft.x;
+    if (ft.y < minTY) minTY = ft.y;
+    if (ft.z < minTZ) minTZ = ft.z;
+
+    // R set between [0,360]
+    // *fr = glm::mod(*fr, 360.f);
+    // if (fr->x < 0.f) fr->x += 360.f;
+    // if (fr->y < 0.f) fr->y += 360.f;
+    // if (fr->z < 0.f) fr->z += 360.f;
+
+    // Force to look forward
+    glm::vec3 currFront = Math::rotToVec(*fr);
+    fr->y = glm::orientedAngle(Math::unitVecZ, currFront, Math::unitVecY);
+    // *fr     = glm::rotateY(*fr, _y);
   }
 
-  // Set data
-  for (auto& f : m->frames) {
-    // T
-    f.translation.x -= minTX;
-    f.translation.y -= minTY;
-    f.translation.z -= minTZ;
-    // R set between [0,360]
-    f.rotations.at(0) = glm::mod(f.rotations.at(0), 360.f);
-    if (f.rotations.at(0).x < 0.f) f.rotations.at(0).x += 360.f;
-    if (f.rotations.at(0).y < 0.f) f.rotations.at(0).y += 360.f;
-    if (f.rotations.at(0).z < 0.f) f.rotations.at(0).z += 360.f;
-    // R back to 0
-    f.rotations.at(0).x -= minRX;
-    f.rotations.at(0).y -= minRY;
-    f.rotations.at(0).z -= minRZ;
+  // T back to 0
+  for (auto i = 1u; i < m->frames.size(); ++i) {
+    m->frames.at(i).translation.x -= minTX;
+    m->frames.at(i).translation.y -= minTY;
+    m->frames.at(i).translation.z -= minTZ;
   }
 
   // === CLEAN ===
@@ -203,27 +201,27 @@ void Motion::clean(loopMode lm, uint steps) {
   if (lm == loopMode::none) return;
 
   // Get low errror frames of animation to generate a loop
-  uint B, E;
-  {
-    uint  nFrames = frames.size();
-    uint  limitA  = nFrames / 2.f;
-    uint  limitB  = nFrames - limitA;
-    float auxDiff = std::numeric_limits<float>::max();
+  if (lm == loopMode::shortLoop) {
+    uint B, E;
+    {
+      uint  nFrames = frames.size();
+      uint  limitA  = nFrames / 2.f;
+      uint  limitB  = nFrames - limitA;
+      float auxDiff = std::numeric_limits<float>::max();
 
-    for (auto f1 = 0u; f1 < limitA; ++f1) {
-      glm::vec3 f1Val = this->frames.at(f1).value();
+      for (auto f1 = 0u; f1 < limitA; ++f1) {
+        glm::vec3 f1Val = this->frames.at(f1).value();
 
-      for (auto f2 = limitB; f2 < nFrames; ++f2) {
-        glm::vec3 f2Val = this->frames.at(f2).value();
+        for (auto f2 = limitB; f2 < nFrames; ++f2) {
+          glm::vec3 f2Val = this->frames.at(f2).value();
 
-        auto diff = glm::compAdd(glm::abs(f1Val - f2Val));
-        if (diff < auxDiff) { std::tie(auxDiff, B, E) = {diff, f1, f2}; }
+          auto diff = glm::compAdd(glm::abs(f1Val - f2Val));
+          if (diff < auxDiff) { std::tie(auxDiff, B, E) = {diff, f1, f2}; }
+        }
       }
     }
-  }
 
-  // Clean
-  if (lm == loopMode::shortLoop) {
+    // Clean based on obtained frames
     std::vector<Frame> auxFrames;
     auxFrames.reserve(E);
     for (auto f = B; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
