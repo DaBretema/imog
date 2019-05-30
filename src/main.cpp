@@ -29,20 +29,35 @@ int main(int argc, char const* argv[]) {
 
   // Load motions
   auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 2u);
+  auto jump = Motion::create("jump", Motions::jump, loopMode::loop, 10u);
   auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 10u);
-  auto idle = Motion::create("idle", Motions::dance, loopMode::loop, 10u);
-  auto jump = Motion::create("jump", Motions::backflip, loopMode::loop, 10u);
+
+  std::string staticMoName = "tPose";
+  auto dance    = Motion::create("dance", Motions::dance, loopMode::loop, 10u);
+  auto tPose    = Motion::create("tPose", Motions::tPose, loopMode::none, 0u);
+  auto backflip = Motion::create(
+      "backflip", Motions::backflip, loopMode::loopAndLockX, 10u);
+
+  sk.onKey(GLFW_KEY_1, [&]() { staticMoName = "tPose"; });
+  sk.onKey(GLFW_KEY_2, [&]() { staticMoName = "dance"; });
+  sk.onKey(GLFW_KEY_3, [&]() { staticMoName = "backflip"; });
+
+  // TODO: Add trim option to motions like backflip!
 
   // To avoid diferent skeletons per motion
-  run->joints  = walk->joints;
-  jump->joints = walk->joints;
-  idle->joints = walk->joints;
+  run->joints      = walk->joints;
+  jump->joints     = walk->joints;
+  dance->joints    = walk->joints;
+  tPose->joints    = walk->joints;
+  backflip->joints = walk->joints;
 
   // Motion addition
   walk->linked = run;
   sk.addMotion(walk);
-  sk.addMotion(idle);
   sk.addMotion(jump);
+  sk.addMotion(tPose);
+  sk.addMotion(dance);
+  sk.addMotion(backflip);
 
 
   // Input setup
@@ -88,7 +103,8 @@ int main(int argc, char const* argv[]) {
         sk.setMotion("walk");
       } else {
         sk.allowedRots = Math::unitVec;
-        sk.setMotion("idle");
+
+        sk.setMotion(staticMoName);
       }
     }
 
@@ -115,14 +131,22 @@ int main(int argc, char const* argv[]) {
     }
   };
 
-  sk.onKey(GLFW_KEY_F, [&]() { mustToggleCamera = true; });
+  // toggle play state
+  sk.onKey(GLFW_KEY_0,
+           [&]() { sk.play = !sk.play; },
+           [&]() {},
+           [&]() { sk.play = !sk.play; });
+
+  // sk interaction
   sk.onKey(GLFW_KEY_SPACE, [&]() { _jump = true; }, [&]() { _jump = false; });
   sk.onKey(GLFW_KEY_W, [&]() { front = true; }, [&]() { front = false; });
   sk.onKey(GLFW_KEY_D, [&]() { right = true; }, [&]() { right = false; });
   sk.onKey(GLFW_KEY_S, [&]() { back = true; }, [&]() { back = false; });
   sk.onKey(GLFW_KEY_A, [&]() { left = true; }, [&]() { left = false; });
+
+  // camera
+  sk.onKey(GLFW_KEY_F, [&]() { mustToggleCamera = true; });
   sk.onKey(GLFW_KEY_C, [&]() { sk.camera->resetOffset(); });
-  sk.onKey(GLFW_KEY_0, [&]() { sk.play = !sk.play; });
 
   // speed-control
   sk.onKey(GLFW_KEY_6,
@@ -141,8 +165,8 @@ int main(int argc, char const* argv[]) {
   });
 
   // un/link run motion to walk motion
-  // sk.onKey(GLFW_KEY_1,
-  //          [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
+  sk.onKey(GLFW_KEY_1,
+           [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
   // === ANIMATE ===
   sk.animate();
@@ -169,6 +193,14 @@ int main(int argc, char const* argv[]) {
     camera->frame();
     Shader::poolUpdate(camera);
     Renderable::poolDraw(camera);
+
+    // Debug::vec(camera, sk.transform.front(), Colors::red, sk.transform.pos);
+    // Debug::vec(camera, Math::unitVecY, Colors::green, sk.transform.pos);
+    // Debug::point(
+    //     camera, sk.transform.front() * 10.f, Colors::white, sk.transform.pos);
+    // Debug::point(
+    //     camera, Math::unitVecY * 10.f, Colors::white, sk.transform.pos);
+    // Renderable::getByName("cyl")->color(Colors::orange);
 
     static std::once_flag initFlag;
     std::call_once(initFlag, initFn);

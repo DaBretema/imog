@@ -52,6 +52,6 @@ namespace Textures {
 
 
 auto emptyFn = []() {};
-enum struct loopMode { none, loop, shortLoop };
+enum struct loopMode { none, loop, shortLoop, loopAndLockX };
 
 } // namespace brave
