@@ -213,15 +213,15 @@ void Motion::clean(loopMode lm, uint steps) {
   }
 
   // Befor lerp modify the N first frames of motion setting rots to zero, avoiding abrupt changes
-  unsigned int nFrame = 15u;
+  // unsigned int nFrame = 15u;
   // float        alphastep = 1.f / (float)nFrame;
   // auto         fnR       = this->frames.at(nFrame).rotations.at(0);
 
-  for (auto i = 0u; i < nFrame; ++i) {
-    // auto alpha                         = i * alphastep;
-    // auto newRot                        = glm::lerp(glm::vec3{0.f}, fnR, alpha);
-    this->frames.at(i).rotations.at(0) = glm::vec3{0.f};
-  }
+  // for (auto i = 0u; i < 15u; ++i) {
+  //   // auto alpha                         = i * alphastep;
+  //   // auto newRot                        = glm::lerp(glm::vec3{0.f}, fnR, alpha);
+  //   this->frames.at(i).rotations.at(0) = glm::vec3{0.f};
+  // }
 
   // Lerp
   // this->frames.at(0).rotations.at(0) =
@@ -234,18 +234,21 @@ void Motion::clean(loopMode lm, uint steps) {
   }
 
   // Force look forward
-  for (auto& f : this->frames) {
-    auto currFront = Math::rotToVec(f.rotations.at(0));
-    auto newY = glm::orientedAngle(currFront, Math::unitVecZ, Math::unitVecY);
+  for (auto i = 0u; i < this->frames.size(); ++i) {
+    Transform t1;
+    t1.rot = this->frames.at(i).rotations.at(0);
 
-    Transform t;
-    t.rot = f.rotations.at(0);
+    auto currFront = Math::rotToVec(t1.rot);
+    auto newY = glm::orientedAngle(t1.front(), Math::unitVecZ, Math::unitVecY);
+    //TODO avoid itself rotation because y flip sign in the middle
     Transform t2;
     t2.rot = glm::degrees(newY) * Math::unitVecY;
-    float x, y, z;
-    glm::extractEulerAngleXYZ(t2.asMatrix() * t.asMatrix(), x, y, z);
 
-    f.rotations.at(0) = glm::vec3{x, y, z};
+    float x, y, z;
+    glm::extractEulerAngleXYZ(t2.asMatrix() * t1.asMatrix(), x, y, z);
+
+    this->frames.at(i).rotations.at(0) = glm::degrees(glm::vec3{-x, y, z});
+    LOG("[{}] - {}", i, glm::to_string(this->frames.at(i).rotations.at(0)));
   }
 }
 

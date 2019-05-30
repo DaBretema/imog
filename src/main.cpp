@@ -28,10 +28,10 @@ int main(int argc, char const* argv[]) {
   auto sk = Skeleton(camera, 1.f, 1.f);
 
   // Load motions
-  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 10u);
   auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 2u);
-  auto jump = Motion::create("jump", Motions::jump, loopMode::loop, 10u);
+  auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 10u);
   auto idle = Motion::create("idle", Motions::dance, loopMode::loop, 10u);
+  auto jump = Motion::create("jump", Motions::backflip, loopMode::loop, 10u);
 
   // To avoid diferent skeletons per motion
   run->joints  = walk->joints;
@@ -39,10 +39,10 @@ int main(int argc, char const* argv[]) {
   idle->joints = walk->joints;
 
   // Motion addition
-  sk.addMotion(jump);
   walk->linked = run;
   sk.addMotion(walk);
   sk.addMotion(idle);
+  sk.addMotion(jump);
 
 
   // Input setup
@@ -141,8 +141,8 @@ int main(int argc, char const* argv[]) {
   });
 
   // un/link run motion to walk motion
-  sk.onKey(GLFW_KEY_1,
-           [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
+  // sk.onKey(GLFW_KEY_1,
+  //          [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
   // === ANIMATE ===
   sk.animate();

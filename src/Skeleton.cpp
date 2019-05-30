@@ -32,7 +32,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
       allowedRots(0.f, 1.f, 0.f),
       allowedTrans(0.f),
       linkedSteps(10u) {
-  // if (camera) camera->target = std::shared_ptr<Transform>(&transform);
+  if (camera) camera->target = std::shared_ptr<Transform>(&transform);
 }
 
 
@@ -93,15 +93,17 @@ void Skeleton::hierarchy() {
 
   // === ROOT ===
   // XZ trans is by user, only apply Y
+  // transform.pos.y = F.translation.y;
   transform.pos.y = F.translation.y;
   // Y rot is by user, only apply XZ
-  transform.rot.x = F.rotations.at(0).x;
-  transform.rot.y += F.rotations.at(0).y;
-  transform.rot.z = F.rotations.at(0).z;
+  transform.rot = F.rotations.at(0);
+  // transform.rot.x = F.rotations.at(0).x;
+  // transform.rot.y += F.rotations.at(0).y;
+  // transform.rot.z = F.rotations.at(0).z;
 
   // Store
   joints[0]->transformAsMatrix = transform.asMatrix();
-  transform.rot.y -= F.rotations.at(0).y;
+  // transform.rot.y -= F.rotations.at(0).y;
 
 
 
