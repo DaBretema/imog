@@ -28,8 +28,8 @@ struct Frame {
   glm::vec3              translation;
   glm::vec3              value() const;
 
-  Frame              lerpOne(const Frame& f2, float alpha) const;
-  std::vector<Frame> lerpTransition(const Frame& f2, uint steps) const;
+  Frame              lerpOne(const Frame& f2, float alpha,bool alsoLerpRoot = true) const;
+  std::vector<Frame> lerpTransition(const Frame& f2, uint steps,bool alsoLerpRoot = true) const;
 };
 
 class Motion {
@@ -45,7 +45,8 @@ public:
   static std::shared_ptr<Motion> create(const std::string& name,
                                         const std::string& filepath,
                                         loopMode           lm,
-                                        uint               steps = 0u);
+                                        uint               steps          = 0u,
+                                        bool alsoLerpRoot = true);
 
   std::string                         name;
   std::vector<std::shared_ptr<Joint>> joints;
@@ -61,9 +62,6 @@ public:
 
   // Type
   bool isMix();
-
-  // Clean any motion to get a smoother loop
-  void clean(loopMode lm, uint steps = 0u);
 
   // Mix any motion with other and get a new animation
   // that conect both smoothly

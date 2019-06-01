@@ -124,8 +124,6 @@ Renderable::Renderable(bool                           allowGlobalDraw,
     this->addVBO(renderData.normals);  // Location = 1
     this->addVBO(renderData.uvs);      // Location = 2
   }
-
-  pool.push_back(std::shared_ptr<Renderable>(this));
 }
 
 // ====================================================================== //

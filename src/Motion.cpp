@@ -63,7 +63,7 @@ glm::vec3 Frame::value() const {
 // Lerp frame A to frame B at alpha point
 // ====================================================================== //
 
-Frame Frame::lerpOne(const Frame& f2, float alpha) const {
+Frame Frame::lerpOne(const Frame& f2, float alpha, bool alsoLerpRoot) const {
   Frame f;
   f.translation = glm::mix(this->translation, f2.translation, alpha);
 
@@ -72,9 +72,12 @@ Frame Frame::lerpOne(const Frame& f2, float alpha) const {
     auto rootY = glm::orientedAngle(Math::unitVecZ, rootFront, Math::unitVecY);
 
     for (auto i = 0u; i < this->rotations.size(); ++i) {
+      if (!alsoLerpRoot && i == 0u) {
+        f.rotations.push_back(this->rotations[i]);
+        continue;
+      }
       auto newRot = glm::mix(this->rotations[i], f2.rotations[i], alpha);
       if (i == 0u) { newRot = rootY * Math::unitVecY; } // Avoid flip over self
-
       f.rotations.push_back(newRot);
     }
   } catch (std::exception&) {
@@ -88,13 +91,15 @@ Frame Frame::lerpOne(const Frame& f2, float alpha) const {
 // Lerp from frame A to frame B
 // ====================================================================== //
 
-std::vector<Frame> Frame::lerpTransition(const Frame& f2, uint steps) const {
+std::vector<Frame> Frame::lerpTransition(const Frame& f2,
+                                         uint         steps,
+                                         bool         alsoLerpRoot) const {
   std::vector<Frame> lerpFrames;
   if (steps < 1u) return lerpFrames;
   float alphaStep = 1.0f / glm::clamp((float)steps, 2.f, 100.f);
 
   for (auto alpha = 0.1f; alpha <= 1.0f; alpha += alphaStep) {
-    auto frame = this->lerpOne(f2, alpha);
+    auto frame = this->lerpOne(f2, alpha, alsoLerpRoot);
     lerpFrames.push_back(frame);
   }
   return lerpFrames;
@@ -112,38 +117,32 @@ std::vector<Frame> Frame::lerpTransition(const Frame& f2, uint steps) const {
 std::shared_ptr<Motion> Motion::create(const std::string& name,
                                        const std::string& filepath,
                                        loopMode           lm,
-                                       uint               steps) {
+                                       uint               steps,
+                                       bool               alsoLerpRoot) {
   auto m       = loader::BVH(filepath);
   m->name      = name;
   m->m_maxStep = 0u;
 
-  //
+  // === SETUP DATA ===
+
   float minTX, minTY, minTZ;
   minTX = minTY = minTZ = std::numeric_limits<float>::max();
-  //
-
 
   // === Iter 1 : Get data and Set undependent ===
-
   for (auto i = 1u; i < m->frames.size(); ++i) {
     auto ft = m->frames.at(i).translation;
-    auto fr = &m->frames.at(i).rotations.at(0);
-
     // Get Max distance
     if (i < m->frames.size() - 2u) {
       auto step = glm::distance(m->frames.at(i + 1u).translation, ft);
       if (step > m->m_maxStep) m->m_maxStep = step;
     }
-
     // Get mins positions
     if (ft.x < minTX) minTX = ft.x;
     if (ft.y < minTY) minTY = ft.y;
     if (ft.z < minTZ) minTZ = ft.z;
   }
 
-
   // === Iter 2 : Set dependent data ===
-
   for (auto i = 1u; i < m->frames.size(); ++i) {
     // T back to 0
     m->frames.at(i).translation.x -= minTX;
@@ -151,80 +150,52 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
     m->frames.at(i).translation.z -= minTZ;
   }
 
+
   // === CLEAN ===
-  m->clean(lm, steps);
 
-  return m;
-}
+  //  === Remove T-Pose ===
+  m->frames.erase(m->frames.begin());
+  if (lm == loopMode::none) return m;
 
-// ====================================================================== //
-// ====================================================================== //
-// Minor methods
-// ====================================================================== //
-
-float Motion::maxStep() const { return m_maxStep; }
-
-bool Motion::isMix() { return Strings::contains(this->name, "_"); }
-
-Frame Motion::linkedFrame(uint frameIdx, float alpha) const {
-  Frame f;
-  if (!this->linked) return f;
-  auto factor = (float)linked->frames.size() / (float)frames.size();
-  // Get errors with 'ceil' (get out-of-range values). Using 'floor' instead.
-  auto cf = floorf(frameIdx * factor);
-  return frames.at(cf).lerpOne(linked->frames.at(cf), alpha);
-}
-
-// ====================================================================== //
-// ====================================================================== //
-// Clean any motion to get a smoother loop
-// ====================================================================== //
-
-void Motion::clean(loopMode lm, uint steps) {
-  this->frames.erase(this->frames.begin()); // Remove T-Pose
-  if (lm == loopMode::none) return;
-
-  // Get low errror frames of animation to generate a loop
+  // === Get low errror frames of animation to generate a loop ===
   if (lm == loopMode::shortLoop) {
-    uint B, E;
-    {
-      uint  nFrames = frames.size();
-      uint  limitA  = nFrames / 2.f;
-      uint  limitB  = nFrames - limitA;
-      float auxDiff = std::numeric_limits<float>::max();
+    uint  B, E;
+    uint  nFrames = m->frames.size();
+    uint  limitA  = nFrames / 2.f;
+    uint  limitB  = nFrames - limitA;
+    float auxDiff = std::numeric_limits<float>::max();
 
-      for (auto f1 = 0u; f1 < limitA; ++f1) {
-        glm::vec3 f1Val = this->frames.at(f1).value();
+    for (auto f1 = 0u; f1 < limitA; ++f1) {
+      glm::vec3 f1Val = m->frames.at(f1).value();
 
-        for (auto f2 = limitB; f2 < nFrames; ++f2) {
-          glm::vec3 f2Val = this->frames.at(f2).value();
+      for (auto f2 = limitB; f2 < nFrames; ++f2) {
+        glm::vec3 f2Val = m->frames.at(f2).value();
 
-          auto diff = glm::compAdd(glm::abs(f1Val - f2Val));
-          if (diff < auxDiff) { std::tie(auxDiff, B, E) = {diff, f1, f2}; }
-        }
+        auto diff = glm::compAdd(glm::abs(f1Val - f2Val));
+        if (diff < auxDiff) { std::tie(auxDiff, B, E) = {diff, f1, f2}; }
       }
     }
 
     // Clean based on obtained frames
     std::vector<Frame> auxFrames;
     auxFrames.reserve(E);
-    for (auto f = B; f < E; ++f) { auxFrames.push_back(this->frames.at(f)); }
-    this->frames = auxFrames; // Store
+    for (auto f = B; f < E; ++f) { auxFrames.push_back(m->frames.at(f)); }
+    m->frames = auxFrames; // Store
   }
 
-  // Lerp
-  auto first = this->frames.front();
-  auto last  = this->frames.back();
-  for (const auto& nF : last.lerpTransition(first, steps)) {
-    this->frames.push_back(nF);
+  // === Lerp: gen loop ===
+  auto first = m->frames.front();
+  auto last  = m->frames.back();
+  for (const auto& nF : last.lerpTransition(first, steps, alsoLerpRoot)) {
+    m->frames.push_back(nF);
   }
 
-  // Force look forward
-  for (auto i = 0u; i < this->frames.size(); ++i) {
+  // === Force look forward ===
+  for (auto i = 0u; i < m->frames.size(); ++i) {
 
     // Get Y
     Transform t1;
-    t1.rot = this->frames.at(i).rotations.at(0);
+    t1.rot = m->frames.at(i).rotations.at(0);
 
     auto flipX = [&]() {
       bool isNegX        = t1.front().x < 0.f;
@@ -239,14 +210,14 @@ void Motion::clean(loopMode lm, uint steps) {
     // Rot to look forward
     Transform t2;
     t2.rot = newY;
-
     float x, y, z;
     glm::extractEulerAngleXYZ(t2.asMatrix() * t1.asMatrix(), x, y, z);
 
     // Store
-    this->frames.at(i).rotations.at(0) = glm::degrees(glm::vec3{x, y, z});
-    ;
+    m->frames.at(i).rotations.at(0) = glm::degrees(glm::vec3{x, y, z});
   }
+
+  return m;
 }
 
 // ====================================================================== //
@@ -256,6 +227,8 @@ void Motion::clean(loopMode lm, uint steps) {
 // ====================================================================== //
 
 Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
+
+  // @lambda for transitions creation
   auto createTransitionMotion = [&](uint idxF1, uint idxF2) {
     auto mo      = std::make_shared<Motion>();
     mo->joints   = this->joints;
@@ -266,7 +239,6 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
     for (const auto& nF : f1.lerpTransition(f2, 10u)) {
       mo->frames.push_back(nF);
     }
-
     return mo;
   };
 
@@ -310,6 +282,25 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
   }
 
   return mm;
+}
+
+
+// ====================================================================== //
+// ====================================================================== //
+// Minor methods
+// ====================================================================== //
+
+float Motion::maxStep() const { return m_maxStep; }
+
+bool Motion::isMix() { return Strings::contains(this->name, "_"); }
+
+Frame Motion::linkedFrame(uint frameIdx, float alpha) const {
+  Frame f;
+  if (!this->linked) return f;
+  auto factor = (float)linked->frames.size() / (float)frames.size();
+  // Get errors with 'ceilf' (get out-of-range values). Using 'floorf' instead.
+  auto cf = floorf(frameIdx * factor);
+  return frames.at(cf).lerpOne(linked->frames.at(cf), alpha);
 }
 
 } // namespace brave

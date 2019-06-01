@@ -81,6 +81,13 @@ public:
     return m_currMotion->joints.at(5)->transformAsMatrix[3].y;
   }
 
+  // link with the camera
+  void toggleCameraFollow();
+
+  // manage speed
+  void incSpeed();
+  void decSpeed();
+
   // manage linked motion alpha and steps to lerp
   unsigned int linkedSteps;
   void         incLinkedAlpha();
@@ -88,8 +95,6 @@ public:
 
   // Compute displacement to apply on next user input
   float step() const;
-  // Compute rotation displacement per component to apply on next user input
-  glm::vec3 rotSteps() const;
 
   // Run a detached thread for animation process
   void animate();

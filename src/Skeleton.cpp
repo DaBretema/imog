@@ -31,10 +31,7 @@ Skeleton::Skeleton(const std::shared_ptr<brave::Camera>& camera,
       camera(camera),
       allowedRots(0.f, 1.f, 0.f),
       allowedTrans(0.f),
-      linkedSteps(10u) {
-  // if (camera) camera->target = std::shared_ptr<Transform>(&transform);
-  // if (camera) camera->target = nullptr; //! why is dangerous ?
-}
+      linkedSteps(10u) {}
 
 
 // ====================================================================== //
@@ -94,7 +91,6 @@ void Skeleton::hierarchy() {
 
   // === ROOT ===
   // XZ trans is by user, only apply Y
-  // transform.pos.y = F.translation.y;
   transform.pos.y = F.translation.y;
   // Y rot is by user, only apply XZ
   transform.rot.x = F.rotations.at(0).x;
@@ -102,8 +98,9 @@ void Skeleton::hierarchy() {
 
   // Store
   joints[0]->transformAsMatrix = transform.asMatrix();
-
-
+  Math::rotateXYZ(joints[0]->transformAsMatrix,
+                  F.rotations.at(0).y * Math::unitVecY);
+  // transform.rot.y -= F.rotations.at(0).y;
 
   // === JOINTS ===
   for (auto idx = 1u; idx < joints.size(); ++idx) {
@@ -186,6 +183,31 @@ void Skeleton::loadNextMotion() {
 
 // * --- Public --------------------------------------------------------- //
 
+// ====================================================================== //
+// ====================================================================== //
+// Link with the camera
+// ====================================================================== //
+
+void Skeleton::toggleCameraFollow() {
+  this->camera->target = (!this->camera->target)
+                             ? std::shared_ptr<Transform>(
+                                   &this->transform, [](brave::Transform*) {})
+                             : nullptr;
+}
+
+// ====================================================================== //
+// ====================================================================== //
+// Manage speed
+// ====================================================================== //
+
+void Skeleton::incSpeed() { speed = glm::clamp(speed + 0.1f, 1.f, 2.5f); }
+void Skeleton::decSpeed() { speed = glm::clamp(speed - 0.1f, 1.f, 2.5f); };
+
+// ====================================================================== //
+// ====================================================================== //
+// Manage linked motion alpha to lerp
+// ====================================================================== //
+
 void Skeleton::incLinkedAlpha() {
   m_linkedAlpha += alphaStep();
   m_linkedAlpha = glm::clamp(m_linkedAlpha, 0.f, 1.f);
@@ -225,27 +247,6 @@ float Skeleton::step() const {
   return step * speed;
 }
 
-// ====================================================================== //
-// ====================================================================== //
-// Compute rotation displacement per component to apply on next user input
-// ====================================================================== //
-
-glm::vec3 Skeleton::rotSteps() const {
-  glm::vec3 r1, r2;
-  auto      cf = glm::clamp(m_currFrame, 0u, lastFrame());
-
-  if (m_currMotion->linked and m_currFrame >= lastFrame()) {
-    r1 = m_currMotion->linkedFrame(cf, m_linkedAlpha).rotations.at(0);
-    r2 = m_currMotion->linkedFrame(cf + 1u, m_linkedAlpha).rotations.at(0);
-  }
-
-  else {
-    r1 = m_currMotion->frames.at(cf).rotations.at(0);
-    r2 = m_currMotion->frames.at(cf + 1u).rotations.at(0);
-  }
-
-  return r1 - r2;
-}
 
 // ====================================================================== //
 // ====================================================================== //
@@ -253,6 +254,8 @@ glm::vec3 Skeleton::rotSteps() const {
 // ====================================================================== //
 
 void Skeleton::animate() {
+
+  // Time per frame
   auto timestepFn = [&]() {
     if (!m_currMotion) return 0.5f / speed;
 
@@ -265,6 +268,7 @@ void Skeleton::animate() {
     }
   };
 
+  // Actions per frame
   auto animationFn = [&]() {
     if (!this->play or !m_currMotion) return;
     hierarchy();
@@ -353,7 +357,7 @@ void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
     LOGE("Motion names can NOT contains '_' is reserved for mixed motions");
     return;
   }
-  m2->name = Strings::toLower(m2->name); // ! must
+  m2->name = Strings::toLower(m2->name);
 
   // Compute transitions
   for (const auto& [_, m1] : m_motions) {

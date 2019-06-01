@@ -15,7 +15,7 @@ CXX       := g++
 CXX_FLAGS := -std=c++17 -Wno-unused-command-line-argument
 
 # opt-flags
-DEBUG_FLAGS   := -DDEBUG -g -Wall -O0
+DEBUG_FLAGS   := -DDEBUG -ggdb3 -Wall -O0
 RELEASE_FLAGS := -DNDEBUG -O3 -static -static-libgcc -static-libstdc++
 
 # paths

@@ -202,8 +202,6 @@ Shader::Shader(const std::string& name,
     LOGE("Program {} \n{}", m_name, std::string(msg.data(), msg.size()));
     glDeleteProgram(m_program);
   }
-
-  pool.push_back(std::shared_ptr<Shader>(this));
 }
 
 // ====================================================================== //
