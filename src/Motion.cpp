@@ -23,10 +23,10 @@ std::string Motion::plotFolder() {
   if (!Files::pathExists(_folder)) {
 #if _WIN64
     auto winPath = Files::pathToWin(_folder);
-    auto winCmd  = std::string("mkdir" + winPath + ">nul 2>&1");
+    auto winCmd  = std::string("mkdir " + winPath + " >nul 2>&1");
     system(winCmd.c_str());
 #else
-    auto nixCmd = std::string("mkdir -p" + _folder);
+    auto nixCmd = std::string("mkdir -p " + _folder);
     system(nixCmd.c_str());
 #endif
   }
@@ -246,8 +246,8 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
 
   // for heat map visualization
   auto          _prefix = plotFolder() + this->name + "_" + m2->name;
-  std::ofstream heatmap(_prefix + "__heatmap.txt");
-  std::ofstream refFrames(_prefix + "__refFrames.txt");
+  std::ofstream heatmap(_prefix + ".hm");
+  std::ofstream refFrames(_prefix + ".ref");
 
   //---
 

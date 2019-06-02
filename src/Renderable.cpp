@@ -271,26 +271,25 @@ void Renderable::draw(const std::shared_ptr<Camera>& camera) {
 
 // ====================================================================== //
 // ====================================================================== //
-// Draw cyl between 2points
+// Draw a line between 2points
 // ====================================================================== //
 //
-std::shared_ptr<Renderable> Renderable::cylBetween2p(const glm::vec3& P1,
-                                                     const glm::vec3& P2,
-                                                     float            scale) {
-  auto cyl = Renderable::getByName("cyl");
+std::shared_ptr<Renderable>
+    Renderable::line(const glm::vec3& P1, const glm::vec3& P2, float scale) {
+  auto stick = Renderable::getByName("stick");
   {
-    cyl->transform.pos = (P1 + P2) * 0.5f;
+    stick->transform.pos = (P1 + P2) * 0.5f;
     // ---
-    auto C1                 = cyl->transform.pos + glm::vec3(0, 0.5f, 0);
-    auto C2                 = cyl->transform.pos - glm::vec3(0, 0.5f, 0);
-    auto vP                 = glm::normalize(P1 - P2);
-    auto vC                 = glm::normalize(C1 - C2);
-    cyl->transform.rotAngle = glm::angle(vC, vP);
-    cyl->transform.rotAxis  = glm::cross(vC, vP);
+    auto C1                   = stick->transform.pos + glm::vec3(0, 0.5f, 0);
+    auto C2                   = stick->transform.pos - glm::vec3(0, 0.5f, 0);
+    auto vP                   = glm::normalize(P1 - P2);
+    auto vC                   = glm::normalize(C1 - C2);
+    stick->transform.rotAngle = glm::angle(vC, vP);
+    stick->transform.rotAxis  = glm::cross(vC, vP);
     // ---
-    cyl->transform.scl = glm::vec3{1.f, scale, 1.0f};
+    stick->transform.scl = glm::vec3{1.f, scale, 1.0f};
   }
-  return cyl;
+  return stick;
 }
 
 } // namespace brave

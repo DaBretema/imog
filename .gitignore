@@ -1,3 +1,6 @@
-.vscode/
 .bin/
-.back*/
+.vscode/
+assets/plotdata/*
+
+Brave
+Brave.exe

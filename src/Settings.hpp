@@ -32,7 +32,6 @@ public:
   static float       mainCameraSpeed;
   static float       mainCameraFov;
   static std::string plotDir;
-  static bool        showPlots;
   static float       floorSize;
 
   // Initializer

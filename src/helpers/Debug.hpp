@@ -15,7 +15,7 @@ namespace Debug {
     auto P1 = center + P * 0.5f;
     auto P2 = center + P * -0.5f;
 
-    auto cyl = Renderable::cylBetween2p(P1, P2, 10.f);
+    auto cyl = Renderable::line(P1, P2, 10.f);
     cyl->color(color);
     cyl->draw(camera);
   };

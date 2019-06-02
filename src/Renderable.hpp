@@ -116,7 +116,7 @@ public:
   void draw(const std::shared_ptr<Camera>& camera);
 
   // Draw cyl between 2points
-  static std::shared_ptr<Renderable> cylBetween2p(const glm::vec3& P1,
+  static std::shared_ptr<Renderable> line(const glm::vec3& P1,
                                                   const glm::vec3& P2,
                                                   float scale = 10.f);
 };

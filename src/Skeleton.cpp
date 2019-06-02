@@ -100,7 +100,6 @@ void Skeleton::hierarchy() {
   joints[0]->transformAsMatrix = transform.asMatrix();
   Math::rotateXYZ(joints[0]->transformAsMatrix,
                   F.rotations.at(0).y * Math::unitVecY);
-  // transform.rot.y -= F.rotations.at(0).y;
 
   // === JOINTS ===
   for (auto idx = 1u; idx < joints.size(); ++idx) {
@@ -152,7 +151,7 @@ void Skeleton::drawBone(const std::shared_ptr<Joint>& J) const {
   auto P1    = J->transformAsMatrix[3].xyz();
   auto P2    = J->parent->transformAsMatrix[3].xyz();
   auto scale = glm::distance(P1, P2) * 0.5f;
-  auto bone  = Renderable::cylBetween2p(P1, P2, scale);
+  auto bone  = Renderable::line(P1, P2, scale);
 
   bone->transform.scl *= glm::vec3(3.5f, 1.f, 3.5f);
   bone->draw(camera);

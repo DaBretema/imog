@@ -27,16 +27,19 @@ int main(int argc, char const* argv[]) {
 
   auto sk = Skeleton(camera, 1.f, 1.f);
 
-  // Load motions
-  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 10u);
-  auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 100u);
+  // Motions for interactive state
   auto walk = Motion::create("walk", Motions::walk, loopMode::shortLoop, 10u);
+  auto run  = Motion::create("run", Motions::run, loopMode::shortLoop, 0u);
+  walk->linked = run;
+  auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
 
+
+  // Motions for static state
   std::string staticMoName = "tPose";
-  auto dance    = Motion::create("dance", Motions::dance, loopMode::loop, 10u);
   auto tPose    = Motion::create("tPose", Motions::tPose, loopMode::none, 0u);
+  auto dance    = Motion::create("dance", Motions::dance, loopMode::loop, 10u);
   auto backflip = Motion::create(
-      "backflip", Motions::backflip, loopMode::loopAndLockX, 20u, false);
+      "backflip", Motions::backflip, loopMode::loopAndLockX, 0u, false);
 
   sk.onKey(GLFW_KEY_1, [&]() { staticMoName = "tPose"; });
   sk.onKey(GLFW_KEY_2, [&]() { staticMoName = "dance"; });
@@ -45,29 +48,18 @@ int main(int argc, char const* argv[]) {
   sk.onKey(GLFW_KEY_5, [&]() { staticMoName = "walk"; });
   sk.onKey(GLFW_KEY_6, [&]() { staticMoName = "run"; });
 
-  // TODO: Add trim option to motions like backflip!
-
-  // To avoid diferent skeletons per motion
-  run->joints      = walk->joints;
-  jump->joints     = walk->joints;
-  dance->joints    = walk->joints;
-  tPose->joints    = walk->joints;
-  backflip->joints = walk->joints;
-
   // Motion addition
-  walk->linked = run;
   sk.addMotion(walk);
+  sk.addMotion(run);
   sk.addMotion(jump);
   sk.addMotion(tPose);
   sk.addMotion(dance);
   sk.addMotion(backflip);
-  sk.addMotion(run);
 
   // Input setup
   float rotSpeed    = 5.f;
   bool  changeSpeed = true;
-  // auto  skt         = std::shared_ptr<Transform>(&sk.transform);
-  bool _jump, mustToggleCamera, front, right, back, left;
+  bool  _jump, mustToggleCamera, front, right, back, left;
   _jump = mustToggleCamera = front = right = back = left = false;
 
   auto isMoving = [&]() { return front || right || back || left; };
@@ -198,13 +190,6 @@ int main(int argc, char const* argv[]) {
     static std::once_flag initFlag;
     std::call_once(initFlag, initFn);
   };
-
-  // This could be improved creating a Python C++ extension
-  // Plot the data generated during motions interpolation
-  if (Settings::showPlots) {
-    std::string pyCmd = "python plotter.py " + Motion::plotFolder();
-    std::thread([&pyCmd]() { system(pyCmd.c_str()); }).detach();
-  }
 
   // Init winow loop
   IO::windowVisibility(true); //! Do not remove. Avoid white screen on loading.

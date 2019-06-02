@@ -62,7 +62,6 @@ glm::vec2   Settings::mainCameraRot{45.0f, 0.0f};
 float       Settings::mainCameraSpeed{0.1f};
 float       Settings::mainCameraFov{0.75f};
 std::string Settings::plotDir{"./assets/plotdata/"};
-bool        Settings::showPlots{true};
 float       Settings::floorSize{500.f};
 
 
@@ -97,7 +96,6 @@ void Settings::init(const std::string& filePath) {
         stdParse(mainCameraSpeed, 0.1f);
         stdParse(mainCameraFov, 0.75f);
         stdParse(plotDir, "./assets/plotdata/");
-        stdParse(showPlots, true);
         stdParse(floorSize, 500.f);
 
         m_corrupted = false;

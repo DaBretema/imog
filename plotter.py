@@ -11,11 +11,12 @@ from os.path import isfile, join
 
 _msgPrefix = "[PLOTTER] - "
 
-def plotHM(folder,filePrefix):
+
+def plotHM(filePrefix):
     """Plots heatmap and winning frames from gived pair of motions"""
 
-    dataFile = folder+filePrefix+"__heatmap.txt"
-    markFile = folder+filePrefix+"__refFrames.txt"
+    dataFile = filePrefix+"__heatmap.plotData"
+    markFile = filePrefix+"__refFrames.plotData"
 
     data = np.loadtxt(dataFile, unpack=True)
     mark = np.loadtxt(markFile, unpack=True)
@@ -33,21 +34,36 @@ def plotHM(folder,filePrefix):
     f.show()
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
     try:
-        if len(sys.argv) < 2:
-            print("{}Usage: python ./plotter.py <folder_with_plotdata>".format(_msgPrefix))
+        if len(sys.argv) < 4:
+            print(
+                "{}Usage: python ./plotter.py <folder> <motion1_name> <motion2_name>".format(_msgPrefix))
             exit(2)
 
-        path  = sys.argv[1]
-        files = [f for f in listdir(path) if isfile(join(path, f))]
-        files = [f.split("__")[0] for f in files]
-        files = list(dict.fromkeys(files))
+        folder = os.path.normpath(sys.argv[1])
+        m1Name = sys.argv[2]
+        m2Name = sys.argv[3]
 
-        for f in files:
-            plotHM(path,f)
+        hmFile = folder+"/"+m1Name+"_"+m2Name+".hm"
+        refFile = folder+"/"+m1Name+"_"+m2Name+".ref"
+
+        data = np.loadtxt(hmFile, unpack=True)
+        mark = np.loadtxt(refFile, unpack=True)
+
+        f = plt.figure("From "+m1Name.upper()+" to "+m2Name.upper())
+
+        plt.xlabel(m1Name)
+        plt.ylabel(m2Name)
+
+        plt.scatter(mark[0], mark[1], s=1, c="cyan", alpha=1, marker="D")
+        plt.imshow(data, origin='lower', cmap="magma",
+                   interpolation="gaussian")
+        plt.colorbar()
+
+        f.show()
 
         input("{}Press any key to close plots.".format(_msgPrefix))
 
-    except FileNotFoundError:
-        print("{}Couldn't found plot data in '{}'".format(_msgPrefix,path))
+    except:
+        print("{}Plot data not found".format(_msgPrefix))

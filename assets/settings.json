@@ -24,6 +24,5 @@
   "mainCameraSpeed": 0.1,
   "mainCameraFov": 0.5,
   "plotDir": "./assets/plotdata/",
-  "showPlots": false,
   "floorSize": 550
 }

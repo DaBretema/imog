@@ -26,7 +26,6 @@ void main() {
         g_pos = v_pos[i];
         g_norm = v_norm[i];
         g_texUV = v_texUV[i];
-        // gl_Position = u_matP * gl_in[i].gl_Position;
         gl_Position = u_matP * gl_in[i].gl_Position;
         EmitVertex();
     }
