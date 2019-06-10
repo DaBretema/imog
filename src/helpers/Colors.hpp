@@ -1,6 +1,6 @@
 #pragma once
 
-namespace brave {
+namespace imog {
 namespace Colors {
 
   const glm::vec3 black   = glm::vec3(0.f, 0.f, 0.f);
@@ -19,4 +19,4 @@ namespace Colors {
   const glm::vec3 teal    = glm::vec3(0.0f, 0.5f, 1.f);
 
 } // namespace Colors
-} // namespace brave
+} // namespace imog

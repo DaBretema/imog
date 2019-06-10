@@ -3,9 +3,9 @@
 #include <string>
 #include <algorithm>
 
-#include "../Runtime.hpp"
+#include "../cpptools_Runtime.hpp"
 
-namespace brave {
+namespace imog {
 
 
 namespace Paths {
@@ -53,4 +53,4 @@ namespace Textures {
 auto emptyFn = []() {};
 enum struct loopMode { none, loop, shortLoop, loopAndLockX };
 
-} // namespace brave
+} // namespace imog

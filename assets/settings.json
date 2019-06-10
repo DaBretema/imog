@@ -1,5 +1,5 @@
 {
-  "windowTitle": "Brave Engine",
+  "windowTitle": "Interactive motion-graph",
   "quiet": true,
   "openglMajorV": 3,
   "openglMinorV": 3,
@@ -8,9 +8,9 @@
   "pollEvents": false,
   "mouseSensitivity": 0.1,
   "clearColor": [
-    0.75,
-    0.75,
-    0.75
+    0.55,
+    0.85,
+    0.95
   ],
   "mainCameraPos": [
     15.0,
@@ -22,7 +22,7 @@
     0.0
   ],
   "mainCameraSpeed": 0.1,
-  "mainCameraFov": 0.5,
+  "mainCameraFov": 0.3,
   "plotDir": "./assets/plotdata/",
   "floorSize": 550
 }

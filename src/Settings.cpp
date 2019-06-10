@@ -3,10 +3,10 @@
 #include <fstream>
 #include <functional>
 
-#include "Logger.hpp"
-#include "FileWatcher.hpp"
+#include "cpptools_Logger.hpp"
+#include "cpptools_FileWatcher.hpp"
 
-namespace brave {
+namespace imog {
 
 // ========================================================================= //
 // ========================================================================= //
@@ -49,11 +49,11 @@ bool           Settings::m_corrupted{false};
 
 bool        Settings::initialized{false};
 bool        Settings::quiet{true};
-int         Settings::openglMajorV{4};
-int         Settings::openglMinorV{5};
+int         Settings::openglMajorV{3};
+int         Settings::openglMinorV{3};
 int         Settings::windowWidth{800};
 int         Settings::windowHeight{600};
-std::string Settings::windowTitle{"Brave Engine"};
+std::string Settings::windowTitle{"Interactive motion-graph"};
 glm::vec3   Settings::clearColor{0.0f};
 float       Settings::mouseSensitivity{1.0f};
 bool        Settings::pollEvents{false};
@@ -83,11 +83,11 @@ void Settings::init(const std::string& filePath) {
         initialized = true;
 
         stdParse(quiet, true);
-        stdParse(openglMajorV, 4);
-        stdParse(openglMinorV, 5);
+        stdParse(openglMajorV, 3);
+        stdParse(openglMinorV, 3);
         stdParse(windowWidth, 800);
         stdParse(windowHeight, 600);
-        stdParse(windowTitle, "Brave Engine");
+        stdParse(windowTitle, "Interactive motion-graph");
         glmParse(clearColor, glm::vec3(0.2, 0.3, 0.3));
         stdParse(mouseSensitivity, 1.0);
         stdParse(pollEvents, false);
@@ -150,4 +150,4 @@ void Settings::dump() {
 
 bool Settings::corrupted() { return m_corrupted; }
 
-} // namespace brave
+} // namespace imog

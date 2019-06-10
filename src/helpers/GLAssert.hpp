@@ -1,6 +1,6 @@
 
 #include <glad/glad.h>
-#include "../Logger.hpp"
+#include "../cpptools_Logger.hpp"
 
 #define GL_ASSERT(funcToCheck) \
   glErrClear();                \

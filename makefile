@@ -8,7 +8,7 @@ UNAME := $(shell uname -s)
 endif
 
 # settings
-PROJECT_NAME := Brave
+PROJECT_NAME := imog
 
 # cpp
 CXX       := g++

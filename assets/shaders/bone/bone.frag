@@ -27,7 +27,7 @@ void main() {
   // Light
   vec3 N = normalize(g_norm);
   vec3 V = normalize(-g_pos);
-  color *= max(dot(V, N), 0.1) + 0.75;
+  color *= max(dot(V, N), 0.1) +0.75;
 
   // Output gamma corrected color
   f_color = vec4(color, 1);

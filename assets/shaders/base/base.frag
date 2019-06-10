@@ -20,7 +20,7 @@ uniform vec3 u_clearColor;
 // ====================================================================== //
 
 vec3 fogged(in vec3 pos, in vec3 color){
-	float fog_factor = 1 / exp(0.0005 * pow(length(pos),2));
+	float fog_factor = 1 / exp(0.0003 * pow(length(pos),2));
 	return mix(u_clearColor, color, fog_factor);
 }
 
@@ -35,7 +35,7 @@ void main() {
 	vec3 color = texture(u_texture, g_texUV).rgb;
 	if (color == vec3(0)) { color = u_color; }
 
-  color *= 0.7;
+  color *= u_color * 0.5;
   color = fogged(-g_pos*0.25, color);
 
   // Output gamma corrected color

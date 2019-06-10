@@ -3,10 +3,10 @@
 #include <json.hpp>
 using json = nlohmann::json;
 
-#include "Math.hpp"
-#include "FileWatcher.hpp"
+#include "gltools_Math.hpp"
+#include "cpptools_FileWatcher.hpp"
 
-namespace brave {
+namespace imog {
 
 class Settings {
 private:
@@ -45,4 +45,4 @@ public:
   static bool corrupted();
 };
 
-} // namespace brave
+} // namespace imog

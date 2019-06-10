@@ -1,13 +1,13 @@
-#include "IO.hpp"
-#include "Logger.hpp"
-#include "Math.hpp"
+#include "gltools_IO.hpp"
+#include "cpptools_Logger.hpp"
+#include "gltools_Math.hpp"
 #include "Settings.hpp"
-#include "Skeleton.hpp"
-#include "Renderable.hpp"
+#include "mgtools_Skeleton.hpp"
+#include "gltools_Renderable.hpp"
 #include "helpers/Consts.hpp"
 #include "helpers/Colors.hpp"
 #include "helpers/Debug.hpp"
-using namespace brave;
+using namespace imog;
 
 int main(int argc, char const* argv[]) {
 
@@ -75,30 +75,20 @@ int main(int argc, char const* argv[]) {
 
   //
   sk.userFn = [&]() {
+    // sk.play = false;
+
     if (_jump) {
       if (changeSpeed) {
         sk.speed *= 0.5f;
         changeSpeed = false;
       }
-
-      sk.allowedRots = Math::unitVec;
       sk.setMotion("jump");
-    }
-
-    else {
+    } else {
       if (!changeSpeed) {
         sk.speed *= 2.0f;
         changeSpeed = true;
       }
-
-      if (isMoving()) {
-        sk.allowedRots = glm::vec3{1.f, 1.f, 0.f};
-        sk.setMotion("walk");
-      } else {
-        sk.allowedRots = Math::unitVec;
-
-        sk.setMotion(staticMoName);
-      }
+      isMoving() ? sk.setMotion("walk") : sk.setMotion(staticMoName);
     }
 
     if (front) sk.transform.rot += angle(0.f) * rotSpeed;
@@ -138,9 +128,9 @@ int main(int argc, char const* argv[]) {
 
   // speed-control
   sk.onKey(
-      GLFW_KEY_I, [&]() { sk.incSpeed(); }, emptyFn, [&]() { sk.incSpeed(); });
+      GLFW_KEY_I, [&]() { sk.decSpeed(); }, emptyFn, [&]() { sk.decSpeed(); });
   sk.onKey(
-      GLFW_KEY_O, [&]() { sk.decSpeed(); }, emptyFn, [&]() { sk.decSpeed(); });
+      GLFW_KEY_O, [&]() { sk.incSpeed(); }, emptyFn, [&]() { sk.incSpeed(); });
 
   // linkalpha-control
   auto decAlpha = [&]() {
@@ -155,11 +145,12 @@ int main(int argc, char const* argv[]) {
   sk.onKey(GLFW_KEY_L, incAlpha, emptyFn, incAlpha);
 
   // un/link run motion to walk motion
-  sk.onKey(GLFW_KEY_1,
+  sk.onKey(GLFW_KEY_9,
            [&]() { walk->linked = (!walk->linked) ? run : nullptr; });
 
   // === ANIMATE ===
   sk.animate();
+  sk.toggleCameraFollow();
 
 
   // ------------------------------------------ / Skeleton ---
@@ -169,8 +160,7 @@ int main(int argc, char const* argv[]) {
   // --- Loop ------------------------------------------------
 
   auto initFn = [&]() {
-    auto _floor = Renderable::getByName("Floor");
-
+    auto _floor             = Renderable::getByName("Floor");
     _floor->transform.pos.y = sk.footHeight() - sk.transform.pos.y;
   };
 
@@ -197,14 +187,6 @@ int main(int argc, char const* argv[]) {
 
   // ---------------------------------------------- / Loop ---
   // ---------------------------------------------------------
-
-  // Skeleton invoke a thread that use render, shader and texture pools.
-  // So if we don't remove skeleton object before remove pools' content and
-  // let that OS' memory manager remove unfree data. May ocur
-
-  // sk.~Skeleton(); // TODO a good./ destructor...
-  // delete &sk;
-  //
 
   return 0;
 }
