@@ -1,6 +1,7 @@
 {
   "windowTitle": "Interactive motion-graph",
   "quiet": true,
+  "showTimers": false,
   "openglMajorV": 3,
   "openglMinorV": 3,
   "windowWidth": 700,
@@ -22,7 +23,7 @@
     0.0
   ],
   "mainCameraSpeed": 0.1,
-  "mainCameraFov": 0.3,
+  "mainCameraFov": 0.4,
   "plotDir": "./assets/plotdata/",
   "floorSize": 550
 }

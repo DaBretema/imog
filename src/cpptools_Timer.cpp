@@ -1,5 +1,6 @@
 #include "cpptools_Timer.hpp"
 #include "cpptools_Logger.hpp"
+#include "Settings.hpp"
 
 namespace imog {
 
@@ -32,7 +33,7 @@ Timer::Timer(const std::string& msg)
 
 Timer::~Timer() {
   auto msg = (!m_promptMsg.empty()) ? " - " + m_promptMsg : "";
-  LOGD("[[{}s]]{}", elapsedTime(), msg);
+  if (Settings::showTimes) LOGD("[[{}s]]{}", elapsedTime(), msg);
 }
 
 } // namespace imog

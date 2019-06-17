@@ -98,14 +98,17 @@ int main(int argc, char const* argv[]) {
 
     if (isMoving() || _jump) {
       sk.transform.pos += step();
-      auto afs = abs(Settings::floorSize) * 0.95f;
 
-      if (bool teleport = Settings::floorSize >= 500.f) {
-        afs = abs(Settings::floorSize) * 0.35f;
-        if (abs(sk.transform.pos.x) > afs) sk.transform.pos.x *= -1.f;
-        if (abs(sk.transform.pos.z) > afs) sk.transform.pos.z *= -1.f;
+      if (sk.camera->target) {
+        auto afs = abs(Settings::floorSize) * 0.95f;
+
+        if (bool teleport = Settings::floorSize >= 500.f) {
+          afs = abs(Settings::floorSize) * 0.35f;
+          if (abs(sk.transform.pos.x) > afs) sk.transform.pos.x *= -1.f;
+          if (abs(sk.transform.pos.z) > afs) sk.transform.pos.z *= -1.f;
+        }
+        sk.transform.pos = glm::clamp(sk.transform.pos, -afs, afs);
       }
-      sk.transform.pos = glm::clamp(sk.transform.pos, -afs, afs);
     }
   };
 
@@ -133,14 +136,8 @@ int main(int argc, char const* argv[]) {
       GLFW_KEY_O, [&]() { sk.incSpeed(); }, emptyFn, [&]() { sk.incSpeed(); });
 
   // linkalpha-control
-  auto decAlpha = [&]() {
-    sk.decLinkedAlpha();
-    sk.decSpeed();
-  };
-  auto incAlpha = [&]() {
-    sk.incLinkedAlpha();
-    sk.incSpeed();
-  };
+  auto decAlpha = [&]() { sk.decLinkedAlpha(); };
+  auto incAlpha = [&]() { sk.incLinkedAlpha(); };
   sk.onKey(GLFW_KEY_K, decAlpha, emptyFn, decAlpha);
   sk.onKey(GLFW_KEY_L, incAlpha, emptyFn, incAlpha);
 

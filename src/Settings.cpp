@@ -49,6 +49,7 @@ bool           Settings::m_corrupted{false};
 
 bool        Settings::initialized{false};
 bool        Settings::quiet{true};
+bool        Settings::showTimes{false};
 int         Settings::openglMajorV{3};
 int         Settings::openglMinorV{3};
 int         Settings::windowWidth{800};
@@ -83,6 +84,7 @@ void Settings::init(const std::string& filePath) {
         initialized = true;
 
         stdParse(quiet, true);
+        stdParse(showTimes, false);
         stdParse(openglMajorV, 3);
         stdParse(openglMinorV, 3);
         stdParse(windowWidth, 800);

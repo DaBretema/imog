@@ -19,6 +19,7 @@ public:
   static bool initialized;
 
   static bool        quiet;
+  static bool        showTimes;
   static int         openglMajorV;
   static int         openglMinorV;
   static int         windowWidth;
