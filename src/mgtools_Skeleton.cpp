@@ -31,7 +31,6 @@ Skeleton::Skeleton(const std::shared_ptr<imog::Camera>& camera,
       camera(camera),
       linkedSteps(10u) {}
 
-
 // ====================================================================== //
 // ====================================================================== //
 // Destructor
@@ -42,7 +41,6 @@ Skeleton::~Skeleton() {
   this->play   = false;
   m_animThread = false;
 }
-
 
 // * --- Private --------------------------------------------------------- //
 
@@ -173,7 +171,6 @@ void Skeleton::loadNextMotion() {
   m_nextMotion = nullptr;
 }
 
-
 // * --- Public --------------------------------------------------------- //
 
 // ====================================================================== //
@@ -193,8 +190,8 @@ void Skeleton::toggleCameraFollow() {
 // Manage speed
 // ====================================================================== //
 
-void Skeleton::incSpeed() { speed = glm::clamp(speed + 0.1f, 1.f, 2.5f); }
-void Skeleton::decSpeed() { speed = glm::clamp(speed - 0.1f, 1.f, 2.5f); };
+void Skeleton::incSpeed() { speed = glm::clamp(speed + 0.1f, 0.1f, 2.f); }
+void Skeleton::decSpeed() { speed = glm::clamp(speed - 0.1f, 0.1f, 2.f); };
 
 // ====================================================================== //
 // ====================================================================== //
@@ -220,7 +217,6 @@ float Skeleton::step() const {
   float     maxStep = m_currMotion->maxStep();
   auto      cf      = glm::clamp(m_currFrame, 0u, lastFrame());
 
-
   if (m_currMotion->linked and m_currFrame >= lastFrame()) {
     t1 = m_currMotion->linkedFrame(cf, m_linkedAlpha).translation;
     t2 = m_currMotion->linkedFrame(cf + 1u, m_linkedAlpha).translation;
@@ -240,7 +236,6 @@ float Skeleton::step() const {
   return step * speed;
 }
 
-
 // ====================================================================== //
 // ====================================================================== //
 // Run a detached thread for animation process
@@ -255,7 +250,8 @@ void Skeleton::animate() {
     if (m_currMotion->linked) {
       return glm::lerp(m_currMotion->timeStep,
                        m_currMotion->linked->timeStep,
-                       m_linkedAlpha);
+                       m_linkedAlpha) /
+             speed;
     } else {
       return m_currMotion->timeStep / speed;
     }
@@ -275,7 +271,6 @@ void Skeleton::animate() {
     Async::periodic(timestepFn, &m_animThread, animationFn);
   });
 }
-
 
 // ====================================================================== //
 // ====================================================================== //
@@ -368,7 +363,6 @@ void Skeleton::addMotion(const std::shared_ptr<Motion> m2) {
   m_motions.try_emplace(m2->name, m2);
   m_currMotion = m_motions.at(m2->name);
 }
-
 
 // ====================================================================== //
 // ====================================================================== //

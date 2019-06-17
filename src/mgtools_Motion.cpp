@@ -10,10 +10,8 @@
 #include "cpptools_Strings.hpp"
 #include "cpptools_Timer.hpp"
 
-
 #include "gltools_Loader.hpp"
 #include "Settings.hpp"
-
 
 namespace imog {
 
@@ -41,8 +39,6 @@ std::string Motion::plotFolder() {
 
   return _folder;
 }
-
-
 
 // * Frame methods
 
@@ -72,8 +68,7 @@ Frame Frame::lerpOne(const Frame& f2, float alpha, bool alsoLerpRoot) const {
 
   try {
     auto rootFront = Math::rotToVec(this->rotations[0]);
-    // auto rootY = glm::orientedAngle(Math::unitVecZ, rootFront, Math::unitVecY);
-    auto rootY = glm::degrees(
+    auto rootY     = glm::degrees(
         glm::orientedAngle(Math::unitVecZ, rootFront, Math::unitVecY));
 
     for (auto i = 0u; i < this->rotations.size(); ++i) {
@@ -82,7 +77,7 @@ Frame Frame::lerpOne(const Frame& f2, float alpha, bool alsoLerpRoot) const {
         continue;
       }
       auto newRot = glm::mix(this->rotations[i], f2.rotations[i], alpha);
-      if (i == 0u) { newRot = rootY * Math::unitVecY; } // Avoid flip over self
+      if (i == 0u) { newRot = rootY * Math::unitVecY; }
       f.rotations.push_back(newRot);
     }
   } catch (std::exception&) {
@@ -109,8 +104,6 @@ std::vector<Frame> Frame::lerpTransition(const Frame& f2,
   }
   return lerpFrames;
 }
-
-
 
 // * Motion methods
 
@@ -157,7 +150,6 @@ std::shared_ptr<Motion> Motion::create(const std::string& name,
     m->frames.at(i).translation.y -= minTY;
     m->frames.at(i).translation.z -= minTZ;
   }
-
 
   // === CLEAN ===
 
@@ -291,7 +283,6 @@ Motion::mixMap Motion::mix(const std::shared_ptr<Motion>& m2) {
 
   return mm;
 }
-
 
 // ====================================================================== //
 // ====================================================================== //

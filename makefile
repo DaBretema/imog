@@ -19,7 +19,7 @@ DEBUG_FLAGS   := -DDEBUG -ggdb3 -Wall -O0
 RELEASE_FLAGS := -DNDEBUG -O3 -static -static-libgcc -static-libstdc++
 
 # paths
-DIST_DIR    := dist
+DIST_DIR    := .
 SOURCE_DIR  := src
 BUILD_DIR   := .bin
 INCL_DIR    := $(SOURCE_DIR)/submodules
@@ -60,9 +60,6 @@ debugExe releaseExe: $(OBJECTS)
 
 debugLib releaseLib: $(OBJECTS)
 	@ar crs lib$(PROJECT_NAME).a $^
-	@mkdir -p $(DIST_DIR)/$(PROJECT_NAME)
-	@mv ./*.a ./$(DIST_DIR)
-	@cp -r ./$(INCL_DIR)/* ./$(DIST_DIR)/$(PROJECT_NAME)
 
 clean:
 ifeq ($(OS),Windows_NT)

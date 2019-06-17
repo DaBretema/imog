@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 
+from os.path import isfile, join
+from os import listdir
+from matplotlib import interactive
 import os
+import re
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import interactive
-
-from os import listdir
-from os.path import isfile, join
 
 _msgPrefix = "[PLOTTER] - "
 
-try:
-    if len(sys.argv) < 4:
-        print(
-            "{}Usage: python ./plotter.py <folder> <motion1_name> <motion2_name>".format(_msgPrefix))
-        exit(2)
+if len(sys.argv) < 4:
+    print(
+        "{}Usage: python3 ./plotter.py <folder> <motion1_name> <motion2_name> [<use_grid>]".format(_msgPrefix))
+    exit(2)
 
+try:
     folder = os.path.normpath(sys.argv[1])
     m1Name = sys.argv[2]
     m2Name = sys.argv[3]
@@ -26,6 +26,9 @@ try:
 
     data = np.loadtxt(hmFile, unpack=True)
     mark = np.loadtxt(refFile, unpack=True)
+
+    if len(sys.argv) > 4 and re.match("[tT][a-zA-Z]*", sys.argv[4]):
+        plt.style.use('seaborn-whitegrid')
 
     plt.figure("From "+m1Name.upper()+" to "+m2Name.upper())
 
