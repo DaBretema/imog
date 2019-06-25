@@ -19,11 +19,11 @@
     150.0
   ],
   "mainCameraRot": [
-    25.0,
+    15.0,
     0.0
   ],
   "mainCameraSpeed": 0.1,
-  "mainCameraFov": 0.4,
+  "mainCameraFov": 0.6,
   "plotDir": "./assets/plotdata/",
-  "floorSize": 550
+  "floorSize": 200
 }

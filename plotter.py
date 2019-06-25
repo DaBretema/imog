@@ -4,7 +4,6 @@ from os.path import isfile, join
 from os import listdir
 from matplotlib import interactive
 import os
-import re
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,7 +26,7 @@ try:
     data = np.loadtxt(hmFile, unpack=True)
     mark = np.loadtxt(refFile, unpack=True)
 
-    if len(sys.argv) > 4 and re.match("[tT][a-zA-Z]*", sys.argv[4]):
+    if len(sys.argv) > 4 and (sys.argv[4] == "true" or sys.argv[4] == "True"):
         plt.style.use('seaborn-whitegrid')
 
     plt.figure("From "+m1Name.upper()+" to "+m2Name.upper())

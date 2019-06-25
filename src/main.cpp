@@ -33,13 +33,19 @@ int main(int argc, char const* argv[]) {
   walk->linked = run;
   auto jump = Motion::create("jump", Motions::jump, loopMode::shortLoop, 10u);
 
-
   // Motions for static state
   std::string staticMoName = "tPose";
   auto tPose    = Motion::create("tPose", Motions::tPose, loopMode::none, 0u);
   auto dance    = Motion::create("dance", Motions::dance, loopMode::loop, 10u);
   auto backflip = Motion::create(
       "backflip", Motions::backflip, loopMode::loopAndLockX, 0u, false);
+
+  // Clone hierarchy from tpose
+  walk->joints     = tPose->joints;
+  run->joints      = tPose->joints;
+  jump->joints     = tPose->joints;
+  dance->joints    = tPose->joints;
+  backflip->joints = tPose->joints;
 
   sk.onKey(GLFW_KEY_1, [&]() { staticMoName = "tPose"; });
   sk.onKey(GLFW_KEY_2, [&]() { staticMoName = "dance"; });
@@ -75,8 +81,6 @@ int main(int argc, char const* argv[]) {
 
   //
   sk.userFn = [&]() {
-    // sk.play = false;
-
     if (_jump) {
       if (changeSpeed) {
         sk.speed *= 0.5f;

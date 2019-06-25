@@ -102,6 +102,7 @@ void IO::windowInit(const std::shared_ptr<Camera>& camera) {
 
   // Set as active window
   glfwMakeContextCurrent(o_WINDOW);
+  // glfwSwapInterval(1);
 
   // Set icon
   int       icoW, icoH;
